@@ -1,3 +1,7 @@
+source("src/indicies/i_and_positions.R")
+source("src/indicies/get_around_square.R")
+source("src/indicies/compute_box_number.R")
+
 #' révéler les cases à la suite d'un clic humain
 #'
 #' @param grid matrice de minesweeper
