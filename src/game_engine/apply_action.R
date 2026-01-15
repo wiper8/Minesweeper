@@ -1,6 +1,7 @@
 source("hp.R")
 source("src/indicies/i_and_positions.R")
 source("src/game_engine/is_game_over.R")
+source("src/game_engine/update_grid.R")
 
 #' Appliquer une action de clic ou de flag
 #'
