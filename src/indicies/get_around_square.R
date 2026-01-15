@@ -1,3 +1,13 @@
+#' Extraire le carré ou rectangle autour d'une position d'une boîte dans la grille
+#'
+#' @param pos vecteur numérique de longueur 2 pour les 2 dimensions (x, y)
+#' @param grid matrice de minesweeper
+#'
+#' @returns un sous-ensemble de la matrice de minesweeper 
+#' @export
+#'
+#' @examples
+#' get_around_square(c(1, 2), matrix(1:12, nrow = 3))
 get_around_square <- function(pos, grid) {
   dims <- dim(grid)
   
