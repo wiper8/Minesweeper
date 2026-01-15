@@ -1,5 +1,6 @@
 source("src/indicies/i_and_positions.R")
 source("src/indicies/get_around_square.R")
+source("src/indicies/square_pos.R")
 source("src/game_engine/compute_box_number.R")
 
 #' révéler les cases à la suite d'un clic humain

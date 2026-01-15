@@ -21,7 +21,7 @@ is_grid_possible <- function(grid) {
     if (grid[i] != sum(square %in% c(covered_mine, uncovered_mine, flag_on_mine))) return(FALSE)
     
     # s'il reste 3 cases non révélées, mais qu'il reste trop de mines selon le nombre
-    # remaining_uncovered_boxes <- sum(square < 0)
+    remaining_uncovered_boxes <- sum(square < 0)
     if (grid[i] > remaining_uncovered_boxes) return(FALSE)
   }
   TRUE

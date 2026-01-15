@@ -1,4 +1,5 @@
 source(here("hp.R"))
+source(here("src/game_engine/update_grid.R"))
 
 test_that("update_grid révelle bien les case autour de celle cliquée", {
   grid <- matrix(
