@@ -22,7 +22,7 @@ simulate_a_game <- function(mines, dims = c(17, 9), clicker, verbose = FALSE) {
   repeat {
     # propagate boxes numbers
     {
-      grid <- update_grid_status(grid)
+      grid <- update_grid(grid)
       # success
       if (sum(grid %in% c(covered_no_mine, uncovered_no_mine, flag_on_no_mine)) == 0 ||
           sum(grid %in% c(covered_no_mine, flag_on_no_mine)) == 0) {

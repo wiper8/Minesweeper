@@ -242,7 +242,7 @@ is_game_possible <- function(grid, status = NULL) {
   
   repeat {
     # propagate boxes numbers
-    grid2 <- update_grid_status(grid, human = TRUE)
+    grid2 <- update_grid(grid, human = TRUE)
     status[status_around(grid2 != grid) & status == 0] <- 1
     grid <- grid2
     
