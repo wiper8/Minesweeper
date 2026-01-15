@@ -13,8 +13,8 @@ source("src/game_engine/is_game_over.R")
 #'
 #' @examples
 #' apply_action(matrix(-1, 3, 3), c(1, 2), FALSE)
-apply_action <- function(grid, pos, action) {
-  i <- position_to_i(pos)
+apply_action <- function(grid, pos, action, ...) {
+  i <- position_to_i(pos, dim(grid))
   
   # actions sur des cases déjà révélées, ignorer
   if (grid[i] >= 0) return(list(grid, is_game_over(grid)))
@@ -27,6 +27,7 @@ apply_action <- function(grid, pos, action) {
   # clic
   if (action) {
     grid <- clic(grid, i)
+    grid <- update_grid(grid, ...)
   }
   
   list(grid, is_game_over(grid))
