@@ -20,13 +20,6 @@ is_game_over <- function(grid, verbose = FALSE) {
     return(-1)
   }
   
-  # erreur de drapeau : pour un humain c'est possible, mais pour mon ordi, ça ne devrait pas l'être. Lancer le débogueur
-  # dans un tel cas pour l'instant
-  if (any(grid == flag_on_no_mine)) { # TODO retirer éventuellement pour permettre à un humain de jouer
-    verbo(grid, verbose)
-    browser()
-  }
-  
   # toutes les boîtes sans mines sont cliquées
   if (sum(grid %in% c(covered_no_mine, uncovered_no_mine, uncovered_mine, flag_on_no_mine)) == 0) {
     verbo(grid, verbose)
