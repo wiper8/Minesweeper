@@ -33,7 +33,7 @@ test_that("update_grid continue de réveller les cases vides", {
       -1, -1, -1,
       -1, -1, -2,
       -1, -1, -1,
-      -1, -1, -1
+      -1, -1, -2
     ),
     nrow = 6, ncol = 3,
     byrow = TRUE
@@ -46,11 +46,42 @@ test_that("update_grid continue de réveller les cases vides", {
         0, 0, 0,
         0, 1, 1,
         0, 1, -2,
-        0, 1, 1,
-        0, 0, 0
+        0, 2, -1,
+        0, 1, -2
       ),
       nrow = 6, ncol = 3,
       byrow = TRUE
     )
   )
 })
+
+test_that("update_grid flag toutes les cases mines si la partie est terminée", {
+  grid <- matrix(
+    c(
+      -1, -1, -1,
+      -1, -3, -1,
+      -1, -1, -1,
+      -1, -1, -2,
+      -2, -1, -1,
+      -2, -1, -3
+    ),
+    nrow = 6, ncol = 3,
+    byrow = TRUE
+  )
+  expect_equal(
+    update_grid(grid),
+    matrix(
+      c(
+        0, 0, 0,
+        0, 0, 0,
+        0, 1, 1,
+        1, 2, -5,
+        -5, 3, 1,
+        -5, 2, 0
+      ),
+      nrow = 6, ncol = 3,
+      byrow = TRUE
+    )
+  )
+})
+

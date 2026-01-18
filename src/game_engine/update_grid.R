@@ -1,6 +1,7 @@
 source("src/indicies/i_and_positions.R")
 source("src/indicies/get_around_square.R")
 source("src/indicies/square_pos.R")
+source("src/game_engine/is_game_over.R")
 source("src/game_engine/compute_box_number.R")
 
 #' révéler les cases à la suite d'un clic humain
@@ -29,6 +30,9 @@ update_grid <- function(grid, ...) {
       }
       grid <- update_grid(grid)
     }
+  }
+  if (is_game_over(grid) == 1) {
+    grid[grid == covered_mine] <- flag_on_mine
   }
   grid
 }
