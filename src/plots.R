@@ -18,14 +18,14 @@ compare_clickers <- function(n, dims, ...) {
   df_human <- cbind(compute_mines_probs_df(n, dims, clicker = human_clicker, ...), clicker = "human")
   # df_smart <- cbind(compute_mines_probs_df(n, dims, clicker = smart_clicker), clicker = "smart")
   # df <- rbind(df_random, df_certain, df_human, df_smart)
-  df <- rbind(df_random, df_certain, df_human)
-  show_mines_difficulty(df)
+  rbind(df_random, df_certain, df_human)
 }
 
 show_mines_difficulty <- function(df) {
   ggplot(df) +
     geom_line(aes(x = mines, y = probs, col = clicker)) +
     geom_line(aes(x = mines, y = probs, col = clicker)) +
+    geom_line(aes(x = mines, y = pct_done, col = clicker)) +
     geom_ribbon(aes(x = mines, ymin = probs_low, ymax = probs_high, fill = clicker), alpha = 0.2)
   # TODO ajouter des seuils visuels de facile, moyen, difficile, expert en me basant sur les probs de réussite des vraies applications
 }
@@ -35,7 +35,8 @@ compute_mines_probs_df <- function(n, dims, ...) {
   probs <- rep(NA, length(mines))
   probs_low <- rep(NA, length(mines))
   probs_high <- rep(NA, length(mines))
-  
+  pct_done <- rep(NA, length(mines))
+
   stop_threshold <- 1 / 100
   for (i in seq_along(probs)) {
     print(paste0(i, " mines"))
@@ -43,6 +44,7 @@ compute_mines_probs_df <- function(n, dims, ...) {
     probs[i] <- tmp[[1]]
     probs_low[i] <- tmp[[2]][1]
     probs_high[i] <- tmp[[2]][2]
+    pct_done[i] <- tmp[[3]]
     if (probs_high[i] <= stop_threshold) {
       print(paste0("stopped at ", i, " / ", length(probs)))
       break
@@ -53,13 +55,14 @@ compute_mines_probs_df <- function(n, dims, ...) {
     probs[i] <- tmp[[1]]
     probs_low[i] <- tmp[[2]][1]
     probs_high[i] <- tmp[[2]][2]
+    pct_done[i] <- tmp[[3]]
     if (probs_high[i] <= stop_threshold) {
       print(paste0("stopped at ", i, " / ", length(probs)))
       break
     }
   }
   
-  data.frame(mines = mines, probs = probs, probs_low = probs_low, probs_high = probs_high)
+  data.frame(mines = mines, probs = probs, probs_low = probs_low, probs_high = probs_high, pct_done = pct_done)
 }
 
 hypothesis_test <- function(n, mines, dims = c(17, 9), clicker1, clicker2) {

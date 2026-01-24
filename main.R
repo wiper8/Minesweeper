@@ -16,8 +16,8 @@ simulate_game(40, c(17, 9), random_clicker)
 compute_probs_success(n = 1000, mines = 56, c(17, 9), random_clicker)
 
 # graphique
-compare_clickers(n = 200, c(6, 4))
-compare_clickers(n = 200, c(17, 9))
+show_mines_difficulty(compare_clickers(n = 200, c(6, 4)))
+show_mines_difficulty(compare_clickers(n = 200, c(17, 9)))
 
 
 hypothesis_test(20, mines = 4, dims = c(10, 8), random_clicker, certain_else_random_clicker)
