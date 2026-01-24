@@ -21,7 +21,8 @@ simulate_game <- function(mines, dims = c(17, 9), clicker) {
   # TODO changer pour une meilleure fonction, il est possible que commencer au centre ou aux coins est avantageux
   # faiblement
   first_click <- random_first_click(dims)
-  grid <- init_grid_after_first_click(grid, first_click, mines)
+  tmp <- init_grid_after_first_click(grid, first_click, mines)
+  grid <- tmp[[1]]
   if (is_game_over(grid) == 1) return(list(grid, "win"))
   
   main_game_loop(grid, mines, clicker)
@@ -37,11 +38,13 @@ init_grid_after_first_click <- function(grid, pos, mines) {
 }
 
 main_game_loop <- function(grid, mines, clicker) {
+  solved_around <- matrix(0, nrow = nrow(grid), ncol = ncol(grid))
   repeat {
     # clicker
     tmp <- clicker(grid, mines)
-    tmp <- apply_action(grid, tmp[[1]], tmp[[2]])
+    tmp <- apply_action(grid, tmp[[1]], tmp[[2]], solved_around)
     grid <- tmp[[1]]
+    solved_around <- tmp[[3]]
     if (tmp[[2]] == 1) return(list(grid, "win"))
     if (tmp[[2]] == -1) return(list(grid, "lost"))
   }

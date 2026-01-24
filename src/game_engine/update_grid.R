@@ -7,20 +7,22 @@ source("src/game_engine/compute_box_number.R")
 #' révéler les cases à la suite d'un clic humain
 #'
 #' @param grid matrice de minesweeper
-#' @param human 
+#' @param solved_around matrice de même dimensions que grid remplie de 0 ou 1 signifiant quelles cellules sont
+#' pleinement résolues, qu'on peut désormais ignorer
 #'
-#' @returns matrice de minesweeper
+#' @returns liste de matrice de minesweeper et de matrice du statut des cases pleinement résolues incluant les 8 autour
 #' @export
 #'
 #' @examples
 #' update_grid(matrix(c(-1, -1, -1, -2, -1, -1, -1, -1, -3), nrow = 3, ncol = 3))
-update_grid <- function(grid, ...) {
-  for (i in which(grid == uncovered_no_mine)) {
+update_grid <- function(grid, solved_around = matrix(0, nrow = nrow(grid), ncol = ncol(grid)), ...) {
+  for (i in which(grid == uncovered_no_mine & solved_around == 0)) {
     pos <- i_to_position(i, dim(grid))
     square <- get_around_square(pos, grid)
     grid[i] <- compute_box_number(square, ...) # calculer le chiffre à mettre
     
     if (grid[i] == 0) {
+      solved_around[i] <- 1
       # cliquer à nouveau automatiquement tout autour
       positions <- square_pos(pos, grid)
       reveal <- unlist(square) == covered_no_mine
@@ -28,11 +30,13 @@ update_grid <- function(grid, ...) {
       for (j in seq_len(nrow(positions))) {
         grid[positions[j, 1], positions[j, 2]] <- uncovered_no_mine
       }
-      grid <- update_grid(grid)
+      tmp <- update_grid(grid, solved_around)
+      grid <- tmp[[1]]
+      solved_around <- tmp[[2]]
     }
   }
   if (is_game_over(grid) == 1) {
     grid[grid == covered_mine] <- flag_on_mine
   }
-  grid
+  list(grid, solved_around)
 }

@@ -12,7 +12,7 @@ test_that("update_grid révelle bien les case autour de celle cliquée", {
     byrow = TRUE
   )
   expect_equal(
-    update_grid(grid),
+    update_grid(grid)[[1]],
     matrix(
       c(
         -2, -1, -1,
@@ -39,7 +39,7 @@ test_that("update_grid continue de réveller les cases vides", {
     byrow = TRUE
   )
   expect_equal(
-    update_grid(grid),
+    update_grid(grid)[[1]],
     matrix(
       c(
         0, 0, 0,
@@ -69,7 +69,7 @@ test_that("update_grid flag toutes les cases mines si la partie est terminée", 
     byrow = TRUE
   )
   expect_equal(
-    update_grid(grid),
+    update_grid(grid)[[1]],
     matrix(
       c(
         0, 0, 0,
@@ -81,6 +81,63 @@ test_that("update_grid flag toutes les cases mines si la partie est terminée", 
       ),
       nrow = 6, ncol = 3,
       byrow = TRUE
+    )
+  )
+})
+
+test_that("update_grid n'effectue sa mise à jour que sur les cellules qui ne sont pas considérées résolues
+          et change la matrice solved_around", {
+  grid <- matrix(
+    c(
+      -1, -1, -1,
+      -1, -1, -1,
+      -3, -1, -1,
+      -1, -1, -2,
+      -2, -1, -1,
+      -2, -1, -3
+    ),
+    nrow = 6, ncol = 3,
+    byrow = TRUE
+  )
+  solved_around <- matrix(
+    c(
+      1, 1, 1,
+      1, 0, 0,
+      0, 0, 0,
+      0, 0, 0,
+      0, 0, 0,
+      0, 0, 0
+    ),
+    nrow = 6, ncol = 3,
+    byrow = TRUE
+  )
+  expect_equal(
+    update_grid(grid, solved_around),
+    list(
+      matrix(
+      c(
+        -3, -3, -3,
+        -3, 0, 0,
+        0, 1, 1,
+        1, 2, -2,
+        -2, 3, 1,
+        -2, 2, 0
+      ),
+      nrow = 6, ncol = 3,
+      byrow = TRUE
+    ),
+    matrix(
+      c(
+        1, 1, 1,
+        1, 1, 1,
+        1, 0, 0,
+        0, 0, 0,
+        0, 0, 0,
+        0, 0, 1
+      ),
+      nrow = 6, ncol = 3,
+      byrow = TRUE
+    )
     )
   )
 })
