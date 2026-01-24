@@ -8,17 +8,19 @@ source("src/game_engine/update_grid.R")
 #' @param grid matrice de minesweeper
 #' @param pos vecteur numérique de longueur 2 pour les 2 dimensions (x, y)
 #' @param action booléen : TRUE signifie de cliquer, FALSE de flaguer
+#' @param solved_around matrice de même dimensions que grid remplie de 0 ou 1 signifiant quelles cellules sont
+#' pleinement résolues, qu'on peut désormais ignorer
 #'
-#' @returns liste de la grille et de si la partie est terminée
+#' @returns liste de la grille, de si la partie est terminée et de la matrice de statuts solved_around
 #' @export
 #'
 #' @examples
 #' apply_action(matrix(-1, 3, 3), c(1, 2), FALSE)
-apply_action <- function(grid, pos, action, ...) {
+apply_action <- function(grid, pos, action, solved_around = matrix(0, nrow = nrow(grid), ncol = ncol(grid)), ...) {
   i <- position_to_i(pos, dim(grid))
   
   # actions sur des cases déjà révélées, ignorer
-  if (grid[i] >= 0) return(list(grid, is_game_over(grid)))
+  if (grid[i] >= 0) return(list(grid, is_game_over(grid)), solved_around)
   
   # flag
   if (!action) {
@@ -28,10 +30,30 @@ apply_action <- function(grid, pos, action, ...) {
   # clic
   if (action) {
     grid <- clic(grid, i)
-    grid <- update_grid(grid, ...)
+    tmp <- update_grid(grid, solved_around, ...)
+    grid <- tmp[[1]]
+    solved_around <- tmp[[2]]
   }
   
-  list(grid, is_game_over(grid))
+  solved_around <- update_solved_around(grid, solved_around)
+  
+  list(grid, is_game_over(grid), solved_around)
+}
+
+update_solved_around <- function(grid, solved_around) {
+  for (i in which(solved_around == 0)) {
+    pos <- i_to_position(i, dim(grid))
+    positions <- square_pos(pos, grid)
+    
+    values <- get_around_square(pos, grid)
+    values_pos <- square_pos(pos, grid)
+    unknown <- !values %in% c(0:9, flag_on_mine, flag_on_no_mine)
+    n_unknown <- sum(unknown)
+    if (n_unknown == 0) {
+      solved_around[i] <- 1
+    }
+  }
+  solved_around
 }
 
 flagguer <- function(grid, i) {
