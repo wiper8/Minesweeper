@@ -1,19 +1,19 @@
 library(profvis)
-source("src/simulate_a_game.R")
+source("src/simulate_game.R")
 source("src/compute_probs_success.R")
 source("src/plots.R")
-source("src/clicker.R")
+source("src/clicker/random_clicker.R")
 
-simulate_a_game(40, c(17, 9), human_clicker, verbose = TRUE)
+simulate_game(40, c(17, 9), random_clicker)
 
 # profvis(
-#   replicate(50, simulate_a_game(40, c(17, 9), certain_else_random_clicker))
+#   replicate(50, simulate_game(40, c(17, 9), certain_else_random_clicker))
 # )
 # profvis(
-#   replicate(50, simulate_a_game(40, c(17, 9), human_clicker))
+#   replicate(50, simulate_game(40, c(17, 9), human_clicker))
 # )
 
-compute_probs_success(n = 1000, mines = 56, c(17, 9), human_clicker)
+compute_probs_success(n = 1000, mines = 56, c(17, 9), random_clicker)
 
 # graphique
 compare_clickers(n = 200, c(6, 4))
