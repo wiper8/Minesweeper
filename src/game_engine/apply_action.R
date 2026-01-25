@@ -37,14 +37,15 @@ apply_action <- function(grid, pos, action, solved_around = matrix(0, nrow = nro
     
     solved_around <- tmp[[2]]
   }
-  
-  solved_around <- update_solved_around(grid, solved_around)
-  
-  list(grid, is_game_over(grid), solved_around)
+  if (any(grid == -3)) {
+    browser()
+  }
+  solved_around2 <- update_solved_around(grid, solved_around)
+  list(grid, is_game_over(grid), solved_around2)
 }
 
 update_solved_around <- function(grid, solved_around) {
-  for (i in which(solved_around == 0)) {
+  for (i in which(solved_around %in% -1:0)) {
     pos <- i_to_position(i, dim(grid))
     positions <- square_pos(pos, grid)
     
@@ -54,6 +55,10 @@ update_solved_around <- function(grid, solved_around) {
     n_unknown <- sum(unknown)
     if (n_unknown == 0) {
       solved_around[i] <- 1
+    } else if (all(unknown)) {
+      solved_around[i] <- -1
+    } else {
+      solved_around[i] <- 0
     }
   }
   solved_around

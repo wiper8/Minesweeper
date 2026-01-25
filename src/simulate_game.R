@@ -38,15 +38,16 @@ init_grid_after_first_click <- function(grid, pos, mines) {
   update_grid(grid)
 }
 
-main_game_loop <- function(grid, mines, clicker, ...) {
+main_game_loop <- function(grid, mines, clicker, solved_around, ...) {
   repeat {
     # clicker
-    tmp <- clicker(grid, mines, ...)
-    if (is.null(tmp)) return(list(grid, "le clicker ne sait pu quoi faire"))
-    tmp <- apply_action(grid, tmp[[1]], tmp[[2]], ...)
-    grid <- tmp[[1]]
-    solved_around <- tmp[[3]]
-    if (tmp[[2]] == 1) return(list(grid, "win"))
-    if (tmp[[2]] == -1) return(list(grid, "lost"))
+    tmp <- clicker(grid, total_mines = mines, solved_around = solved_around, ...)
+    if (is.null(tmp)) return(list(grid, "le clicker ne sait pu quoi faire", solved_around))
+    
+    tmp2 <- apply_action(grid, tmp[[1]], tmp[[2]], solved_around = solved_around, ...)
+    grid <- tmp2[[1]]
+    solved_around <- tmp2[[3]]
+    if (tmp2[[2]] == 1) return(list(grid, "win", solved_around))
+    if (tmp2[[2]] == -1) return(list(grid, "lost", solved_around))
   }
 }

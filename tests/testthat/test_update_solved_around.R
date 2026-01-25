@@ -17,7 +17,7 @@ test_that("update_solved_around fonctionne", {
   )
   solved_around <- matrix(
     c(
-      rep(0, 9 * 4),
+      c(-1, -1, -1, rep(0, 9 * 4 - 3)),
       rep(1, 9),
       rep(0, 9 * 3)
     ),
@@ -28,14 +28,14 @@ test_that("update_solved_around fonctionne", {
     update_solved_around(grid, solved_around),
     matrix(
       c(
-        rep(0, 9),
-        rep(0, 9),
-        c(0, 0, 0, 0, 1, 1, 0, 0, 0),
-        c(0, 0, 0, 1, 1, 1, 0, 0, 0),
+        -1, -1, 0, 0, 0, 0, 0, 0, -1,
+        rep(0, 8), -1,
+        0, 0, 0, 0, 1, 1, 0, 0, -1,
+        0, 0, 0, 1, 1, 1, 0, 0, -1,
         rep(1, 9),
-        rep(0, 9),
-        rep(0, 9),
-        rep(0, 9)
+        rep(0, 8), -1,
+        rep(0, 8), -1,
+        -1, 0, 0, 0, 0, 0, 0, -1, -1
       ),
       ncol = 9,
       byrow = TRUE

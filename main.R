@@ -8,12 +8,13 @@ source("src/clicker/certain_else_random_clicker.R")
 simulate_game(40, c(17, 9), random_clicker)
 simulate_game(40, c(17, 9), certain_else_random_clicker)
 
-# profvis(
-#   replicate(50, simulate_game(40, c(17, 9), certain_else_random_clicker))
-# )
-# profvis(
-#   replicate(50, simulate_game(40, c(17, 9), human_clicker))
-# )
+set.seed(2026L)
+profvis(
+  replicate(1, simulate_game(40, c(17, 9), certain_else_random_clicker))
+)
+profvis(
+  replicate(50, simulate_game(40, c(17, 9), human_clicker))
+)
 
 compute_probs_success(n = 1000, mines = 56, c(17, 9), random_clicker)
 

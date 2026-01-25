@@ -8,9 +8,6 @@ certain_core <- function(grid, total_mines, solved_around) {
   if (!is.null(tmp)) return(tmp)
   tmp <- can_deduce_pattern(grid, solved_around)
   if (!is.null(tmp)) return(tmp)
-  # tmp <- can_deduce_pattern_knowing_mines_left()
-  # if (!is.null(tmp)) return(tmp)
-  
   NULL # retourner NULL si on ne sait pas quelle action certain prendre.
 }
 
@@ -59,9 +56,10 @@ can_deduce_pattern <- function(grid, solved_around) {
     pos_unknown <- values_pos[unknown, , drop = FALSE]
     
     # tester toutes les combinaisons autour de cette case, vérifier s'il y a toujours ou jamais un drapeau
+    if (mines_left < 0) return(NULL) # dans les situations où on propage un flag. Je donne NULL, plus loin ça va crash
     combins <- combn(n_unknown, mines_left)
     possible <- which_combins_possible(grid, combins, pos_unknown, solved_around = solved_around)
-    if (all(!possible)) browser()
+    if (all(!possible)) return(NULL)
     
     for (mine_i in seq_len(n_unknown)) {
       # certain qu'il n'y ait pas de mine : donc cliquer
@@ -86,4 +84,3 @@ which_combins_possible <- function(grid, combins, pos_unknown, ...) {
     is_mine_propagation_possible(grid_tmp_propagate, ...)
   })
 }
-
