@@ -16,7 +16,7 @@ source("src/game_engine/compute_box_number.R")
 #' @examples
 #' update_grid(matrix(c(-1, -1, -1, -2, -1, -1, -1, -1, -3), nrow = 3, ncol = 3))
 update_grid <- function(grid, solved_around = matrix(0, nrow = nrow(grid), ncol = ncol(grid)), ...) {
-  for (i in which(grid == uncovered_no_mine & solved_around == 0)) {
+  for (i in which(grid == uncovered_no_mine)) {
     pos <- i_to_position(i, dim(grid))
     square <- get_around_square(pos, grid)
     grid[i] <- compute_box_number(square, ...) # calculer le chiffre à mettre
@@ -29,6 +29,7 @@ update_grid <- function(grid, solved_around = matrix(0, nrow = nrow(grid), ncol 
       positions <- positions[reveal, , drop = FALSE]
       for (j in seq_len(nrow(positions))) {
         grid[positions[j, 1], positions[j, 2]] <- uncovered_no_mine
+        if (solved_around[positions[j, 1], positions[j, 2]] == -1) solved_around[positions[j, 1], positions[j, 2]] <- 0
       }
       tmp <- update_grid(grid, solved_around)
       grid <- tmp[[1]]
