@@ -41,7 +41,7 @@ main_game_loop <- function(grid, mines, clicker) {
   solved_around <- matrix(0, nrow = nrow(grid), ncol = ncol(grid))
   repeat {
     # clicker
-    tmp <- clicker(grid, mines)
+    tmp <- clicker(grid, mines, solved_around)
     tmp <- apply_action(grid, tmp[[1]], tmp[[2]], solved_around)
     grid <- tmp[[1]]
     solved_around <- tmp[[3]]
