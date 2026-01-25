@@ -1,12 +1,14 @@
+source("src/indicies/count.R")
+
 certain_core <- function(grid, total_mines, solved_around) {
   tmp <- can_flag_all_around(grid, solved_around)
   if (!is.null(tmp)) return(tmp)
   tmp <- can_click_all_around(grid, solved_around)
   if (!is.null(tmp)) return(tmp)
-  tmp <- can_deduce_pattern()
-  if (!is.null(tmp)) return(tmp)
-  tmp <- can_deduce_pattern_knowing_mines_left()
-  if (!is.null(tmp)) return(tmp)
+  # tmp <- can_deduce_pattern()
+  # if (!is.null(tmp)) return(tmp)
+  # tmp <- can_deduce_pattern_knowing_mines_left()
+  # if (!is.null(tmp)) return(tmp)
   
   NULL # retourner NULL si on ne sait pas quelle action certain prendre.
 }

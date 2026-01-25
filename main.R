@@ -3,8 +3,10 @@ source("src/simulate_game.R")
 source("src/compute_probs_success.R")
 source("src/plots.R")
 source("src/clicker/random_clicker.R")
+source("src/clicker/certain_else_random_clicker.R")
 
 simulate_game(40, c(17, 9), random_clicker)
+simulate_game(40, c(17, 9), certain_else_random_clicker)
 
 # profvis(
 #   replicate(50, simulate_game(40, c(17, 9), certain_else_random_clicker))

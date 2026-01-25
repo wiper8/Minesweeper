@@ -20,11 +20,13 @@ apply_action <- function(grid, pos, action, solved_around = matrix(0, nrow = nro
   i <- position_to_i(pos, dim(grid))
   
   # actions sur des cases déjà révélées, ignorer
-  if (grid[i] >= 0) return(list(grid, is_game_over(grid)), solved_around)
+  if (grid[i] >= 0) return(list(grid, is_game_over(grid), solved_around))
   
   # flag
   if (!action) {
     grid <- flagguer(grid, i)
+    
+    if (is_game_over(grid) != 0) browser()
   }
   
   # clic
@@ -32,6 +34,7 @@ apply_action <- function(grid, pos, action, solved_around = matrix(0, nrow = nro
     grid <- clic(grid, i)
     tmp <- update_grid(grid, solved_around, ...)
     grid <- tmp[[1]]
+    
     solved_around <- tmp[[2]]
   }
   
@@ -77,7 +80,7 @@ flagguer <- function(grid, i) {
 }
 
 clic <- function(grid, i) {
-  stopifnot(grid[i] %in% c(covered_no_mine, covered_mine))
+  if (isFALSE(grid[i] %in% c(covered_no_mine, covered_mine))) browser()
   grid[i] <- ifelse(grid[i] == covered_mine, uncovered_mine, uncovered_no_mine)
   grid
 }

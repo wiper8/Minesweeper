@@ -14,18 +14,18 @@ compare_clickers <- function(n, dims, ...) {
   df_random <- cbind(compute_mines_probs_df(n, dims, clicker = random_clicker, ...), clicker = "random")
   print("certain")
   df_certain <- cbind(compute_mines_probs_df(n, dims, clicker = certain_else_random_clicker, ...), clicker = "certain")
-  print("human")
-  df_human <- cbind(compute_mines_probs_df(n, dims, clicker = human_clicker, ...), clicker = "human")
+  # print("human")
+  # df_human <- cbind(compute_mines_probs_df(n, dims, clicker = human_clicker, ...), clicker = "human")
   # df_smart <- cbind(compute_mines_probs_df(n, dims, clicker = smart_clicker), clicker = "smart")
   # df <- rbind(df_random, df_certain, df_human, df_smart)
-  rbind(df_random, df_certain, df_human)
+  rbind(df_random, df_certain) # , df_human)
 }
 
 show_mines_difficulty <- function(df) {
   ggplot(df) +
     geom_line(aes(x = mines, y = probs, col = clicker)) +
     geom_line(aes(x = mines, y = probs, col = clicker)) +
-    geom_line(aes(x = mines, y = pct_done, col = clicker)) +
+    geom_line(aes(x = mines, y = pct_done, col = clicker), linetype = "dashed") +
     geom_ribbon(aes(x = mines, ymin = probs_low, ymax = probs_high, fill = clicker), alpha = 0.2)
   # TODO ajouter des seuils visuels de facile, moyen, difficile, expert en me basant sur les probs de réussite des vraies applications
 }
