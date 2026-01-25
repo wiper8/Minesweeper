@@ -12,3 +12,6 @@ flag_on_mine <- -5L
 # -6 est un flag de posé sur une non-mine, soit une erreur
 flag_on_no_mine <- -6L
 uncovered_unknown <- -7L
+
+# pour accélérer les calculs, pas besoin de réinstancier à chaque fois
+known <- c(0:9, flag_on_mine, flag_on_no_mine)

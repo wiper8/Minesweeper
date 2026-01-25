@@ -1,5 +1,6 @@
 source("hp.R")
 source("src/indicies/i_and_positions.R")
+source("src/indicies/square_pos_and_get_around_square.R")
 source("src/game_engine/is_game_over.R")
 source("src/game_engine/update_grid.R")
 
@@ -37,9 +38,6 @@ apply_action <- function(grid, pos, action, solved_around = matrix(0, nrow = nro
     
     solved_around <- tmp[[2]]
   }
-  if (any(grid == -3)) {
-    browser()
-  }
   solved_around2 <- update_solved_around(grid, solved_around)
   list(grid, is_game_over(grid), solved_around2)
 }
@@ -49,9 +47,10 @@ update_solved_around <- function(grid, solved_around) {
     pos <- i_to_position(i, dim(grid))
     positions <- square_pos(pos, grid)
     
-    values <- get_around_square(pos, grid)
-    values_pos <- square_pos(pos, grid)
-    unknown <- !values %in% c(0:9, flag_on_mine, flag_on_no_mine)
+    tmp <- square_pos_and_get_around_square(pos, grid)
+    values_pos <- tmp[[1]]
+    values <- tmp[[2]]
+    unknown <- !values %in% known
     n_unknown <- sum(unknown)
     if (n_unknown == 0) {
       solved_around[i] <- 1

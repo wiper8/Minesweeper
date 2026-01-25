@@ -1,4 +1,6 @@
+source("src/fast_apply.R")
 source("src/indicies/count.R")
+source("src/game_engine/is_grid_possible.R")
 source("src/clicker/is_mine_propagation_possible.R")
 
 certain_core <- function(grid, total_mines, solved_around) {
@@ -18,7 +20,7 @@ can_flag_all_around <- function(grid, solved_around) {
     positions <- tmp$positions
     n_unknown <- count_unknown(grid, i, values)
     if (n_unknown > 0 && count_mines_left_around(grid, i, values) == n_unknown) {
-      unknown <- !values %in% c(0:9, flag_on_mine, flag_on_no_mine)
+      unknown <- !values %in% known
       return(list(positions[unknown, , drop = FALSE][1, ], FALSE))
     }
   }
@@ -32,7 +34,7 @@ can_click_all_around <- function(grid, solved_around) {
     positions <- tmp$positions
     n_unknown <- count_unknown(grid, i, values)
     if (n_unknown > 0 && count_mines_left_around(grid, i, values) == 0) {
-      unknown <- !values %in% c(0:9, flag_on_mine, flag_on_no_mine)
+      unknown <- !values %in% known
       return(list(positions[unknown, , drop = FALSE][1, ], TRUE))
     }
   }
@@ -44,8 +46,7 @@ can_deduce_pattern <- function(grid, solved_around) {
     tmp <- count_core(grid, i)
     values <- tmp$values
     positions <- tmp$positions
-    values_pos <- tmp$values_pos
-    unknown <- !values %in% c(0:9, flag_on_mine, flag_on_no_mine)
+    unknown <- !values %in% known
     n_unknown <- sum(unknown)
     
     # car quand on essaie un drapeau et de le propager, ça peut arriver qu'il n'y a plus de combinaisons
@@ -53,34 +54,39 @@ can_deduce_pattern <- function(grid, solved_around) {
     
     mines_left <- count_mines_left_around(grid, i, values)
     # appliquer toutes les combins de mines autour, et vérifier s'il y a une certitude
-    pos_unknown <- values_pos[unknown, , drop = FALSE]
+    pos_unknown <- positions[unknown, , drop = FALSE]
     
     # tester toutes les combinaisons autour de cette case, vérifier s'il y a toujours ou jamais un drapeau
     if (mines_left < 0) return(NULL) # dans les situations où on propage un flag. Je donne NULL, plus loin ça va crash
     combins <- combn(n_unknown, mines_left)
-    possible <- which_combins_possible(grid, combins, pos_unknown, solved_around = solved_around)
-    if (all(!possible)) return(NULL)
-    
+    possible <- rep(NA, ncol(combins))
     for (mine_i in seq_len(n_unknown)) {
-      # certain qu'il n'y ait pas de mine : donc cliquer
-      possible_combins <- combins[, possible, drop = FALSE]
-      mines_has_mine_i <- apply(possible_combins, 2, `%in%`, x = mine_i) # TODO optimiser sans apply?
-      if (all(!mines_has_mine_i)) return(list(pos_unknown[mine_i, ], TRUE))
+      mines_has_mine_i <- fast_apply(combins, 2, `%in%`, x = mine_i) # TODO optimiser sans apply?
+      possible[mines_has_mine_i] <- which_combins_possible(
+        grid,
+        combins[, mines_has_mine_i, drop = FALSE],
+        pos_unknown,
+        solved_around = solved_around
+      )
+      if (all(!possible[mines_has_mine_i])) return(list(pos_unknown[mine_i, ], TRUE))
       
       # impossible qu'il y ait pas de mine : donc flagger
-      if (all(mines_has_mine_i)) return(list(pos_unknown[mine_i, ], FALSE))
+      if (all(possible[mines_has_mine_i])) return(list(pos_unknown[mine_i, ], FALSE))
     }
+    if (all(!possible)) return(NULL)
   }
   NULL
 }
 
 which_combins_possible <- function(grid, combins, pos_unknown, ...) {
-  apply(combins, 2, function(combin) {
+  fun <- function(combin) {
     # supposer des mines
     # puis propager avec certitude, et voir si c'est possible
     grid_tmp_propagate <- grid
     i_to_flag <- position_to_i_mat(pos_unknown[combin, , drop = FALSE], dim(grid))
     grid_tmp_propagate[i_to_flag] <- flag_on_mine
+    if (!is_grid_possible(grid_tmp_propagate)) return(FALSE)
     is_mine_propagation_possible(grid_tmp_propagate, ...)
-  })
+  }
+  fast_apply(combins, 2, fun)
 }
