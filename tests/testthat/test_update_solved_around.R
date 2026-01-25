@@ -1,6 +1,6 @@
 source(here("src/game_engine/apply_action.R"))
 
-test_that("update_solved_around fonctionne", {
+test_that("update_solved_around met à jour autour du i ciblé", {
   grid <- matrix(
     c(
       -1, -1, -1, -2, -1, -1, -2, -2, -1,
@@ -24,21 +24,40 @@ test_that("update_solved_around fonctionne", {
     ncol = 9,
     byrow = TRUE
   )
+  solution <- solved_around
+  solution[17] <- 0
   expect_equal(
-    update_solved_around(grid, solved_around),
-    matrix(
-      c(
-        -1, -1, 0, 0, 0, 0, 0, 0, -1,
-        rep(0, 8), -1,
-        0, 0, 0, 0, 1, 1, 0, 0, -1,
-        0, 0, 0, 1, 1, 1, 0, 0, -1,
-        rep(1, 9),
-        rep(0, 8), -1,
-        rep(0, 8), -1,
-        -1, 0, 0, 0, 0, 0, 0, -1, -1
-      ),
-      ncol = 9,
-      byrow = TRUE
-    )
+    update_solved_around(grid, solved_around, 26),
+    solution
+  )
+  solution <- solved_around
+  solution[28] <- 1
+  expect_equal(
+    update_solved_around(grid, solved_around, 28),
+    solution
+  )
+  solution <- solved_around
+  solution[35] <- 1
+  expect_equal(
+    update_solved_around(grid, solved_around, 35),
+    solution
+  )
+  solution <- solved_around
+  solution[43] <- 1
+  expect_equal(
+    update_solved_around(grid, solved_around, 43),
+    solution
+  )
+  solution <- solved_around
+  solution[44] <- 1
+  expect_equal(
+    update_solved_around(grid, solved_around, 44),
+    solution
+  )
+  solution <- solved_around
+  solution[c(57, 58, 66)] <- 0
+  expect_equal(
+    update_solved_around(grid, solved_around, 65),
+    solution
   )
 })

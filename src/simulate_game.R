@@ -25,7 +25,8 @@ simulate_game <- function(mines, dims = c(17, 9), clicker) {
   grid <- tmp[[1]]
   if (is_game_over(grid) == 1) return(list(grid, "win"))
   
-  solved_around <- matrix(0, nrow = nrow(grid), ncol = ncol(grid))
+  solved_around <- matrix(-1, nrow = nrow(grid), ncol = ncol(grid))
+  solved_around <- update_solved_around(grid, solved_around, position_to_i(first_click, dim(grid)))
   main_game_loop(grid, mines, clicker, solved_around = solved_around)
 }
 

@@ -1,4 +1,4 @@
-source(here("src/clicker/is_mine_propagation_possible.R"))
+source(here("src/clicker/certain_core.R"))
 
 test_that("is_mine_propagation_possible fonctionne généralement", {
   grid <- matrix(
@@ -60,6 +60,7 @@ test_that("is_mine_propagation_possible fonctionne pour un pattern possible de m
             expect_true(
               is_mine_propagation_possible(grid, total_mines = 12, matrix(0, nrow(grid), ncol(grid)))
             )
+            # oui c'est une solution sans le total de mines, c'est jusqu'on peut pu jouer, mais la partie est valide
             expect_true(
               is_mine_propagation_possible(grid, total_mines = NA, matrix(0, nrow(grid), ncol(grid)))
             )
@@ -68,7 +69,7 @@ test_that("is_mine_propagation_possible fonctionne pour un pattern possible de m
             grid <- matrix(
               c(
                 -5, 4, -5, 3, -2, 1,
-                -5, -5, -1, -2, -1, 2,
+                -5, -2, -1, -2, -1, 2,
                 -5, -1, -2, 2, 2, -5,
                 -5, 3, 2, -1, 2, 1,
                 2, -1, -1, -2, 3, 1,
@@ -83,7 +84,7 @@ test_that("is_mine_propagation_possible fonctionne pour un pattern possible de m
             expect_true(
               is_mine_propagation_possible(grid, total_mines = 14, matrix(0, nrow(grid), ncol(grid)))
             )
-            expect_false(
+            expect_true(
               is_mine_propagation_possible(grid, total_mines = 13, matrix(0, nrow(grid), ncol(grid)))
             )
             grid <- matrix(
@@ -104,6 +105,9 @@ test_that("is_mine_propagation_possible fonctionne pour un pattern possible de m
             expect_true(
               is_mine_propagation_possible(grid, total_mines = 13, matrix(0, nrow(grid), ncol(grid)))
             )
+            expect_false(
+              is_mine_propagation_possible(grid, total_mines = 14, matrix(0, nrow(grid), ncol(grid)))
+            )
           }
 )
 
@@ -123,7 +127,8 @@ test_that("exemples supplémentaires de cas pour is_mine_propagation_possible", 
       grid,
       matrix(c(1, 3), nrow = 2),
       pos_unknown,
-      solved_around = solved_around
+      solved_around = solved_around,
+      total_mines = NA
     )
   )
   expect_false(
@@ -131,7 +136,8 @@ test_that("exemples supplémentaires de cas pour is_mine_propagation_possible", 
       grid,
       matrix(c(1, 2), nrow = 2),
       pos_unknown,
-      solved_around = solved_around
+      solved_around = solved_around,
+      total_mines = NA
     )
   )
   expect_false(
@@ -139,8 +145,32 @@ test_that("exemples supplémentaires de cas pour is_mine_propagation_possible", 
       grid,
       matrix(c(2, 3), nrow = 2),
       pos_unknown,
-      solved_around = solved_around
+      solved_around = solved_around,
+      total_mines = NA
     )
   )
 })
+
+test_that("is_mine_propagation_possible avec des boîtes inconnuces", {
+  grid <- matrix(
+    c(
+      -10, -10, -5, -10, -10,
+      1, 3, 3, 4, -10,
+      -10, 3, -5, -10, -10,
+      -10, 4, -5, 3, 1,
+      2, -5, 2, 1, 0,
+      -10, 2, 1, 0, 0,
+      -10, 1, 0, 0, 0,
+      1, 2, 1, 2, 1,
+      -10, 3, -5, 3, -5,
+      -10, -10, -8, -9, -8
+    ),
+    ncol = 5,
+    byrow = TRUE
+  )
+  expect_true(
+    is_mine_propagation_possible(grid, total_mines = NA, grid * 0)
+  )
+})
+
 

@@ -26,7 +26,7 @@ apply_action <- function(grid, pos, action, solved_around = matrix(0, nrow = nro
   # flag
   if (!action) {
     grid <- flagguer(grid, i)
-    
+    solved_around <- update_solved_around(grid, solved_around, i)
     if (is_game_over(grid) != 0) browser()
   }
   
@@ -35,27 +35,31 @@ apply_action <- function(grid, pos, action, solved_around = matrix(0, nrow = nro
     grid <- clic(grid, i)
     tmp <- update_grid(grid, solved_around, ...)
     grid <- tmp[[1]]
-    
     solved_around <- tmp[[2]]
   }
-  solved_around2 <- update_solved_around(grid, solved_around)
-  list(grid, is_game_over(grid), solved_around2)
+  list(grid, is_game_over(grid), solved_around)
 }
 
-update_solved_around <- function(grid, solved_around) {
-  for (i in which(solved_around %in% -1:0)) {
+#' @param grid matrice de Minesweeper
+#' @param solved_around matrice de statut de résolution des cellules
+#'  -1 est une cellule sans aucune information autour, 0 est une cellule avec information autour, 1 est une cellule dont
+#'  toutes les cases autour sont révélées ou flaguées 
+#' @param i entier : indice de la case qui vient d'être actionnée, peu importe l'action
+update_solved_around <- function(grid, solved_around, i) {
+  if (solved_around[i] %in% -1:0) {
     pos <- i_to_position(i, dim(grid))
-    positions <- square_pos(pos, grid)
-    
     tmp <- square_pos_and_get_around_square(pos, grid)
-    values_pos <- tmp[[1]]
+    positions <- tmp[[1]]
     values <- tmp[[2]]
     unknown <- !values %in% known
     n_unknown <- sum(unknown)
+    
+    for (j in seq_len(nrow(positions))) {
+      if (solved_around[positions[j, 1], positions[j, 2]] == -1) solved_around[positions[j, 1], positions[j, 2]] <- 0
+    }
+    
     if (n_unknown == 0) {
       solved_around[i] <- 1
-    } else if (all(unknown)) {
-      solved_around[i] <- -1
     } else {
       solved_around[i] <- 0
     }
@@ -64,27 +68,37 @@ update_solved_around <- function(grid, solved_around) {
 }
 
 flagguer <- function(grid, i) {
-  stopifnot(grid[i] %in% c(covered_no_mine, covered_mine, flag_on_mine, flag_on_no_mine))
+  stopifnot(grid[i] %in% c(covered_no_mine, covered_mine, flag_on_mine, flag_on_no_mine, unknown_box))
+  if (grid[i] == covered_mine) {
+    grid[i] <- flag_on_mine
+    return(grid)
+  }
+  if (grid[i] == covered_no_mine) {
+    grid[i] <- flag_on_no_mine
+    return(grid)
+  }
+  if (grid[i] == unknown_box) {
+    grid[i] <- hypothetical_mine
+    return(grid)
+  }
   
-  # TODO améliorer et accélérer probablement
-  grid[i] <- ifelse(
-    grid[i] == covered_mine,
-    flag_on_mine,
-    ifelse(
-      grid[i] == covered_no_mine,
-      flag_on_no_mine, 
-      ifelse(
-        grid[i] == flag_on_mine,
-        covered_mine,
-        covered_no_mine
-      )
-    )
-  )
-  grid
+  # retirer drapeaux
+  if (grid[i] == flag_on_mine) {
+    grid[i] <- covered_mine
+    return(grid)
+  }
+  if (grid[i] == flag_on_no_mine) {
+    grid[i] <- covered_no_mine
+    return(grid)
+  }
 }
 
 clic <- function(grid, i) {
-  if (isFALSE(grid[i] %in% c(covered_no_mine, covered_mine))) browser()
+  if (isFALSE(grid[i] %in% c(covered_no_mine, covered_mine, unknown_box))) browser()
+  if (grid[i] == unknown_box) {
+    grid[i] <- hypothetical_no_mine
+    return(grid)
+  }
   grid[i] <- ifelse(grid[i] == covered_mine, uncovered_mine, uncovered_no_mine)
   grid
 }

@@ -17,7 +17,10 @@ is_game_over <- function(grid, mines = NA, verbose = FALSE) {
   }
   check_mines <- function(grid, mines) {
     if (is.na(mines)) return(TRUE)
-    if (sum(grid %in% c(covered_mine, uncovered_mine, flag_on_mine)) != mines) stop("il y a trop ou peu de mines")
+    nb_mines_so_far <- sum(grid %in% c(covered_mine, uncovered_mine, flag_on_mine, hypothetical_mine))
+    if (isFALSE(nb_mines_so_far <= mines && mines <= nb_mines_so_far + sum(grid %in% unknown_box))) {
+      stop("il y a trop ou peu de mines")
+    }
   }
   
   check_mines(grid, mines)
@@ -28,7 +31,7 @@ is_game_over <- function(grid, mines = NA, verbose = FALSE) {
   }
   
   # toutes les boîtes sans mines sont cliquées
-  if (sum(grid %in% c(covered_no_mine, uncovered_no_mine, uncovered_mine, flag_on_no_mine)) == 0) {
+  if (sum(grid %in% c(covered_no_mine, uncovered_no_mine, uncovered_mine, flag_on_no_mine, unknown_box)) == 0) {
     verbo(grid, verbose)
     return(1)
   }
