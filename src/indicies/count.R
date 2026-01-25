@@ -19,6 +19,6 @@ count_core <- function(grid, i) {
   pos <- i_to_position(i, dim(grid))
   positions <- square_pos(pos, grid)
   values <- get_around_square(pos, grid)
-  # values_pos <- square_pos(pos, grid)
-  list(values = values, positions = positions)
+  values_pos <- square_pos(pos, grid)
+  list(values = values, values_pos = values_pos, positions = positions)
 }

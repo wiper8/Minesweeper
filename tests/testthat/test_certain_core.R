@@ -65,3 +65,20 @@ test_that("certain_core appelle can_click_all_around", {
     list(c(3, 1), TRUE)
   )
 })
+
+test_that("certain_core appelle can_deduce_pattern", {
+  stub(certain_core, "can_deduce_pattern", list(c(1, 1), FALSE))
+  
+  grid <- matrix(
+    c(
+      -2, -1, -2, -1,
+      1, 2, 1, 1
+    ),
+    nrow = 2,
+    byrow = TRUE
+  )
+  expect_equal(
+    certain_core(grid, NA, matrix(0, nrow(grid), ncol(grid))),
+    list(c(1, 1), FALSE)
+  )
+})

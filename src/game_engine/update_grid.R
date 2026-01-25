@@ -36,7 +36,7 @@ update_grid <- function(grid, solved_around = matrix(0, nrow = nrow(grid), ncol 
     }
   }
   if (is_game_over(grid) == 1) {
-    grid[grid == covered_mine] <- flag_on_mine
+    grid[grid == covered_mine] <- flag_on_mine # flagger automatiquement toutes les mines quand la partie est terminée
   }
   list(grid, solved_around)
 }
