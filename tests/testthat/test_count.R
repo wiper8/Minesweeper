@@ -48,4 +48,8 @@ test_that("count_mines_left_around donne les bons résultats", {
     count_mines_left_around(grid, 25),
     1
   )
+  expect_equal(
+    count_mines_left_around(matrix(c(-8, 2, -10, 4, -5, 2), ncol = 2), 2),
+    1
+  )
 })

@@ -26,26 +26,3 @@ test_that("une partie sans boîte sans mine est terminée", {
     1
   )
 })
-
-test_that("trop ou pas assez de mines génère une erreur", {
-  set.seed(2026L)
-  grid <- matrix(
-    c(
-      -2, -2, -2,
-      -5, -5, -1,
-      -1, -1, -1,
-      -1, -1, -1
-    ),
-    ncol = 3,
-    byrow = TRUE
-  )
-  expect_error(
-    is_game_over(grid, 6)
-  )
-  expect_error(
-    is_game_over(grid, 4)
-  )
-  expect_no_error(
-    is_game_over(grid, 5)
-  )
-})

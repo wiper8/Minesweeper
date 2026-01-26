@@ -28,4 +28,18 @@ test_that("can_click_all_around clique sur les cases autour qui sont certaines",
     can_click_all_around(grid, matrix(0, nrow(grid), ncol(grid))),
     list(c(3, 1), TRUE)
   )
+  
+  grid <- matrix(
+    c(
+      -8, 4,
+      2, -5,
+      -10, 2
+    ),
+    nrow = 3,
+    byrow = TRUE
+  )
+  expect_equal(
+    can_click_all_around(grid, grid * 0),
+    NULL
+  )
 })
