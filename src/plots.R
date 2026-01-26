@@ -1,10 +1,10 @@
 library(ggplot2)
 
-show_first_click_probs <- function(mines, dims) {
+show_first_click_probs <- function(total_mines, dims) {
   # TODO
 }
 
-show_box_probs <- function(mines, grid) {
+show_box_probs <- function(total_mines, grid) {
   # montre la grille avec toutes les boites non flaguées leur prob d'avoir une mine'
   # TODO
 }
@@ -23,10 +23,10 @@ compare_clickers <- function(n, dims, ...) {
 
 show_mines_difficulty <- function(df) {
   ggplot(df) +
-    geom_line(aes(x = mines, y = probs, col = clicker)) +
-    geom_line(aes(x = mines, y = probs, col = clicker)) +
-    geom_line(aes(x = mines, y = pct_done, col = clicker), linetype = "dashed") +
-    geom_ribbon(aes(x = mines, ymin = probs_low, ymax = probs_high, fill = clicker), alpha = 0.2)
+    geom_line(aes(x = total_mines, y = probs, col = clicker)) +
+    geom_line(aes(x = total_mines, y = probs, col = clicker)) +
+    geom_line(aes(x = total_mines, y = pct_done, col = clicker), linetype = "dashed") +
+    geom_ribbon(aes(x = total_mines, ymin = probs_low, ymax = probs_high, fill = clicker), alpha = 0.2)
   # TODO ajouter des seuils visuels de facile, moyen, difficile, expert en me basant sur les probs de réussite des vraies applications
 }
 
@@ -62,12 +62,12 @@ compute_mines_probs_df <- function(n, dims, ...) {
     }
   }
   
-  data.frame(mines = mines, probs = probs, probs_low = probs_low, probs_high = probs_high, pct_done = pct_done)
+  data.frame(total_mines = mines, probs = probs, probs_low = probs_low, probs_high = probs_high, pct_done = pct_done)
 }
 
-hypothesis_test <- function(n, mines, dims = c(17, 9), clicker1, clicker2) {
-  x <- n * compute_probs_success(n, mines, dims, clicker1)[[1]]
-  y <- n * compute_probs_success(n, mines, dims, clicker2)[[1]]
+hypothesis_test <- function(n, total_mines, dims = c(17, 9), clicker1, clicker2) {
+  x <- n * compute_probs_success(n, total_mines, dims, clicker1)[[1]]
+  y <- n * compute_probs_success(n, total_mines, dims, clicker2)[[1]]
   prop.test(c(x, y), c(n, n), alternative = "less")
 }
 
