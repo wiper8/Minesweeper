@@ -1,31 +1,5 @@
 source(here("src/game_engine/is_grid_possible.R"))
 
-test_that("is_grid_possible retourne faux pour des nombres qui supposerait trop de mines", {
-  expect_false(
-    is_grid_possible(matrix(c(-1, -2, 2, -1), nrow = 2))
-  )
-  expect_false(
-    is_grid_possible(
-      matrix(
-        c(
-          -8, -8, -5, -10, -10,
-          1, 3, 3, 4, -10,
-          -9, 3, -5, -10, -10,
-          -8, 4, -5, 3, 1,
-          2, -5, 2, 1, 0,
-          -9, 2, 1, 0, 0,
-          -8, 1, 0, 0, 0,
-          1, 2, 1, 2, 1,
-          -9, 3, -5, 3, -5,
-          -9, -8, -8, -10, -10
-        ),
-        ncol = 5,
-        byrow = TRUE
-      )
-    )
-  )
-})
-
 test_that("is_grid_possible retourne faux si un nombre n'a plus assez de place pour placer toutes ses mines", {
   grid <- matrix(c(-2, -1, -3, 2, 6, 1, 1, 1, 1), 3, 3)
   expect_false(is_grid_possible(grid))

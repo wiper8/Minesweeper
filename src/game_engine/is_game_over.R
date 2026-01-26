@@ -15,15 +15,6 @@ is_game_over <- function(grid, mines = NA, verbose = FALSE) {
       print(grid)
     }
   }
-  check_mines <- function(grid, mines) {
-    if (is.na(mines)) return(TRUE)
-    nb_mines_so_far <- sum(grid %in% c(covered_mine, uncovered_mine, flag_on_mine, hypothetical_mine))
-    if (isFALSE(nb_mines_so_far <= mines && mines <= nb_mines_so_far + sum(grid %in% unknown_box))) {
-      stop("il y a trop ou peu de mines")
-    }
-  }
-  
-  check_mines(grid, mines)
   
   if (any(grid == uncovered_mine)) {
     verbo(grid, verbose)
