@@ -43,6 +43,27 @@ test_that("is_mine_propagation_possible fonctionne pour un pattern possible de m
             # situation complexe où il faut connaître le nombre de mines pour pouvoir avancer
             grid <- matrix(
               c(
+                -8, -8, -5, -10, -10,
+                1, 3, 3, 4, -10,
+                -9, 3, -5, -10, -10,
+                -10, 4, -5, 3, 1,
+                2, -5, 2, 1, 0,
+                -10, 2, 1, 0, 0,
+                -10, 1, 0, 0, 0,
+                1, 2, 1, 2, 1,
+                -10, 3, -5, 3, -5,
+                -10, -10, -10, -10, -10
+              ),
+              nrow = 10,
+              byrow = TRUE
+            )
+            expect_true(
+              is_mine_propagation_possible(grid, total_mines = NA, grid * 0)
+            )
+            
+            
+            grid <- matrix(
+              c(
                 -1, -1, -5, -2, -1,
                 1, 3, 3, 4, -1,
                 -2, 3, -5, -1, -2,
@@ -151,7 +172,7 @@ test_that("exemples supplémentaires de cas pour is_mine_propagation_possible", 
   )
 })
 
-test_that("is_mine_propagation_possible avec des boîtes inconnuces", {
+test_that("is_mine_propagation_possible avec des boîtes inconnues", {
   grid <- matrix(
     c(
       -10, -10, -5, -10, -10,
@@ -170,6 +191,26 @@ test_that("is_mine_propagation_possible avec des boîtes inconnuces", {
   )
   expect_true(
     is_mine_propagation_possible(grid, total_mines = NA, grid * 0)
+  )
+  
+  grid <- matrix(
+    c(
+      -10, -10, -5, -10, -10,
+      1, 3, 3, 4, -10,
+      -10, 3, -5, -10, -10,
+      -10, 4, -5, 3, 1,
+      2, -5, 2, 1, 0,
+      -10, 2, 1, 0, 0,
+      -10, 1, 0, 0, 0,
+      1, 2, 1, 2, 1,
+      -9, 3, -5, 3, -5,
+      -9, -8, -8, -10, -10
+    ),
+    ncol = 5,
+    byrow = TRUE
+  )
+  expect_false(
+    is_mine_propagation_possible(grid, total_mines = 12, grid * 0)
   )
 })
 

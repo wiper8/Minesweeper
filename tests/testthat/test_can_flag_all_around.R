@@ -11,7 +11,7 @@ test_that("can_flag_all_around ajoute les flags qui sont certains autour des cas
     byrow = TRUE
   )
   expect_equal(
-    can_flag_all_around(grid, matrix(0, nrow(grid), ncol(grid))),
+    can_flag_all_around(grid, grid * 0),
     list(c(1, 1), FALSE)
   )
   
@@ -25,7 +25,21 @@ test_that("can_flag_all_around ajoute les flags qui sont certains autour des cas
     byrow = TRUE
   )
   expect_equal(
-    can_flag_all_around(grid, matrix(0, nrow(grid), ncol(grid))),
+    can_flag_all_around(grid, grid * 0),
     list(c(1, 5), FALSE)
+  )
+  
+  grid <- matrix(
+    c(
+      -8, 4,
+      2, -5,
+      -10, 2
+    ),
+    nrow = 3,
+    byrow = TRUE
+  )
+  expect_equal(
+    can_flag_all_around(grid, grid * 0),
+    list(c(3, 1), FALSE)
   )
 })

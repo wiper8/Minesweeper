@@ -27,7 +27,6 @@ apply_action <- function(grid, pos, action, solved_around = matrix(0, nrow = nro
   if (!action) {
     grid <- flagguer(grid, i)
     solved_around <- update_solved_around(grid, solved_around, i)
-    if (is_game_over(grid) != 0) browser()
   }
   
   # clic
