@@ -5,7 +5,7 @@ source("src/plots.R")
 source("src/clicker/random_clicker.R")
 source("src/clicker/certain_else_random_clicker.R")
 
-set.seed(2024L)
+set.seed(2026L)
 simulate_game(40, c(17, 9), random_clicker)
 simulate_game(40, c(17, 9), certain_else_random_clicker)
 
