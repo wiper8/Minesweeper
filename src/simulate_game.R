@@ -40,17 +40,19 @@ init_grid_after_first_click <- function(grid, pos, total_mines) {
   update_grid(grid, total_mines)
 }
 
-main_game_loop <- function(grid, mines_left, clicker, solved_around, ...) {
+main_game_loop <- function(grid, mines_left, clicker, solved_around, hypothesis = FALSE, ...) {
   repeat {
-    # clicker
+    # choisir la prochaine action
     tmp <- clicker(grid, mines_left = mines_left, solved_around = solved_around, ...)
-    if (isTRUE(all.equal(tmp, "impossible"))) return(list(grid, "partie impossible", solved_around))
-    if (is.null(tmp)) return(list(grid, "le clicker ne sait pu quoi faire", solved_around))
-    
+    if (hypothesis && isTRUE(all.equal(tmp, "impossible"))) return(list(grid, "partie impossible", solved_around))
+    if (isTRUE(all.equal(tmp, "impossible"))) browser()
+    if (hypothesis && is.null(tmp)) return(list(grid, "le clicker ne sait pu quoi faire", solved_around))
+    if (is.null(tmp)) browser()
     
     tmp2 <- apply_action(grid, tmp[[1]], tmp[[2]], mines_left, solved_around = solved_around, ...)
     grid <- tmp2[[1]]
-    solved_around <- tmp2[[3]]
+    mines_left <- tmp2[[3]]
+    solved_around <- tmp2[[4]]
     if (tmp2[[2]] == 1) return(list(grid, "win", solved_around))
     if (tmp2[[2]] == -1) return(list(grid, "lost", solved_around))
   }

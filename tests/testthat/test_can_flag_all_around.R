@@ -11,7 +11,7 @@ test_that("can_flag_all_around ajoute les flags qui sont certains autour des cas
     byrow = TRUE
   )
   expect_equal(
-    can_flag_all_around(grid, grid * 0),
+    can_flag_all_around(grid, 1, grid * 0),
     list(c(1, 1), FALSE)
   )
   
@@ -25,7 +25,7 @@ test_that("can_flag_all_around ajoute les flags qui sont certains autour des cas
     byrow = TRUE
   )
   expect_equal(
-    can_flag_all_around(grid, grid * 0),
+    can_flag_all_around(grid, 3, grid * 0),
     list(c(1, 5), FALSE)
   )
   
@@ -39,7 +39,37 @@ test_that("can_flag_all_around ajoute les flags qui sont certains autour des cas
     byrow = TRUE
   )
   expect_equal(
-    can_flag_all_around(grid, grid * 0),
+    can_flag_all_around(grid, 1, grid * 0),
     list(c(3, 1), FALSE)
+  )
+})
+
+test_that("can_flag_all_around ne peut ajouter de drapeau s'il ne reste pas de mines disponible", {
+  grid <- matrix(
+    c(
+      -2, 1, -1,
+      1, 1, -1,
+      0, 0, -1
+    ),
+    nrow = 3,
+    byrow = TRUE
+  )
+  expect_equal(
+    can_flag_all_around(grid, 1, grid * 0),
+    list(c(1, 1), FALSE)
+  )
+  
+  grid <- matrix(
+    c(
+      -5, 1, 0, 2, -5,
+      1, 2, 1, 4, -2,
+      -1, -1, -5, 3, -5
+    ),
+    nrow = 3,
+    byrow = TRUE
+  )
+  expect_equal(
+    can_flag_all_around(grid, 0, grid * 0),
+    "impossible"
   )
 })

@@ -1,11 +1,11 @@
 source("src/clicker/certain_core.R")
 source("src/clicker/random_clicker.R")
 
-certain_else_random_clicker <- function(grid, total_mines, ...) {
-  tmp <- certain_core(grid, total_mines, ...)
+certain_else_random_clicker <- function(grid, mines_left, ...) {
+  tmp <- certain_core(grid, mines_left, ...)
   if (!is.null(tmp)) {
     return(tmp)
   }
   # si aucune stratégie
-  random_clicker(grid, total_mines, ...)
+  random_clicker(grid, ...)
 }
