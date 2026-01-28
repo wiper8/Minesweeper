@@ -39,7 +39,7 @@ update_grid <- function(grid, mines_left, solved_around = matrix(0, nrow = nrow(
       mines_left <- tmp[[3]]
     }
   }
-  if (is_game_over(grid) == 1) {
+  if (is_game_over(grid, NA) == 1) { # ici on ne vérifie pas le nombre de mines, ca sera vérifié plus tard
     place_flag <- grid == covered_mine
     mines_left <- mines_left - sum(place_flag)
     grid[place_flag] <- flag_on_mine # flagger automatiquement toutes les mines quand la partie est terminée

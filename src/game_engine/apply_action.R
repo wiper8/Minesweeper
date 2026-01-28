@@ -22,11 +22,11 @@ apply_action <- function(grid, pos, action, mines_left, solved_around = matrix(0
   i <- position_to_i(pos, dim(grid))
   
   # actions sur des cases déjà révélées, ignorer
-  if (grid[i] >= 0) return(list(grid, is_game_over(grid), mines_left, solved_around))
+  if (grid[i] >= 0) return(list(grid, is_game_over(grid, mines_left), mines_left, solved_around))
   
   # flag
   if (!action) {
-    if (mines_left <= 0) stop("aucun drapeau disponible")
+    if (isTRUE(mines_left <= 0)) stop("aucun drapeau disponible")
     tmp <- flagguer(grid, i, mines_left)
     grid <- tmp[[1]]
     mines_left <- tmp[[2]]
@@ -41,7 +41,7 @@ apply_action <- function(grid, pos, action, mines_left, solved_around = matrix(0
     solved_around <- tmp[[2]]
     mines_left <- tmp[[3]]
   }
-  list(grid, is_game_over(grid), mines_left, solved_around)
+  list(grid, is_game_over(grid, mines_left), mines_left, solved_around)
 }
 
 #' @param grid matrice de Minesweeper

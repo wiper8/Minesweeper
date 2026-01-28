@@ -24,10 +24,13 @@ simulate_game <- function(total_mines, dims = c(17, 9), clicker) {
   tmp <- init_grid_after_first_click(grid, first_click, total_mines)
   grid <- tmp[[1]]
   mines_left <- tmp[[3]]
-  if (is_game_over(grid) == 1) return(list(grid, "win"))
+  if (is_game_over(grid, mines_left) == 1) return(list(grid, "win"))
   
   solved_around <- matrix(-1, nrow = nrow(grid), ncol = ncol(grid))
-  solved_around <- update_solved_around(grid, solved_around, position_to_i(first_click, dim(grid)))
+  tmp2 <- apply_action(grid, first_click, TRUE, mines_left, solved_around = solved_around)
+  grid <- tmp2[[1]]
+  mines_left <- tmp2[[3]]
+  solved_around <- tmp2[[4]]
   main_game_loop(grid, total_mines, clicker, solved_around = solved_around)
 }
 
@@ -43,7 +46,7 @@ init_grid_after_first_click <- function(grid, pos, total_mines) {
 main_game_loop <- function(grid, mines_left, clicker, solved_around, hypothesis = FALSE, ...) {
   repeat {
     # choisir la prochaine action
-    tmp <- clicker(grid, mines_left = mines_left, solved_around = solved_around, ...)
+    tmp <- clicker(grid, mines_left = mines_left, solved_around = solved_around, hypothesis = hypothesis, ...)
     if (hypothesis && isTRUE(all.equal(tmp, "impossible"))) return(list(grid, "partie impossible", solved_around))
     if (isTRUE(all.equal(tmp, "impossible"))) browser()
     if (hypothesis && is.null(tmp)) return(list(grid, "le clicker ne sait pu quoi faire", solved_around))
