@@ -12,7 +12,7 @@ base_grid <- matrix(
 
 test_that("la partie est perdue si on clique sur une mine", {
   expect_equal(
-    apply_action(base_grid, c(2, 3), TRUE)[[2]],
+    apply_action(base_grid, c(2, 3), TRUE, NA)[[2]],
     -1
   )
 })
@@ -21,13 +21,13 @@ test_that("la partie est gagnée lorsque je clique sur la dernière boîte resta
   grid <- base_grid
   grid[2, 4] <- -1
   expect_equal(
-    apply_action(grid, c(2, 4), TRUE)[[2]],
+    apply_action(grid, c(2, 4), TRUE, 1)[[2]],
     1
   )
 })
 
 test_that("Ajouter un drapeau fonctionne", {
-  tmp <- apply_action(base_grid, c(2, 3), FALSE)
+  tmp <- apply_action(base_grid, c(2, 3), FALSE, 1)
   
   expect_equal(
     tmp[[1]][2, 3],
@@ -41,10 +41,17 @@ test_that("Ajouter un drapeau fonctionne", {
 
 test_that("Retirer un drapeau fonctionne", {
   grid <- base_grid
-  tmp <- apply_action(grid, c(2, 2), FALSE)
+  mines_left <- 10
+  tmp <- apply_action(grid, c(2, 2), FALSE, mines_left)
   grid <- tmp[[1]]
-  tmp <- apply_action(grid, c(2, 4), FALSE)
+  mines_left <- tmp[[3]]
+  tmp <- apply_action(grid, c(2, 4), FALSE, mines_left)
+  mines_left <- tmp[[3]]
   
+  expect_equal(
+    mines_left,
+    12
+  )
   expect_equal(
     tmp[[1]][2, 2],
     -2
@@ -58,3 +65,11 @@ test_that("Retirer un drapeau fonctionne", {
     0
   )
 })
+
+test_that("Erreur dans apply_action si aucun drapeau n'est disponible et qu'on tente d'en ajouter un", {
+  grid <- base_grid
+  expect_error(
+    apply_action(grid, c(2, 3), FALSE, 0)
+  )
+})
+

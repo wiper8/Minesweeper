@@ -3,13 +3,12 @@ source("hp.R")
 #' Est-ce que la partie est perdue?
 #'
 #' @param grid matrice de minesweeper
-#' @param mines entier : nombre de mines au total dans la grille
 #'
 #' @returns nombre entier : -1 si la partie est perdue, 1 si la partie est gagnée, 0 si la partie est en cours
 #' @export
 #'
 #' @examples
-is_game_over <- function(grid, mines = NA, verbose = FALSE) {
+is_game_over <- function(grid, verbose = FALSE) {
   verbo <- function(grid, verbose) {
     if (verbose) {
       print(grid)
