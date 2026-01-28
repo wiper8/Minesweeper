@@ -9,6 +9,7 @@ source("src/game_engine/update_grid.R")
 #' @param grid matrice de minesweeper
 #' @param pos vecteur numérique de longueur 2 pour les 2 dimensions (x, y)
 #' @param action booléen : TRUE signifie de cliquer, FALSE de flaguer
+#' @param mines_left entiern : nombre de mines restantes à placer
 #' @param solved_around matrice de même dimensions que grid remplie de 0 ou 1 signifiant quelles cellules sont
 #' pleinement résolues, qu'on peut désormais ignorer
 #'
@@ -16,27 +17,31 @@ source("src/game_engine/update_grid.R")
 #' @export
 #'
 #' @examples
-#' apply_action(matrix(-1, 3, 3), c(1, 2), FALSE)
-apply_action <- function(grid, pos, action, solved_around = matrix(0, nrow = nrow(grid), ncol = ncol(grid)), ...) {
+#' apply_action(matrix(-1, 3, 3), c(1, 2), FALSE, 2)
+apply_action <- function(grid, pos, action, mines_left, solved_around = matrix(0, nrow = nrow(grid), ncol = ncol(grid)), ...) {
   i <- position_to_i(pos, dim(grid))
   
   # actions sur des cases déjà révélées, ignorer
-  if (grid[i] >= 0) return(list(grid, is_game_over(grid), solved_around))
+  if (grid[i] >= 0) return(list(grid, is_game_over(grid), mines_left, solved_around))
   
   # flag
   if (!action) {
-    grid <- flagguer(grid, i)
+    if (mines_left <= 0) stop("aucun drapeau disponible")
+    tmp <- flagguer(grid, i, mines_left)
+    grid <- tmp[[1]]
+    mines_left <- tmp[[2]]
     solved_around <- update_solved_around(grid, solved_around, i)
   }
   
   # clic
   if (action) {
     grid <- clic(grid, i)
-    tmp <- update_grid(grid, solved_around, ...)
+    tmp <- update_grid(grid, mines_left, solved_around, ...)
     grid <- tmp[[1]]
     solved_around <- tmp[[2]]
+    mines_left <- tmp[[3]]
   }
-  list(grid, is_game_over(grid), solved_around)
+  list(grid, is_game_over(grid), mines_left, solved_around)
 }
 
 #' @param grid matrice de Minesweeper
@@ -66,29 +71,34 @@ update_solved_around <- function(grid, solved_around, i) {
   solved_around
 }
 
-flagguer <- function(grid, i) {
+flagguer <- function(grid, i, mines_left) {
   stopifnot(grid[i] %in% c(covered_no_mine, covered_mine, flag_on_mine, flag_on_no_mine, unknown_box))
   if (grid[i] == covered_mine) {
     grid[i] <- flag_on_mine
-    return(grid)
+    mines_left <- mines_left - 1
+    return(list(grid, mines_left))
   }
   if (grid[i] == covered_no_mine) {
     grid[i] <- flag_on_no_mine
-    return(grid)
+    mines_left <- mines_left - 1
+    return(list(grid, mines_left))
   }
   if (grid[i] == unknown_box) {
     grid[i] <- hypothetical_mine
-    return(grid)
+    mines_left <- mines_left - 1
+    return(list(grid, mines_left))
   }
   
   # retirer drapeaux
   if (grid[i] == flag_on_mine) {
     grid[i] <- covered_mine
-    return(grid)
+    mines_left <- mines_left + 1
+    return(list(grid, mines_left))
   }
   if (grid[i] == flag_on_no_mine) {
     grid[i] <- covered_no_mine
-    return(grid)
+    mines_left <- mines_left + 1
+    return(list(grid, mines_left))
   }
 }
 

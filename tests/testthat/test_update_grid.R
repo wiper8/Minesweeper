@@ -12,7 +12,7 @@ test_that("update_grid révelle bien les case autour de celle cliquée", {
     byrow = TRUE
   )
   expect_equal(
-    update_grid(grid)[[1]],
+    update_grid(grid, NA)[[1]],
     matrix(
       c(
         -2, -1, -1,
@@ -39,7 +39,7 @@ test_that("update_grid continue de réveller les cases vides", {
     byrow = TRUE
   )
   expect_equal(
-    update_grid(grid)[[1]],
+    update_grid(grid, NA)[[1]],
     matrix(
       c(
         0, 0, 0,
@@ -69,7 +69,7 @@ test_that("update_grid flag toutes les cases mines si la partie est terminée", 
     byrow = TRUE
   )
   expect_equal(
-    update_grid(grid)[[1]],
+    update_grid(grid, 3)[[1]],
     matrix(
       c(
         0, 0, 0,
@@ -82,5 +82,9 @@ test_that("update_grid flag toutes les cases mines si la partie est terminée", 
       nrow = 6, ncol = 3,
       byrow = TRUE
     )
+  )
+  expect_equal(
+    update_grid(grid, 3)[[3]],
+    0
   )
 })

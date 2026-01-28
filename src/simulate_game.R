@@ -23,6 +23,7 @@ simulate_game <- function(total_mines, dims = c(17, 9), clicker) {
   first_click <- random_first_click(dims)
   tmp <- init_grid_after_first_click(grid, first_click, total_mines)
   grid <- tmp[[1]]
+  mines_left <- tmp[[3]]
   if (is_game_over(grid) == 1) return(list(grid, "win"))
   
   solved_around <- matrix(-1, nrow = nrow(grid), ncol = ncol(grid))
@@ -36,27 +37,19 @@ init_grid_after_first_click <- function(grid, pos, total_mines) {
   # put mines in the game
   grid[sample(setdiff(seq_len(prod(dims)), position_to_i(pos, dims)), total_mines)] <- covered_mine
   grid[is.na(grid)] <- covered_no_mine
-  update_grid(grid)
+  update_grid(grid, total_mines)
 }
 
-main_game_loop <- function(grid, total_mines, clicker, solved_around, ...) {
+main_game_loop <- function(grid, mines_left, clicker, solved_around, ...) {
   repeat {
-    # TODO ajout temporaire pour débogage
-    if (tryCatch(is_game_over(grid, total_mines = total_mines), error = function(e) "erreur") == "erreur") browser()
-    ##
-    
     # clicker
-    tmp <- clicker(grid, total_mines = total_mines, solved_around = solved_around, ...)
+    tmp <- clicker(grid, mines_left = mines_left, solved_around = solved_around, ...)
     if (isTRUE(all.equal(tmp, "impossible"))) return(list(grid, "partie impossible", solved_around))
     if (is.null(tmp)) return(list(grid, "le clicker ne sait pu quoi faire", solved_around))
     
     
-    tmp2 <- apply_action(grid, tmp[[1]], tmp[[2]], solved_around = solved_around, ...)
-    grid2 <- tmp2[[1]]
-    # TODO ajout temporaire pour débogage
-    if (tryCatch(is_game_over(grid2, total_mines = total_mines), error = function(e) "erreur") == "erreur") browser()
-    grid <- grid2
-    ##
+    tmp2 <- apply_action(grid, tmp[[1]], tmp[[2]], mines_left, solved_around = solved_around, ...)
+    grid <- tmp2[[1]]
     solved_around <- tmp2[[3]]
     if (tmp2[[2]] == 1) return(list(grid, "win", solved_around))
     if (tmp2[[2]] == -1) return(list(grid, "lost", solved_around))
