@@ -124,7 +124,7 @@ test_that("can_deduce_pattern peut déduire un pattern simple", {
     byrow = TRUE
   )
   expect_equal(
-    can_deduce_pattern(grid, NA, matrix(0, nrow(grid), ncol(grid)), FALSE),
+    can_deduce_pattern(grid, NA, grid * 0, FALSE),
     list(c(1, 1), TRUE)
   )
 })
@@ -140,7 +140,7 @@ test_that("can_deduce_pattern ne donne pas d'action s'il ne sait pas quoi faire"
     byrow = TRUE
   )
   expect_equal(
-    can_deduce_pattern(grid, NA, matrix(0, nrow(grid), ncol(grid)), FALSE),
+    can_deduce_pattern(grid, NA, grid * 0, FALSE),
     NULL
   )
 })

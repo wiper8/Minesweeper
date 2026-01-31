@@ -17,28 +17,29 @@ source("src/game_engine/compute_box_number.R")
 #'
 #' @examples
 #' update_grid(matrix(c(-1, -1, -1, -2, -1, -1, -1, -1, -3), nrow = 3, ncol = 3), NA, FALSE)
-update_grid <- function(grid, mines_left, solved_around = matrix(0, nrow = nrow(grid), ncol = ncol(grid)),
-                        hypothesis = FALSE, once = FALSE, ...) {
+update_grid <- function(grid, mines_left, solved_around = grid * 0 - 1, hypothesis = FALSE, ...) {
   for (i in which(grid == uncovered_no_mine)) {
     if (hypothesis && grid[i] == uncovered_no_mine) grid[i] <- hypothetical_no_mine
     pos <- i_to_position(i, dim(grid))
     square <- get_around_square(pos, grid)
     if (!hypothesis) grid[i] <- compute_box_number(square, ...) # calculer le chiffre à mettre
-    solved_around <- update_solved_around(grid, solved_around, i, once)
     
     if (grid[i] == 0) {
-      # cliquer à nouveau automatiquement tout autour
+      solved_around <- update_solved_around(grid, solved_around, i, once = FALSE)
       
+      # cliquer à nouveau automatiquement tout autour
       positions <- square_pos(pos, grid)
       reveal <- unlist(square) == covered_no_mine
       positions <- positions[reveal, , drop = FALSE]
       for (j in seq_len(nrow(positions))) {
         grid[positions[j, 1], positions[j, 2]] <- uncovered_no_mine
       }
-      tmp <- update_grid(grid, mines_left, solved_around, once = FALSE)
+      tmp <- update_grid(grid, mines_left, solved_around)
       grid <- tmp[[1]]
       solved_around <- tmp[[2]]
       mines_left <- tmp[[3]]
+    } else {
+      solved_around <- update_solved_around(grid, solved_around, i, once = TRUE)
     }
   }
   if (is_game_over(grid, NA) == 1) { # ici on ne vérifie pas le nombre de mines, ca sera vérifié plus tard

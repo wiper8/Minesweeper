@@ -65,7 +65,8 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis) {
     if (mines_left_around < 0 || n_unknown < mines_left_around || isTRUE(mines_left < mines_left_around)) return("impossible")
     
     combins <- combn(n_unknown, mines_left_around)
-    
+    cache <- rep(NA, ncol(combins))
+
     for (mine_i in seq_len(n_unknown)) {
       mines_has_mine_i <- fast_apply(combins, 2, function(comb) mine_i %in% comb)
       
@@ -77,8 +78,11 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis) {
         combins[, !mines_has_mine_i, drop = FALSE],
         pos_unknown,
         solved_around = solved_around,
-        mines_left = mines_left
+        mines_left = mines_left,
+        cache = cache[!mines_has_mine_i]
       )
+      possible <- possible[!is.na(possible)]
+      cache[which(!mines_has_mine_i)[seq_along(possible)]] <- possible
       if (!hypothesis && all(!possible)) return(list(pos_unknown[mine_i, ], FALSE))
       if (any(possible)) {
         impossible <- FALSE
@@ -99,8 +103,11 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis) {
         combins[, mines_has_mine_i, drop = FALSE],
         pos_unknown,
         solved_around = solved_around,
-        mines_left = mines_left
+        mines_left = mines_left,
+        cache = cache[mines_has_mine_i]
       )
+      possible <- possible[!is.na(possible)]
+      cache[which(mines_has_mine_i)[seq_along(possible)]] <- possible
       if (!hypothesis && all(!possible)) return(list(pos_unknown[mine_i, ], TRUE))
       if (any(possible)) {
         impossible <- FALSE
@@ -127,10 +134,14 @@ deduce_unknown_boxes <- function(grid, mines_left) {
 }
 
 #' Retourne si une proposition de mines est possible (génère une partie sans problèmes)
-which_combins_possible <- function(grid, combins, pos_unknown, mines_left, ...) {
+which_combins_possible <- function(grid, combins, pos_unknown, mines_left, cache = rep(NA, ncol(combins)), ...) {
   mines_left_init <- mines_left
   possible <- rep(NA, ncol(combins))
   for (i in seq_len(ncol(combins))) {
+    if (!is.na(cache[i])) {
+      possible[i] <- cache[i]
+      next
+    }
     combin <- combins[, i]
     # supposer des mines
     # puis propager avec certitude, et voir si c'est possible
