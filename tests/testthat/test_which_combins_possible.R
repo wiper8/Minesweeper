@@ -77,7 +77,7 @@ test_that("which_combins_possible peut retourner TRUE sur un cas incertain", {
   expect_true(
     which_combins_possible(
       grid,
-      matrix(2),
+      matrix(1),
       matrix(c(1, 1, 1, 2), nrow = 2),
       solved_around = matrix(0, nrow = 2, ncol = 4),
       mines_left = NA
@@ -123,12 +123,15 @@ test_that("which_combins_possible pour des cas complexes", {
     nrow = 10,
     byrow = TRUE
   )
+  solved_around <- grid * 0
+  solved_around[c(25:28, 35:38, 45:48)] <- 1
+  
   expect_true(
     which_combins_possible(
       grid,
       matrix(2:3, nrow = 1),
       matrix(c(10, 10, 10, 3:5), ncol = 2),
-      solved_around = grid * 0,
+      solved_around = solved_around,
       mines_left = NA
     )[1]
   )
@@ -138,7 +141,7 @@ test_that("which_combins_possible pour des cas complexes", {
       grid,
       combins = matrix(c(1, 2, 2, 3, 2, 4), nrow = 2),
       pos_unknown = matrix(c(9, 10, 10, 10, 1, 1, 2, 3), ncol = 2),
-      solved_around = grid * 0,
+      solved_around = solved_around,
       mines_left = 12
     ),
     c(FALSE, FALSE, FALSE)

@@ -43,7 +43,7 @@ can_click_all_around <- function(grid, solved_around) {
 }
 
 can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis) {
-  impossible <- TRUE # pour hypothesis = FALSE
+  impossible <- TRUE # pour hypothesis = TRUE
   
   # je prend une cellule avec un chiffre qui a >= 1 inconnu autour
   for (i in which(grid > 0 & solved_around == 0)) {
@@ -110,9 +110,20 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis) {
       }
     }
   }
+  tmp <- deduce_unknown_boxes(grid, mines_left)
+  if (!is.null(tmp)) return(tmp)
   if (!hypothesis && impossible) browser() # pas sensé etre impossible si on n'est pas en exploration
   if (hypothesis && impossible) return("impossible")
   NULL # ne sait pas quoi faire
+}
+
+deduce_unknown_boxes <- function(grid, mines_left) {
+  if (is.na(mines_left)) return(NULL)
+  known_boxes <- grid %in% known
+  if (mines_left == 0) return(list(i_to_position(which(!known_boxes)[1], dim(grid)), TRUE))
+  no_info_boxes <- sum(!known_boxes)
+  if (no_info_boxes == mines_left) return(list(i_to_position(which(!known_boxes)[1], dim(grid)), FALSE))
+  NULL
 }
 
 #' Retourne si une proposition de mines est possible (génère une partie sans problèmes)
@@ -126,7 +137,7 @@ which_combins_possible <- function(grid, combins, pos_unknown, mines_left, ...) 
     grid_tmp_propagate <- convert_grid_solution_to_human_grid(grid, ...)
     i_to_flag <- position_to_i_mat(pos_unknown[combin, , drop = FALSE], dim(grid))
     i_to_click <- position_to_i_mat(pos_unknown[-combin, , drop = FALSE], dim(grid))
-    i_to_click <- i_to_click[grid[i_to_click] %in% c(covered_mine, covered_no_mine, uncovered_mine, uncovered_no_mine)]
+    i_to_click <- i_to_click[grid[i_to_click] %in% hp_to_hypo_no_mine]
     mines_left <- mines_left_init - length(i_to_flag)
     grid_tmp_propagate[i_to_flag] <- hypothetical_mine
     grid_tmp_propagate[i_to_click] <- hypothetical_no_mine
@@ -139,6 +150,6 @@ which_combins_possible <- function(grid, combins, pos_unknown, mines_left, ...) 
 convert_grid_solution_to_human_grid <- function(grid, solved_around, ...) {
   human_grid <- grid
   human_grid[solved_around == -1] <- unknown_box
-  human_grid[human_grid %in% c(covered_mine, covered_no_mine, uncovered_mine, uncovered_no_mine)] <- unknown_box
+  human_grid[human_grid %in% hp_to_hypo_no_mine] <- unknown_box
   human_grid
 }

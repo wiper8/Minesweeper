@@ -212,9 +212,10 @@ test_that("can_deduce_pattern peut déduire un pattern si le nombre total de min
     byrow = TRUE
   )
   solved_around <- grid * 0
-  solved_around[c(26:28, 35:37, 45:47)] <- 1
+  solved_around[c(26:28, 35:38, 45:48)] <- 1
   
   tmp <- can_deduce_pattern(grid, mines_left = 6, solved_around, FALSE)
+  
   expect_true(
     grid[tmp[[1]][1], tmp[[1]][2]] == ifelse(tmp[[2]], -1, -2)
   )
@@ -230,11 +231,11 @@ test_that("can_deduce_pattern peut déduire un pattern si le nombre total de min
   grid <- matrix(
     c(
       -5, 4, -5, 3, -2, 1,
-      -5, -1, -2, -2, -1, 2,
-      -5, -1, -1, 2, 2, -5,
+      -5, -1, -2, -1, -1, 2,
+      -5, -1, -2, 2, 2, -5,
       -5, 3, 2, -1, 2, 1,
-      2, -2, -1, -2, 3, 1,
-      1, -1, 3, -5, -5, 1
+      2, -1, -1, -2, 3, 1,
+      1, -2, 3, -5, -5, 1
     ),
     nrow = 6,
     byrow = TRUE

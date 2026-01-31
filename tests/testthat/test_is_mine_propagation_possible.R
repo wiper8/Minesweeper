@@ -122,10 +122,10 @@ test_that("is_mine_propagation_possible fonctionne pour un pattern possible de m
               is_mine_propagation_possible(grid, mines_left = NA, matrix(0, nrow(grid), ncol(grid)))
             )
             expect_true(
-              is_mine_propagation_possible(grid, mines_left = 5, matrix(0, nrow(grid), ncol(grid)))
+              is_mine_propagation_possible(grid, mines_left = 4, matrix(0, nrow(grid), ncol(grid)))
             )
             expect_false(
-              is_mine_propagation_possible(grid, mines_left = 6, matrix(0, nrow(grid), ncol(grid)))
+              is_mine_propagation_possible(grid, mines_left = 5, matrix(0, nrow(grid), ncol(grid)))
             )
           }
 )
@@ -167,8 +167,15 @@ test_that("is_mine_propagation_possible avec des boîtes inconnues", {
     ncol = 5,
     byrow = TRUE
   )
+  expect_true(
+    is_mine_propagation_possible(grid, mines_left = 5, grid * 0)
+  )
+  solved <- grid * 0
+  for (i in seq_len(length(solved))) {
+    solved <- update_solved_around(grid, solved, i)
+  }
   expect_false(
-    is_mine_propagation_possible(grid, mines_left = 6, grid * 0)
+    is_mine_propagation_possible(grid, mines_left = 6, solved)
   )
 })
 
