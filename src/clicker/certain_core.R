@@ -44,7 +44,7 @@ can_click_all_around <- function(grid, solved_around) {
 
 can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis) {
   impossible <- TRUE # pour hypothesis = TRUE
-  
+  reached_prop <- FALSE
   # je prend une cellule avec un chiffre qui a >= 1 inconnu autour
   for (i in which(grid > 0 & solved_around == 0)) {
     tmp <- count_core(grid, i)
@@ -55,6 +55,7 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis) {
     
     # car quand on essaie un drapeau et de le propager, ça peut arriver qu'il n'y a plus de combinaisons
     if (n_unknown == 0) next
+    reached_prop <- TRUE
     
     mines_left_around <- count_mines_left_around(grid, i, values)
     # appliquer toutes les combins de mines autour, et vérifier s'il y a une certitude
@@ -118,16 +119,19 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis) {
   }
   tmp <- deduce_unknown_boxes(grid, mines_left)
   if (!is.null(tmp)) return(tmp)
+  if (isTRUE(all.equal(tmp, "impossible"))) return("impossible")
   if (!hypothesis && impossible) browser() # pas sensé etre impossible si on n'est pas en exploration
-  if (hypothesis && impossible) return("impossible")
+  if (hypothesis && reached_prop) return("impossible")
   NULL # ne sait pas quoi faire
 }
 
 deduce_unknown_boxes <- function(grid, mines_left) {
   if (is.na(mines_left)) return(NULL)
   known_boxes <- grid %in% known
+  if (mines_left < 0) return("impossible")
   if (mines_left == 0) return(list(i_to_position(which(!known_boxes)[1], dim(grid)), TRUE))
   no_info_boxes <- sum(!known_boxes)
+  if (no_info_boxes < mines_left) return("impossible")
   if (no_info_boxes == mines_left) return(list(i_to_position(which(!known_boxes)[1], dim(grid)), FALSE))
   NULL
 }
