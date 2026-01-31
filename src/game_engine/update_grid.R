@@ -16,30 +16,32 @@ source("src/game_engine/compute_box_number.R")
 #' @export
 #'
 #' @examples
-#' update_grid(matrix(c(-1, -1, -1, -2, -1, -1, -1, -1, -3), nrow = 3, ncol = 3), NA)
-update_grid <- function(grid, mines_left, solved_around = matrix(0, nrow = nrow(grid), ncol = ncol(grid)), ...) {
+#' update_grid(matrix(c(-1, -1, -1, -2, -1, -1, -1, -1, -3), nrow = 3, ncol = 3), NA, FALSE)
+update_grid <- function(grid, mines_left, solved_around = matrix(0, nrow = nrow(grid), ncol = ncol(grid)),
+                        hypothesis = FALSE, once = FALSE, ...) {
   for (i in which(grid == uncovered_no_mine)) {
+    if (hypothesis && grid[i] == uncovered_no_mine) grid[i] <- hypothetical_no_mine
     pos <- i_to_position(i, dim(grid))
     square <- get_around_square(pos, grid)
-    grid[i] <- compute_box_number(square, ...) # calculer le chiffre à mettre
+    if (!hypothesis) grid[i] <- compute_box_number(square, ...) # calculer le chiffre à mettre
+    solved_around <- update_solved_around(grid, solved_around, i, once)
     
     if (grid[i] == 0) {
-      solved_around[i] <- 1
       # cliquer à nouveau automatiquement tout autour
+      
       positions <- square_pos(pos, grid)
       reveal <- unlist(square) == covered_no_mine
       positions <- positions[reveal, , drop = FALSE]
       for (j in seq_len(nrow(positions))) {
         grid[positions[j, 1], positions[j, 2]] <- uncovered_no_mine
-        if (solved_around[positions[j, 1], positions[j, 2]] == -1) solved_around[positions[j, 1], positions[j, 2]] <- 0
       }
-      tmp <- update_grid(grid, mines_left, solved_around)
+      tmp <- update_grid(grid, mines_left, solved_around, once = FALSE)
       grid <- tmp[[1]]
       solved_around <- tmp[[2]]
       mines_left <- tmp[[3]]
     }
   }
-  if (is_game_over(grid) == 1) {
+  if (is_game_over(grid, NA) == 1) { # ici on ne vérifie pas le nombre de mines, ca sera vérifié plus tard
     place_flag <- grid == covered_mine
     mines_left <- mines_left - sum(place_flag)
     grid[place_flag] <- flag_on_mine # flagger automatiquement toutes les mines quand la partie est terminée

@@ -12,6 +12,6 @@ source("hp.R")
 #' grid <- matrix(c(-2, -5, -6, -1, -1, -1, -1, -1, -1), ncol = 3)
 #' compute_box_number(grid)
 #' compute_box_number(grid, human = TRUE)
-compute_box_number <- function(square, human = FALSE) {
+compute_box_number <- function(square, human = FALSE, ...) {
   sum(square %in% c(covered_mine, flag_on_mine, uncovered_mine) | (square == flag_on_no_mine) & human)
 }

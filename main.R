@@ -11,7 +11,7 @@ simulate_game(40, c(17, 9), certain_else_random_clicker)
 
 set.seed(2026L)
 profvis(
-  replicate(5, simulate_game(40, c(17, 9), certain_else_random_clicker))
+  replicate(1, simulate_game(40, c(17, 9), certain_else_random_clicker))
 )
 
 profvis(

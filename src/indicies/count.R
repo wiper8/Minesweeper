@@ -12,7 +12,7 @@ count_unknown <- function(grid, i, values) {
 count_mines_left_around <- function(grid, i, values) {
   if (missing(values)) values <- count_core(grid, i)$values
   digit <- grid[i]
-  digit - sum(values %in% c(flag_on_mine, flag_on_no_mine, hypothetical_mine))
+  digit - sum(values %in% hp_flags)
 }
 
 count_core <- function(grid, i) {

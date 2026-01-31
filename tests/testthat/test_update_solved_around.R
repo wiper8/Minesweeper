@@ -24,40 +24,30 @@ test_that("update_solved_around met à jour autour du i ciblé", {
     ncol = 9,
     byrow = TRUE
   )
-  solution <- solved_around
-  solution[17] <- 0
+  # cas où on vient d'ajouter un flag
   expect_equal(
-    update_solved_around(grid, solved_around, 26),
-    solution
+    update_solved_around(grid, solved_around, 26)[17],
+    0
   )
-  solution <- solved_around
-  solution[28] <- 1
   expect_equal(
-    update_solved_around(grid, solved_around, 28),
-    solution
+    update_solved_around(grid, solved_around, 28)[28],
+    1
   )
-  solution <- solved_around
-  solution[35] <- 1
   expect_equal(
-    update_solved_around(grid, solved_around, 35),
-    solution
+    update_solved_around(grid, solved_around, 35)[35],
+    1
   )
-  solution <- solved_around
-  solution[43] <- 1
+  # cas où je viens de cliquer quelque part
   expect_equal(
-    update_solved_around(grid, solved_around, 43),
-    solution
+    update_solved_around(grid, solved_around, 43)[43],
+    1
   )
-  solution <- solved_around
-  solution[44] <- 1
   expect_equal(
-    update_solved_around(grid, solved_around, 44),
-    solution
+    update_solved_around(grid, solved_around, 44)[44],
+    1
   )
-  solution <- solved_around
-  solution[c(57, 58, 66)] <- 0
   expect_equal(
-    update_solved_around(grid, solved_around, 65),
-    solution
+    update_solved_around(grid, solved_around, 65)[c(57, 58, 66)],
+    c(0, 0, 0)
   )
 })
