@@ -95,7 +95,6 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis) {
         return(NULL)
       }
       
-      # TODO il y a des symétries ici X2
       # si à l'inverse, je flag la cellule, et que toutes les situations sont impossibles, c'est qu'il n'y a pas de mine!
       # donc la cliquer
       possible <- which_combins_possible(
