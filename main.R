@@ -9,6 +9,17 @@ set.seed(2026L)
 simulate_game(40, c(17, 9), random_clicker)
 simulate_game(40, c(17, 9), certain_else_random_clicker)
 
+
+set.seed(2026L)
+library(bench)
+mark(
+  simulate_game(40, c(17, 9), certain_else_random_clicker)
+)
+profvis(
+  replicate(1, simulate_game(40, c(17, 9), certain_else_random_clicker))
+)
+
+
 set.seed(2026L)
 profvis(
   replicate(1, simulate_game(40, c(17, 9), certain_else_random_clicker))
