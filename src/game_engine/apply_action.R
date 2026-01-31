@@ -1,4 +1,5 @@
 source("hp.R")
+source("src/fast_pmax.R")
 source("src/indicies/i_and_positions.R")
 source("src/indicies/square_pos_and_get_around_square.R")
 source("src/game_engine/is_game_over.R")
@@ -18,7 +19,7 @@ source("src/game_engine/update_grid.R")
 #'
 #' @examples
 #' apply_action(matrix(-1, 3, 3), c(1, 2), FALSE, 2)
-apply_action <- function(grid, pos, action, mines_left, solved_around = matrix(0, nrow = nrow(grid), ncol = ncol(grid)), ...) {
+apply_action <- function(grid, pos, action, mines_left, solved_around = grid * 0 - 1, ...) {
   i <- position_to_i(pos, dim(grid))
   
   # actions sur des cases déjà révélées, ignorer
@@ -36,7 +37,7 @@ apply_action <- function(grid, pos, action, mines_left, solved_around = matrix(0
   # clic
   if (action) {
     grid <- clic(grid, i)
-    tmp <- update_grid(grid, mines_left, solved_around, once = TRUE, ...)
+    tmp <- update_grid(grid, mines_left, solved_around, ...)
     grid <- tmp[[1]]
     solved_around <- tmp[[2]]
     mines_left <- tmp[[3]]
@@ -69,13 +70,13 @@ update_solved_around <- function(grid, solved_around, i, once = FALSE) {
     }
     # updater l'entourage aussi
     around_pos <- positions
-    keep <- !(positions[, 1] == pos[1] & positions[, 2] == pos[2])
+    keep <- positions[, 1] != pos[1] | positions[, 2] != pos[2]
     around_pos <- around_pos[keep, , drop = FALSE]
     idx <- position_to_i_mat(around_pos, dims)
-    solved_around[idx] <- pmax(solved_around[idx], 0)
+    solved_around[idx] <- fast_pmax(solved_around[idx], 0)
     if (once) {
-      for (j in idx) {
-        solved_around <- update_solved_around(grid, solved_around, j, once = FALSE)
+      for (k in idx) {
+        solved_around <- update_solved_around(grid, solved_around, k, once = FALSE)
       }
     }
   }

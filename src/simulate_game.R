@@ -42,14 +42,8 @@ init_grid_after_first_click <- function(grid, pos, total_mines) {
 }
 
 main_game_loop <- function(grid, mines_left, clicker, solved_around, hypothesis = FALSE, ...) {
-  a <- 0
   repeat {
     # choisir la prochaine action
-    a <- a + 1
-    if (!hypothesis && a == 52) {
-      print(a)
-      browser()
-    }
     tmp <- clicker(grid, mines_left = mines_left, solved_around = solved_around, hypothesis = hypothesis, ...)
     if (hypothesis && isTRUE(all.equal(tmp, "impossible"))) return(list(grid, "partie impossible", solved_around))
     if (isTRUE(all.equal(tmp, "impossible"))) browser()

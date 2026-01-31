@@ -10,7 +10,10 @@ count_unknown <- function(grid, i, values) {
 }
 
 count_mines_left_around <- function(grid, i, values) {
-  if (missing(values)) values <- count_core(grid, i)$values
+  if (missing(values)) {
+    pos <- i_to_position(i, dim(grid))
+    values <- get_around_square(pos, grid)
+  }
   digit <- grid[i]
   digit - sum(values %in% hp_flags)
 }
@@ -18,7 +21,5 @@ count_mines_left_around <- function(grid, i, values) {
 count_core <- function(grid, i) {
   pos <- i_to_position(i, dim(grid))
   tmp <- square_pos_and_get_around_square(pos, grid)
-  positions <- tmp[[1]]
-  values <- tmp[[2]]
-  list(values = values, positions = positions)
+  list(values = tmp[[2]], positions = tmp[[1]])
 }

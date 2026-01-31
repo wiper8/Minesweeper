@@ -11,7 +11,7 @@ test_that("can_click_all_around clique sur les cases autour qui sont certaines",
     byrow = TRUE
   )
   expect_equal(
-    can_click_all_around(grid, matrix(0, nrow(grid), ncol(grid))),
+    can_click_all_around(grid, grid * 0),
     list(c(1, 3), TRUE)
   )
   
@@ -25,7 +25,7 @@ test_that("can_click_all_around clique sur les cases autour qui sont certaines",
     byrow = TRUE
   )
   expect_equal(
-    can_click_all_around(grid, matrix(0, nrow(grid), ncol(grid))),
+    can_click_all_around(grid, grid * 0),
     list(c(3, 1), TRUE)
   )
   

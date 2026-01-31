@@ -39,6 +39,6 @@ position_to_i_mat <- function(pos_mat, dims) {
 #' i_to_position(53, c(10, 8))
 i_to_position <- function(i, dims) {
   col <- floor(i / dims[1])
-  col <- col + (i / dims[1] != floor(i / dims[1]))
+  col <- col + (i / dims[1] != col)
   c(i - (col - 1) * dims[1], col)
 }
