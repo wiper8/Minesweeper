@@ -12,6 +12,21 @@ simulate_game(40, c(17, 9), certain_else_random_clicker)
 
 set.seed(2026L)
 compute_probs_success(n = 1000, total_mines = 56, c(17, 9), random_clicker)
+
+n <- 27
+time <- rep(NA, n)
+set.seed(2026L)
+for (i in seq_len(n)) {
+  print(i)
+  a <- Sys.time()
+  simulate_game(40, c(17, 9), certain_else_random_clicker)
+  b <- Sys.time()
+  time[i] <- as.numeric(difftime(b, a, units = "secs"))
+}
+summary(time)
+ggplot()+
+  geom_histogram(aes(x=time))
+
 set.seed(2026L)
 compute_probs_success(n = 100, total_mines = 40, c(17, 9), certain_else_random_clicker)
 compute_probs_success(n = 100, total_mines = 56, c(17, 9), certain_else_random_clicker)
