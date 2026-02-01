@@ -35,10 +35,10 @@ update_grid <- function(grid, mines_left, solved_around = grid * 0 - 1, hypothes
       
       # cliquer à nouveau automatiquement tout autour
       positions <- square_pos(pos, grid)
-      reveal <- unlist(square) == covered_no_mine
-      positions <- positions[reveal, , drop = FALSE]
       update_solved_backlog <- rbind(update_solved_backlog, positions)
       update_solved_backlog <- unique(update_solved_backlog)
+      reveal <- unlist(square) == covered_no_mine
+      positions <- positions[reveal, , drop = FALSE]
         for (j in seq_len(nrow(positions))) {
           grid[positions[j, 1], positions[j, 2]] <- uncovered_no_mine
         }
