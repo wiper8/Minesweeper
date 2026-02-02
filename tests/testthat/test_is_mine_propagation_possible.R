@@ -200,3 +200,32 @@ test_that("is_mine_propagation est faux avec une grille possible mais pas le bon
     tmp
   )
 })
+
+test_that("is_mine_propagation dans des parties avancées", {
+  grid <- matrix(
+    c(
+      0, 1, -5, 1, 0, 0, 0, 1, -8,
+      1, 2, 1, 1, 0, 0, 0, 2, -9,
+      -5, 1, 0, 0, 1, 2, 2, 3, -9,
+      2, 2, 1, 2, 3, -5, -5, 2, -8,
+      -5, 1, 1, -5, -5, 3, 2, 2, -8,
+      1, 1, 2, 3, 4, 3, 2, 2, -9,
+      1, 2, 2, -5, 2, -5, -5, 4, -8,
+      -5, 2, -5, 2, 3, 5, -5, -9, -8,
+      1, 3, 3, 3, 2, -5, -5, -10, -10,
+      0, 2, -5, -5, 3, 4, -9, -10, -10,
+      1, 3, -5, 4, -9, -8, -8, -10, -10,
+      -5, 2, 1, 2, -8, -10, -10, -10, -10,
+      2, 3, 2, 2, -8, -10, -10, -10, -10,
+      -8, -9, -9, -8, -9, rep(-10, 31)
+    ),
+    nrow = 17,
+    byrow = TRUE
+  )
+  solved_around <- grid * 0
+  solved_around[grid == 0] <- 1
+  solved_around[c(1:13, 18:30, 35:47, 52:64, 69:78, 86:94, 120:125, 137:142)] <- 1
+  expect_true(
+    is_mine_propagation_possible(grid, mines_left = 12, solved_around)
+  )
+})

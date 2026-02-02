@@ -72,4 +72,3 @@ test_that("Erreur dans apply_action si aucun drapeau n'est disponible et qu'on t
     apply_action(grid, c(2, 3), FALSE, 0)
   )
 })
-

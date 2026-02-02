@@ -88,3 +88,50 @@ test_that("update_grid flag toutes les cases mines si la partie est terminée", 
     0
   )
 })
+
+test_that("update_grid propage bien les update_solved_around quand il y a des 0", {
+  grid <- matrix(
+    c(
+      -2, -1, -1, -3, -1, -1, -1,
+      -1, -1, -1, -1, -1, -1, -2,
+      -1, -1, -1, -1, -1, -1, -2,
+      -1, -1, -1, -2, -2, -1, -1
+    ), nrow = 4, byrow = TRUE
+  )
+  expect_equal(
+    (update_grid(grid, 4, grid * 0 - 1)[[2]] == 1) |>
+      which(),
+    which(matrix(
+      c(
+        NA, 0, 1, 1, 1, 0, NA,
+        0, 0, 1, 1, 1, 0, NA,
+        1, 1, 0, 0, 0, 0, NA,
+        1, 1, 0, NA, NA, NA, NA
+      ), nrow = 4, byrow = TRUE
+    ) == 1)
+  )
+  
+  grid <- matrix(
+    c(
+      0, 1, -5, 1, -3, -1,
+      0, 1, 1, 1, 1, -1,
+      0, 0, 0, 0, 1, -2,
+      0, 0, 1, 2, 4, -1,
+      0, 0, 2, -5, -5, -2
+    ),
+    nrow = 5, byrow = TRUE
+  )
+  solved_around <- matrix(
+    c(
+      1, 1, 1, 0, 0, 0,
+      1, 1, 1, 0, 0, 0,
+      1, 1, 1, 1, 0, 0,
+      1, 1, 1, 1, 0, 0,
+      1, 1, 1, 0, 0, 0
+    ), nrow = 5, byrow = TRUE
+  )
+  expect_equal(
+    update_grid(grid, 2, solved_around)[[2]][16:17],
+    c(1, 1)
+  )
+})
