@@ -296,21 +296,25 @@ test_that("can_deduce_pattern n'a pas de bug de récursion infinie", {
       rep(c(1, 1, 1, 1, 1, 0, 0, 0, 0), 3),
       1, 1, 1, 1, 1, 1, 1, 0, 0,
       rep(c(1, 1, 1, 0, 0, 0, 0, 0, 0), 3),
-      c(1, 1, 1, 1, 1, 0, 0, 0, -1),
-      c(0, 0, 0, 0, 0, 0, 0, 0, -1),
-      rep(0, 9 * 2),
-      0, 0, 0, 0, 0, 0, 0, 0, 0,
-      rep(c(-1, -1, -1, 0, 0, 0, 0, 0, 0), 2),
-      c(-1, -1, -1, 0, 0, 0, 0, 0, -1),
-      rep(-1, 18)
+      1, 1, 1, 1, 1, 0, 0, -1, -1,
+      0, 0, 0, 0, 0, 0, 0, -1, -1,
+      0, 0, 0, 0, 0, 0, 0, -1, -1,
+      0, 0, 0, 0, 0, 0, -1, -1, -1,
+      rep(-1, 9 * 6)
     ),
     nrow = 17,
     byrow = TRUE
   )
-  browser()
   set.seed(1L)
+  browser()
   tmp <- can_deduce_pattern(grid2, mines_left = 32, solved_around2, FALSE)
-  # TODO tester le test avec un expect_...
+  expect_equal(
+    tmp,
+    list(
+      c(6, 5),
+      TRUE
+    )
+  )
 })
 
 test_that("can_deduce_pattern n'a pas de bug de récursion infinie", {
@@ -356,6 +360,12 @@ test_that("can_deduce_pattern n'a pas de bug de récursion infinie", {
   browser()
   set.seed(1L)
   tmp <- can_deduce_pattern(grid2, mines_left = 32, solved_around2, FALSE)
-  # TODO tester le test avec un expect_...
+  expect_equal(
+    tmp,
+    list(
+      c(6, 5),
+      TRUE
+    )
+  )
 })
 

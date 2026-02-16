@@ -72,3 +72,36 @@ test_that("Erreur dans apply_action si aucun drapeau n'est disponible et qu'on t
     apply_action(grid, c(2, 3), FALSE, 0)
   )
 })
+
+test_that("apply_action ne s'étend pas trop de 0", {
+  grid2 <- matrix(
+    c(
+      -2, -1, -1, -1, -1, -1, -1, -2, -1,
+      -2, -2, -1, -2, -1, -1, -1, -1, -1,
+      -1, -2, -1, -1, -2, -1, -2, -1, -1,
+      -1, -1, -2, -1, -1, -1, -1, -2, -1,
+      -1, -2, -1, -1, -2, -3, -1, -2, -2,
+      -1, -2, -2, -1, -1, -1, -1, -2, -2,
+      -1, -2, -1, -1, -2, -1, -1, -2, -1,
+      -1, -1, -1, -1, -1, -1, -2, -2, -1,
+      -2, -1, -1, -1, -1, -2, -1, -1, -1
+    ),
+    ncol = 9,
+    byrow = TRUE
+  )
+  solved_around <- apply_action(grid2, c(5, 6), TRUE, 25, grid2 * 0 - 1)[[4]]
+  expect_equal(
+    solved_around,
+    matrix(
+      c(
+        rep(-1, 9 * 3),
+        -1, -1, -1, -1, 0, 0, 0, -1, -1,
+        -1, -1, -1, -1, 0, 0, 0, -1, -1,
+        -1, -1, -1, -1, 0, 0, 0, -1, -1,
+        rep(-1, 9 * 3)
+      ),
+      ncol = 9,
+      byrow = TRUE
+    )
+  )
+})
