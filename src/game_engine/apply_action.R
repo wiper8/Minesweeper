@@ -31,7 +31,7 @@ apply_action <- function(grid, pos, action, mines_left, solved_around = grid * 0
     tmp <- flagguer(grid, i, mines_left)
     grid <- tmp[[1]]
     mines_left <- tmp[[2]]
-    solved_around <- update_solved_around(grid, solved_around, i, once = TRUE)
+    solved_around <- update_solved_around(grid, solved_around, i, once = FALSE)
   }
   
   # clic

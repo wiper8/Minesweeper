@@ -47,7 +47,7 @@ update_grid <- function(grid, mines_left, solved_around = grid * 0 - 1, hypothes
       solved_around <- tmp[[2]]
       mines_left <- tmp[[3]]
     } else {
-      solved_around <- update_solved_around(grid, solved_around, i, once = TRUE)
+      solved_around <- update_solved_around(grid, solved_around, i, once = FALSE)
       if (!is.null(backlog)) {
         k <- position_to_i_mat(backlog, dim(grid))
         for (j in k) {
