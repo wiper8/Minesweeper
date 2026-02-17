@@ -266,7 +266,6 @@ test_that("can_deduce_pattern peut déduire un pattern si le nombre total de min
   )
 })
 
-
 test_that("can_deduce_pattern n'a pas de bug de récursion infinie", {
   grid2 <- matrix(
     c(
@@ -307,7 +306,7 @@ test_that("can_deduce_pattern n'a pas de bug de récursion infinie", {
   )
   set.seed(1L)
   browser()
-  tmp <- can_deduce_pattern(grid2, mines_left = 32, solved_around2, FALSE)
+  tmp <- can_deduce_pattern(grid2, mines_left = 32, solved_around2, FALSE, click_order = matrix(c(7, 5), nrow = 1))
   expect_equal(
     tmp,
     list(

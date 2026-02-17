@@ -13,7 +13,7 @@ test_that("certain_core appelle can_flag_all_around", {
     byrow = TRUE
   )
   expect_equal(
-    certain_core(grid, NA, grid * 0),
+    certain_core(grid, NA, grid * 0, FALSE),
     list(c(1, 1), FALSE)
   )
   
@@ -28,7 +28,7 @@ test_that("certain_core appelle can_flag_all_around", {
     byrow = TRUE
   )
   expect_equal(
-    certain_core(grid, NA, grid * 0),
+    certain_core(grid, NA, grid * 0, FALSE),
     list(c(1, 5), FALSE)
   )
 })
@@ -46,7 +46,7 @@ test_that("certain_core appelle can_click_all_around", {
     byrow = TRUE
   )
   expect_equal(
-    certain_core(grid, NA, grid * 0),
+    certain_core(grid, NA, grid * 0, FALSE),
     list(c(1, 3), TRUE)
   )
   
@@ -61,7 +61,7 @@ test_that("certain_core appelle can_click_all_around", {
     byrow = TRUE
   )
   expect_equal(
-    certain_core(grid, NA, grid * 0),
+    certain_core(grid, NA, grid * 0, FALSE),
     list(c(3, 1), TRUE)
   )
 })
@@ -77,7 +77,7 @@ test_that("certain_core donne du random s'il ne sait pas quoi faire", {
     byrow = TRUE
   )
   expect_equal(
-    certain_core(grid, 1, grid * 0),
+    certain_core(grid, 1, grid * 0, FALSE),
     NULL
   )
 })
