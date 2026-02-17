@@ -3,12 +3,12 @@ source("src/indicies/count.R")
 source("src/game_engine/is_grid_possible.R")
 source("src/clicker/is_mine_propagation_possible.R")
 
-certain_core <- function(grid, mines_left, solved_around, hypothesis) {
+certain_core <- function(grid, mines_left, solved_around, hypothesis, ...) {
   tmp <- can_flag_all_around(grid, mines_left, solved_around)
   if (!is.null(tmp)) return(tmp)
   tmp <- can_click_all_around(grid, solved_around)
   if (!is.null(tmp)) return(tmp)
-  tmp <- can_deduce_pattern(grid, mines_left, solved_around, hypothesis)
+  tmp <- can_deduce_pattern(grid, mines_left, solved_around, hypothesis, ...)
   if (!is.null(tmp)) return(tmp)
   NULL # retourner NULL si on ne sait pas quelle action certain prendre.
 }
@@ -42,11 +42,22 @@ can_click_all_around <- function(grid, solved_around) {
   NULL
 }
 
-can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis) {
+can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, click_order = NULL) {
   impossible <- TRUE # pour hypothesis = TRUE
   reached_prop <- FALSE
+  if (is.null(click_order)) {
+    i_to_investigate <- which(grid > 0 & solved_around == 0)
+  } else {
+    # browser()
+    i_to_investigate <- position_to_i_mat(click_order[rev(seq_len(nrow(click_order))), , drop = FALSE], dim(grid))
+    # s'assurer de juste investiguer les cases pertinentes
+    i_to_investigate <- i_to_investigate[grid[i_to_investigate] > 0 & solved_around[i_to_investigate] == 0]
+    # au cas où on en oubli, quand des cases sont révélées automatiquement sans avoir été cliquées
+    i_to_investigate <- union(i_to_investigate, which(grid > 0 & solved_around == 0))
+  }
+
   # je prend une cellule avec un chiffre qui a >= 1 inconnu autour
-  for (i in which(grid > 0 & solved_around == 0)) {
+  for (i in i_to_investigate) {
     tmp <- count_core(grid, i)
     values <- tmp$values
     positions <- tmp$positions
@@ -72,7 +83,7 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis) {
       mines_has_mine_i <- fast_apply(combins, 2, function(comb) mine_i %in% comb)
       
       # je me questionne : parmi les mines restantes autour,
-      # si je ne flag JAMAIS une cellule et que toutes les combinaisons ne sont pas possible,
+      # si je ne flag JAMAIS une cellule et que toutes les combinaisons ne sont pas possibles,
       # c'est que je dois la flagguer
       possible <- which_combins_possible(
         grid,
@@ -80,7 +91,8 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis) {
         pos_unknown,
         solved_around = solved_around,
         mines_left = mines_left,
-        cache = cache[!mines_has_mine_i]
+        cache = cache[!mines_has_mine_i],
+        click_order = click_order
       )
       possible <- possible[!is.na(possible)]
       cache[which(!mines_has_mine_i)[seq_along(possible)]] <- possible
@@ -104,7 +116,8 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis) {
         pos_unknown,
         solved_around = solved_around,
         mines_left = mines_left,
-        cache = cache[mines_has_mine_i]
+        cache = cache[mines_has_mine_i],
+        click_order = click_order
       )
       possible <- possible[!is.na(possible)]
       cache[which(mines_has_mine_i)[seq_along(possible)]] <- possible
@@ -137,7 +150,8 @@ deduce_unknown_boxes <- function(grid, mines_left) {
 }
 
 #' Retourne si une proposition de mines est possible (génère une partie sans problèmes)
-which_combins_possible <- function(grid, combins, pos_unknown, mines_left, cache = rep(NA, ncol(combins)), ...) {
+which_combins_possible <- function(grid, combins, pos_unknown, mines_left, cache = rep(NA, ncol(combins)),
+                                   click_order = NULL, ...) {
   mines_left_init <- mines_left
   possible <- rep(NA, ncol(combins))
   for (i in seq_len(ncol(combins))) {
@@ -155,7 +169,12 @@ which_combins_possible <- function(grid, combins, pos_unknown, mines_left, cache
     mines_left <- mines_left_init - length(i_to_flag)
     grid_tmp_propagate[i_to_flag] <- hypothetical_mine
     grid_tmp_propagate[i_to_click] <- hypothetical_no_mine
-    possible[i] <- is_mine_propagation_possible(grid_tmp_propagate, mines_left = mines_left, ...)
+    
+    for (i_to_ck in i_to_click) {
+      click_order <- rbind(click_order, i_to_position(i_to_ck, dim(grid)))
+    }
+    
+    possible[i] <- is_mine_propagation_possible(grid_tmp_propagate, mines_left = mines_left, click_order = click_order, ...)
     if (possible[i]) break # early exist cause the calling function (which_combins_possible) checks for all FALSE
   }
   possible
