@@ -58,6 +58,7 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
 
   # je prend une cellule avec un chiffre qui a >= 1 inconnu autour
   for (i in i_to_investigate) {
+    print(paste0("i:", i))
     tmp <- count_core(grid, i)
     values <- tmp$values
     positions <- tmp$positions
@@ -80,6 +81,7 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
     cache <- rep(NA, ncol(combins))
 
     for (mine_i in seq_len(n_unknown)) {
+      print(paste0("mine_i:", mine_i))
       mines_has_mine_i <- fast_apply(combins, 2, function(comb) mine_i %in% comb)
       
       # je me questionne : parmi les mines restantes autour,
@@ -152,6 +154,7 @@ deduce_unknown_boxes <- function(grid, mines_left) {
 #' Retourne si une proposition de mines est possible (génère une partie sans problèmes)
 which_combins_possible <- function(grid, combins, pos_unknown, mines_left, cache = rep(NA, ncol(combins)),
                                    click_order = NULL, ...) {
+  browser()
   mines_left_init <- mines_left
   possible <- rep(NA, ncol(combins))
   for (i in seq_len(ncol(combins))) {
