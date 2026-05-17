@@ -31,8 +31,6 @@ update_grid <- function(grid, mines_left, solved_around = grid * 0 - 1, hypothes
         rbind(backlog, matrix(pos, nrow = 1))
       }
       
-      # solved_around <- update_solved_around(grid, solved_around, i)
-      
       # cliquer à nouveau automatiquement tout autour
       positions <- square_pos(pos, grid)
       update_solved_backlog <- rbind(update_solved_backlog, positions)

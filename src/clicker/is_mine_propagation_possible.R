@@ -8,7 +8,7 @@ is_mine_propagation_possible <- function(grid, mines_left = NA, solved_around, .
   
   ### TODO modifier
   clusters <- independant_clusters(grid, mines_left, solved_around, ...)
-  
+
   for (clust_i in seq_along(clusters)) {
     # simuler une nouvelle partie avec un clicker certain
     propagated_game_end <- main_game_loop(grid, mines_left, certain_core, solved_around = solved_around, hypothesis = TRUE, ...)
