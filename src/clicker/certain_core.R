@@ -81,7 +81,6 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
     cache <- rep(NA, ncol(combins))
 
     for (mine_i in seq_len(n_unknown)) {
-      print(paste0("mine_i:", mine_i))
       mines_has_mine_i <- fast_apply(combins, 2, function(comb) mine_i %in% comb)
       
       # je me questionne : parmi les mines restantes autour,
