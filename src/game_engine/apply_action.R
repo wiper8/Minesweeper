@@ -31,7 +31,7 @@ apply_action <- function(grid, pos, action, mines_left, solved_around = grid * 0
     tmp <- flagguer(grid, i, mines_left)
     grid <- tmp[[1]]
     mines_left <- tmp[[2]]
-    solved_around <- update_solved_around(grid, solved_around, i, once = FALSE)
+    solved_around <- update_solved_around(grid, solved_around, i)
   }
   
   # clic
@@ -50,7 +50,7 @@ apply_action <- function(grid, pos, action, mines_left, solved_around = grid * 0
 #'  -1 est une cellule sans aucune information autour, 0 est une cellule avec information autour, 1 est une cellule dont
 #'  toutes les cases autour sont révélées ou flaguées
 #' @param i entier : indice de la case qui vient d'être actionnée, peu importe l'action
-update_solved_around <- function(grid, solved_around, i, once = FALSE) {
+update_solved_around <- function(grid, solved_around, i) {
   if (solved_around[i] %in% -1:0) {
     pos <- i_to_position(i, dim(grid))
     tmp <- square_pos_and_get_around_square(pos, grid)
@@ -74,11 +74,6 @@ update_solved_around <- function(grid, solved_around, i, once = FALSE) {
     around_pos <- around_pos[keep, , drop = FALSE]
     idx <- position_to_i_mat(around_pos, dims)
     solved_around[idx] <- fast_pmax(solved_around[idx], 0)
-    if (once) {
-      for (k in idx) {
-        solved_around <- update_solved_around(grid, solved_around, k, once = FALSE)
-      }
-    }
   }
   solved_around
 }
