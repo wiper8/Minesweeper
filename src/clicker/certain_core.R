@@ -64,7 +64,7 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
       to_union
     )
   }
-
+  
   # je prend une cellule avec un chiffre qui a >= 1 inconnu autour
   for (i in i_to_investigate) {
     tmp <- count_core(grid, i)
@@ -87,7 +87,7 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
     
     combins <- combn(n_unknown, mines_left_around)
     cache <- rep(NA, ncol(combins))
-
+    
     for (mine_i in seq_len(n_unknown)) {
       mines_has_mine_i <- fast_apply(combins, 2, function(comb) mine_i %in% comb)
       
@@ -178,7 +178,7 @@ which_combins_possible <- function(grid, combins, pos_unknown, solved_around, mi
     i_to_flag <- position_to_i_mat(pos_unknown[combin, , drop = FALSE], dim(grid))
     i_to_click <- position_to_i_mat(pos_unknown[-combin, , drop = FALSE], dim(grid))
     i_to_click <- i_to_click[grid[i_to_click] %in% hp_to_hypo_no_mine]
-
+    
     for (j in i_to_flag) {
       tmp <- apply_action(grid_tmp_propagate, i_to_position(j, dim(grid_tmp_propagate)), action = FALSE, mines_left,
                           solved_around, hypothesis = TRUE, ...)
@@ -186,7 +186,7 @@ which_combins_possible <- function(grid, combins, pos_unknown, solved_around, mi
       mines_left <- tmp[[3]]
       solved_around <- tmp[[4]]
     }
-
+    
     for (j in i_to_click) {
       j_pos <- i_to_position(j, dim(grid_tmp_propagate))
       tmp <- apply_action(grid_tmp_propagate, j_pos, action = TRUE, mines_left,
@@ -196,7 +196,7 @@ which_combins_possible <- function(grid, combins, pos_unknown, solved_around, mi
       solved_around <- tmp[[4]]
       click_order <- rbind(click_order, j_pos)
     }
-
+    
     possible[i] <- is_mine_propagation_possible(grid_tmp_propagate, mines_left = mines_left,
                                                 solved_around = solved_around, click_order = click_order, ...)
     if (possible[i]) break # early exist cause the calling function (which_combins_possible) checks for all FALSE
