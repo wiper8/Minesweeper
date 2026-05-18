@@ -26,6 +26,16 @@ test_that("la partie est gagnée lorsque je clique sur la dernière boîte resta
   )
 })
 
+test_that("pas de révélation de case quand on clique en mode hypothesis", {
+  grid <- base_grid
+  grid[2, 2] <- -9
+  grid[1, 3] <- -1
+  expect_equal(
+    apply_action(grid, c(1, 3), TRUE, 1, hypothesis = TRUE)[[1]][1, 3],
+    -8
+  )
+})
+
 test_that("Ajouter un drapeau fonctionne", {
   tmp <- apply_action(base_grid, c(2, 3), FALSE, 1)
   
@@ -36,6 +46,14 @@ test_that("Ajouter un drapeau fonctionne", {
   expect_equal(
     tmp[[2]],
     0
+  )
+  
+  # mode hypothesis
+  grid <- base_grid
+  grid[2, 3] <- -10
+  expect_equal(
+    apply_action(grid, c(2, 3), FALSE, 1)[[1]][2, 3],
+    -9
   )
 })
 

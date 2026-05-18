@@ -13,6 +13,7 @@ simulate_game(40, c(17, 9), certain_else_random_clicker)
 set.seed(2026L)
 compute_probs_success(n = 1000, total_mines = 56, c(17, 9), random_clicker)
 
+# TODO retirer cette section ci-dessous, c'est pour générer un bug précis où le nb de combins est trop élevé
 n <- 28
 time <- rep(NA, n)
 set.seed(2026L)

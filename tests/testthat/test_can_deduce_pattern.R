@@ -355,9 +355,10 @@ test_that("can_deduce_pattern n'a pas de bug de récursion infinie", {
     nrow = 17,
     byrow = TRUE
   )
-  browser()
+  # TODO vérifier si rapide
   set.seed(1L)
-  tmp <- can_deduce_pattern(grid2, mines_left = 32, solved_around2, hypothesis = FALSE)
+  debugonce(can_deduce_pattern)
+  tmp <- can_deduce_pattern(grid2, mines_left = sum(grid2 == covered_mine), solved_around2, hypothesis = FALSE)
   expect_equal(
     tmp,
     list(

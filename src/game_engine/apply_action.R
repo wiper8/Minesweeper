@@ -18,7 +18,7 @@ source("src/game_engine/update_grid.R")
 #' @export
 #'
 #' @examples
-#' apply_action(matrix(-1, 3, 3), c(1, 2), FALSE, 2)
+#' apply_action(matrix(-1, 3, 3), c(1, 2), FALSE, 2, FALSE)
 apply_action <- function(grid, pos, action, mines_left, solved_around = grid * 0 - 1, ...) {
   i <- position_to_i(pos, dim(grid))
   

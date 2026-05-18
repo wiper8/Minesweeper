@@ -24,9 +24,9 @@ is_mine_propagation_possible <- function(grid, mines_left = NA, solved_around, .
 independant_clusters <- function(grid, mines_left, solved_around, ...) {
   # TODO intégrer le `...` dans la liste de retour?
   # TODO générer toutes les combinaisons de clusters possibles, voir le test unitaire à compléter
-  list(
+  list(list(
     grid = grid,
     mines_left = mines_left,
     solved_around = solved_around
-  )
+  ))
 }
