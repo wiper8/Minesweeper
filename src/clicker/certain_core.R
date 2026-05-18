@@ -42,7 +42,7 @@ can_click_all_around <- function(grid, solved_around) {
   NULL
 }
 
-can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, click_order = NULL) {
+can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, click_order = NULL, ...) {
   impossible <- TRUE # pour hypothesis = TRUE
   reached_prop <- FALSE
   if (is.null(click_order)) {
@@ -101,7 +101,8 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
         solved_around = solved_around,
         mines_left = mines_left,
         cache = cache[!mines_has_mine_i],
-        click_order = click_order
+        click_order = click_order,
+        ...
       )
       possible <- possible[!is.na(possible)]
       cache[which(!mines_has_mine_i)[seq_along(possible)]] <- possible
@@ -126,7 +127,8 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
         solved_around = solved_around,
         mines_left = mines_left,
         cache = cache[mines_has_mine_i],
-        click_order = click_order
+        click_order = click_order,
+        ...
       )
       possible <- possible[!is.na(possible)]
       cache[which(mines_has_mine_i)[seq_along(possible)]] <- possible
