@@ -37,16 +37,16 @@ update_grid <- function(grid, mines_left, solved_around = grid * 0 - 1, hypothes
       update_solved_backlog <- unique(update_solved_backlog)
       reveal <- unlist(square) == covered_no_mine
       positions <- positions[reveal, , drop = FALSE]
-        for (j in seq_len(nrow(positions))) {
-          grid[positions[j, 1], positions[j, 2]] <- uncovered_no_mine
-        }
+      for (j in seq_len(nrow(positions))) {
+        grid[positions[j, 1], positions[j, 2]] <- uncovered_no_mine
+      }
       tmp <- update_grid(grid, mines_left, solved_around, backlog = update_solved_backlog)
       grid <- tmp[[1]]
       solved_around <- tmp[[2]]
       mines_left <- tmp[[3]]
     } else {
       solved_around <- update_solved_around(grid, solved_around, i)
-
+      
       # où on aurait cliqué
       if (!is.null(backlog)) {
         k <- position_to_i_mat(backlog, dim(grid))
@@ -59,7 +59,7 @@ update_grid <- function(grid, mines_left, solved_around = grid * 0 - 1, hypothes
       around_pos <- square_pos(pos, grid)
       k <- position_to_i_mat(around_pos, dim(grid))
       for (j in k) {
-        solved_around <- update_solved_around_but_not_around_too(grid, solved_around, j)
+        solved_around <- update_solved_around(grid, solved_around, j, around_too = FALSE)
       }
     }
   }
