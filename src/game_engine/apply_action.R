@@ -78,6 +78,28 @@ update_solved_around <- function(grid, solved_around, i) {
   solved_around
 }
 
+update_solved_around_but_not_around_too <- function(grid, solved_around, i) {
+  if (solved_around[i] %in% -1:0) {
+    pos <- i_to_position(i, dim(grid))
+    tmp <- square_pos_and_get_around_square(pos, grid)
+    positions <- tmp[[1]]
+    values <- tmp[[2]]
+    unknown <- !values %in% known
+    n_unknown <- sum(unknown)
+    dims <- dim(grid)
+    
+    if (n_unknown == 0) {
+      solved_around[i] <- 1
+      # des inconnus et des connus
+    } else if (n_unknown > 0 & sum(!unknown) > 0) {
+      solved_around[i] <- 0
+    } else {
+      return(solved_around)
+    }
+  }
+  solved_around
+}
+
 flagguer <- function(grid, i, mines_left) {
   stopifnot(grid[i] %in% c(covered_no_mine, covered_mine, flag_on_mine, flag_on_no_mine, unknown_box))
   if (grid[i] == covered_mine) {

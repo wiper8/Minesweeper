@@ -46,16 +46,20 @@ update_grid <- function(grid, mines_left, solved_around = grid * 0 - 1, hypothes
       mines_left <- tmp[[3]]
     } else {
       solved_around <- update_solved_around(grid, solved_around, i)
-      # si le clic a générer une case pleinement résolue et quelle n'était pas résolue avant, on update son contour
-      around_pos <- square_pos(pos, grid)
-      backlog <- if (is.null(backlog)) {
-        around_pos
-      } else {
-        rbind(backlog, around_pos)
+
+      # où on aurait cliqué
+      if (!is.null(backlog)) {
+        k <- position_to_i_mat(backlog, dim(grid))
+        for (j in k) {
+          solved_around <- update_solved_around(grid, solved_around, j)
+        }
       }
-      k <- position_to_i_mat(backlog, dim(grid))
+      
+      # où on aurait pas cliqué, mais potentiellement 0 -> 1
+      around_pos <- square_pos(pos, grid)
+      k <- position_to_i_mat(around_pos, dim(grid))
       for (j in k) {
-        solved_around <- update_solved_around(grid, solved_around, j)
+        solved_around <- update_solved_around_but_not_around_too(grid, solved_around, j)
       }
     }
   }
