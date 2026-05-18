@@ -45,20 +45,21 @@ update_grid <- function(grid, mines_left, solved_around = grid * 0 - 1, hypothes
       solved_around <- tmp[[2]]
       mines_left <- tmp[[3]]
     } else {
-      solved_around <- update_solved_around(grid, solved_around, i)
-      
       # où on aurait cliqué
-      if (!is.null(backlog)) {
-        k <- position_to_i_mat(backlog, dim(grid))
-        for (j in k) {
-          solved_around <- update_solved_around(grid, solved_around, j)
-        }
+      k <- if (is.null(backlog)) {
+        i
+      } else {
+        unique(c(i, position_to_i_mat(backlog, dim(grid))))
       }
-      
+
+      for (j in k) {
+        solved_around <- update_solved_around(grid, solved_around, j)
+      }
+
       # où on aurait pas cliqué, mais potentiellement 0 -> 1
       around_pos <- square_pos(pos, grid)
-      k <- position_to_i_mat(around_pos, dim(grid))
-      for (j in k) {
+      k2 <- position_to_i_mat(around_pos, dim(grid))
+      for (j in setdiff(k2, k)) {
         solved_around <- update_solved_around(grid, solved_around, j, around_too = FALSE)
       }
     }
