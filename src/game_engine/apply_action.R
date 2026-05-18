@@ -47,8 +47,8 @@ apply_action <- function(grid, pos, action, mines_left, solved_around = grid * 0
 
 #' @param grid matrice de Minesweeper
 #' @param solved_around matrice de statut de résolution des cellules
-#'  -1 est une cellule sans aucune information autour, 0 est une cellule avec information autour, 1 est une cellule dont
-#'  toutes les cases autour sont révélées ou flaguées
+#'  -1 est une cellule sans aucune information autour, 0 est une cellule avec information autour (sauf flag),
+#'  1 est une cellule dont toutes les cases autour sont révélées ou flaguées. Bref aucun inconnu
 #' @param i entier : indice de la case qui vient d'être actionnée, peu importe l'action
 #' @param around_too : est-ce qu'on suppose qu'on a cliqué sur les cases autour de la cellule également ?
 update_solved_around <- function(grid, solved_around, i, around_too = TRUE) {
@@ -63,8 +63,8 @@ update_solved_around <- function(grid, solved_around, i, around_too = TRUE) {
     
     if (n_unknown == 0) {
       solved_around[i] <- 1
-      # des inconnus et des connus
-    } else if (n_unknown > 0 & sum(!unknown) > 0) {
+      # des inconnus et des connus (excluants flags)
+    } else if (n_unknown > 0 & sum(values %in% known_but_no_flag) > 0) {
       solved_around[i] <- 0
     } else {
       return(solved_around)
@@ -75,7 +75,9 @@ update_solved_around <- function(grid, solved_around, i, around_too = TRUE) {
       keep <- positions[, 1] != pos[1] | positions[, 2] != pos[2]
       around_pos <- around_pos[keep, , drop = FALSE]
       idx <- position_to_i_mat(around_pos, dims)
-      solved_around[idx] <- fast_pmax(solved_around[idx], 0)
+      for (j in idx) {
+        solved_around <- update_solved_around(grid, solved_around, j, around_too = FALSE)
+      }
     }
   }
   solved_around
