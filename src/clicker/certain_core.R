@@ -50,9 +50,19 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
   } else {
     i_to_investigate <- position_to_i_mat(click_order[rev(seq_len(nrow(click_order))), , drop = FALSE], dim(grid))
     # s'assurer de juste investiguer les cases pertinentes
-    i_to_investigate <- i_to_investigate[grid[i_to_investigate] > 0 & solved_around[i_to_investigate] == 0]
+    i_to_investigate_filtered <- i_to_investigate[grid[i_to_investigate] > 0 & solved_around[i_to_investigate] == 0]
     # au cas où on en oubli, quand des cases sont révélées automatiquement sans avoir été cliquées
-    i_to_investigate <- union(i_to_investigate, which(grid > 0 & solved_around == 0))
+    to_union <- which(grid > 0 & solved_around == 0)
+    # et les ajouter en ordre de proximité au dernier clicked
+    to_union <- to_union[order(sapply(to_union, function(i) {
+      coordinates <- i_to_position(i, dims = dim(grid))
+      # distance de manhattan
+      sum(abs(coordinates - i_to_position(i_to_investigate[1], dim(grid))))
+    }))]
+    i_to_investigate <- union(
+      i_to_investigate_filtered,
+      to_union
+    )
   }
 
   # je prend une cellule avec un chiffre qui a >= 1 inconnu autour
@@ -149,11 +159,14 @@ deduce_unknown_boxes <- function(grid, mines_left) {
 }
 
 #' Retourne si une proposition de mines est possible (génère une partie sans problèmes)
-which_combins_possible <- function(grid, combins, pos_unknown, mines_left, cache = rep(NA, ncol(combins)),
-                                   click_order = NULL, ...) {
+which_combins_possible <- function(grid, combins, pos_unknown, solved_around, mines_left,
+                                   cache = rep(NA, ncol(combins)), click_order = NULL, ...) {
   mines_left_init <- mines_left
+  solved_around_init <- solved_around
   possible <- rep(NA, ncol(combins))
   for (i in seq_len(ncol(combins))) {
+    mines_left <- mines_left_init
+    solved_around <- solved_around_init
     if (!is.na(cache[i])) {
       possible[i] <- cache[i]
       next
@@ -161,19 +174,31 @@ which_combins_possible <- function(grid, combins, pos_unknown, mines_left, cache
     combin <- combins[, i]
     # supposer des mines
     # puis propager avec certitude, et voir si c'est possible
-    grid_tmp_propagate <- convert_grid_solution_to_human_grid(grid, ...)
+    grid_tmp_propagate <- convert_grid_solution_to_human_grid(grid, solved_around, ...)
     i_to_flag <- position_to_i_mat(pos_unknown[combin, , drop = FALSE], dim(grid))
     i_to_click <- position_to_i_mat(pos_unknown[-combin, , drop = FALSE], dim(grid))
     i_to_click <- i_to_click[grid[i_to_click] %in% hp_to_hypo_no_mine]
-    mines_left <- mines_left_init - length(i_to_flag)
-    grid_tmp_propagate[i_to_flag] <- hypothetical_mine
-    grid_tmp_propagate[i_to_click] <- hypothetical_no_mine
-    
-    for (i_to_ck in i_to_click) {
-      click_order <- rbind(click_order, i_to_position(i_to_ck, dim(grid)))
+
+    for (j in i_to_flag) {
+      tmp <- apply_action(grid_tmp_propagate, i_to_position(j, dim(grid_tmp_propagate)), action = FALSE, mines_left,
+                          solved_around, hypothesis = TRUE, ...)
+      grid_tmp_propagate <- tmp[[1]]
+      mines_left <- tmp[[3]]
+      solved_around <- tmp[[4]]
     }
-    
-    possible[i] <- is_mine_propagation_possible(grid_tmp_propagate, mines_left = mines_left, click_order = click_order, ...)
+
+    for (j in i_to_click) {
+      j_pos <- i_to_position(j, dim(grid_tmp_propagate))
+      tmp <- apply_action(grid_tmp_propagate, j_pos, action = TRUE, mines_left,
+                          solved_around, hypothesis = TRUE, ...)
+      grid_tmp_propagate <- tmp[[1]]
+      mines_left <- tmp[[3]]
+      solved_around <- tmp[[4]]
+      click_order <- rbind(click_order, j_pos)
+    }
+
+    possible[i] <- is_mine_propagation_possible(grid_tmp_propagate, mines_left = mines_left,
+                                                solved_around = solved_around, click_order = click_order, ...)
     if (possible[i]) break # early exist cause the calling function (which_combins_possible) checks for all FALSE
   }
   possible
