@@ -304,9 +304,7 @@ test_that("can_deduce_pattern n'a pas de bug de récursion infinie", {
     nrow = 17,
     byrow = TRUE
   )
-  # TODO pourquoi ce test prend encore ~50 secondes??
   set.seed(1L)
-  debugonce(can_deduce_pattern)
   tmp <- can_deduce_pattern(grid2, mines_left = 32, solved_around2, FALSE, click_order = matrix(c(7, 5), nrow = 1))
   expect_equal(
     tmp,
