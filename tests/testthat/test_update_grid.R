@@ -1,5 +1,5 @@
 source(here("hp.R"))
-source(here("src/game_engine/update_grid.R"))
+source(here("src/game_engine/apply_action.R"))
 
 test_that("update_grid révelle bien les case autour de celle cliquée", {
   grid <- matrix(
@@ -133,5 +133,67 @@ test_that("update_grid propage bien les update_solved_around quand il y a des 0"
   expect_equal(
     update_grid(grid, 2, solved_around)[[2]][16:17],
     c(1, 1)
+  )
+})
+
+test_that("update_grid fonctionne lors de propagation hypothesis", {
+  grid4 <- matrix(
+    c(
+      0, 1, -5, 1, 0, 1, -10, -10, -10,
+      0, 1, 1, 1, 1, 2, -10, -10, -10,
+      0, 0, 0, 0, 1, -5, 2, 3, -10,
+      0, 0, 1, 2, 4, 3, 2, 2, -10,
+      0, 0, 2, -5, -5, -5, 2, 1, -10,
+      0, 0, 3, -5, -3, -9, -10, -10, -10,
+      1, 1, 3, -5, 3, 2, -10, -10, -10,
+      2, -5, 2, 1, 1, 1, -10, -10, -10,
+      -5, 4, 3, 1, 1, 1, -10, -10, -10,
+      -10, -5, -10, -10, 2, -10, -10, -10, -10
+    ),
+    ncol = 9,
+    byrow = TRUE
+  )
+  solved_around4 <- matrix(
+    c(
+      rep(1, 5), rep(0, 4),
+      rep(1, 5), rep(0, 4),
+      rep(1, 5), rep(0, 4),
+      rep(1, 7), 0, 0,
+      1, 1, 1, rep(0, 6),
+      1, 1, 1, rep(0, 6),
+      1, 1, 1, rep(0, 6),
+      rep(1, 5), 0, 0, -1, -1,
+      rep(0, 7), -1, -1,
+      rep(0, 7), -1, -1
+    ),
+    ncol = 9,
+    byrow = TRUE
+  )
+
+  expect_equal(
+    update_grid(grid4, 28, solved_around4, hypothesis = TRUE)[[2]],
+    matrix(
+      c(
+        rep(1, 5), rep(0, 4),
+        rep(1, 5), rep(0, 4),
+        rep(1, 5), rep(0, 4),
+        rep(1, 7), 0, 0,
+        1, 1, 1, 1, 1, rep(0, 4),
+        1, 1, 1, 1, 1, rep(0, 4),
+        1, 1, 1, 1, 1, rep(0, 4),
+        rep(1, 5), 0, 0, -1, -1,
+        rep(0, 7), -1, -1,
+        rep(0, 7), -1, -1
+      ),
+      ncol = 9,
+      byrow = TRUE
+    )
+  )
+
+  grid4[6, 5] <- -9
+  grid4[6, 6] <- -3
+  expect_equal(
+    update_grid(grid4, 28, solved_around4, hypothesis = TRUE)[[2]][45:47],
+    c(1, 1, 1)
   )
 })
