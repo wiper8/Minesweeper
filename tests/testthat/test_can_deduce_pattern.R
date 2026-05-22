@@ -267,7 +267,7 @@ test_that("can_deduce_pattern peut déduire un pattern si le nombre total de min
 })
 
 test_that("can_deduce_pattern n'a pas de bug de récursion infinie", {
-  grid2 <- matrix(
+  grid <- matrix(
     c(
       0, 1, -5, 1, 0, 1, -1, -1, -1,
       0, 1, 1, 1, 1, 2, -2, -1, -2,
@@ -290,22 +290,10 @@ test_that("can_deduce_pattern n'a pas de bug de récursion infinie", {
     nrow = 17,
     byrow = TRUE
   )
-  solved_around2 <- matrix(
-    c(
-      rep(c(1, 1, 1, 1, 1, 0, 0, 0, 0), 3),
-      1, 1, 1, 1, 1, 1, 1, 0, 0,
-      rep(c(1, 1, 1, 0, 0, 0, 0, 0, 0), 3),
-      1, 1, 1, 1, 1, 0, 0, -1, -1,
-      0, 0, 0, 0, 0, 0, 0, -1, -1,
-      0, 0, 0, 0, 0, 0, 0, -1, -1,
-      0, 0, 0, 0, 0, 0, -1, -1, -1,
-      rep(-1, 9 * 6)
-    ),
-    nrow = 17,
-    byrow = TRUE
-  )
+  solved_around <- init_solved_around(grid)
   set.seed(1L)
-  tmp <- can_deduce_pattern(grid2, mines_left = 32, solved_around2, FALSE, click_order = matrix(c(7, 5), nrow = 1))
+  debugonce(can_deduce_pattern)
+  tmp <- can_deduce_pattern(grid, mines_left = 32, solved_around, FALSE, click_order = matrix(c(7, 5), nrow = 1), ori = TRUE)
   expect_equal(
     tmp,
     list(
@@ -316,7 +304,7 @@ test_that("can_deduce_pattern n'a pas de bug de récursion infinie", {
 })
 
 test_that("can_deduce_pattern n'a pas de bug de récursion infinie", {
-  grid2 <- matrix(
+  grid <- matrix(
     c(
       0, 1, -5, 1, 0, 1, -1, -1, -1,
       0, 1, 1, 1, 1, 2, -2, -1, -2,
@@ -339,26 +327,11 @@ test_that("can_deduce_pattern n'a pas de bug de récursion infinie", {
     nrow = 17,
     byrow = TRUE
   )
-  solved_around2 <- matrix(
-    c(
-      rep(c(1, 1, 1, 1, 1, 0, 0, 0, 0), 3),
-      1, 1, 1, 1, 1, 1, 1, 0, 0,
-      rep(c(1, 1, 1, 0, 0, 0, 0, 0, 0), 3),
-      c(1, 1, 1, 1, 1, 0, 0, 0, -1),
-      c(0, 0, 0, 0, 0, 0, 0, 0, -1),
-      rep(0, 9 * 2),
-      0, 0, 0, 0, 0, 0, 0, 0, 0,
-      rep(c(-1, -1, -1, 0, 0, 0, 0, 0, 0), 2),
-      c(-1, -1, -1, 0, 0, 0, 0, 0, -1),
-      rep(-1, 18)
-    ),
-    nrow = 17,
-    byrow = TRUE
-  )
+  solved_around <- init_solved_around(grid)
   # TODO vérifier si rapide
   set.seed(1L)
   debugonce(can_deduce_pattern)
-  tmp <- can_deduce_pattern(grid2, mines_left = sum(grid2 == covered_mine), solved_around2, hypothesis = FALSE)
+  tmp <- can_deduce_pattern(grid, mines_left = sum(grid == covered_mine), solved_around, hypothesis = FALSE)
   expect_equal(
     tmp,
     list(

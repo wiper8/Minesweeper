@@ -1,4 +1,5 @@
 source(here("src/clicker/certain_core.R"))
+source(here("src/game_engine/init_solved_around.R"))
 
 test_that("is_mine_propagation_possible fonctionne généralement", {
   grid <- matrix(
@@ -10,12 +11,12 @@ test_that("is_mine_propagation_possible fonctionne généralement", {
     byrow = TRUE
   )
   expect_false(
-    is_mine_propagation_possible(grid, mines_left = 1, matrix(0, nrow(grid), ncol(grid)))
+    is_mine_propagation_possible(grid, mines_left = 1, init_solved_around(grid))
   )
   grid[2, 2] <- -5
   grid[2, 3] <- -1
   expect_true(
-    is_mine_propagation_possible(grid, mines_left = 0, matrix(0, nrow(grid), ncol(grid)))
+    is_mine_propagation_possible(grid, mines_left = 0, init_solved_around(grid))
   )
 })
 
@@ -30,13 +31,13 @@ test_that("is_mine_propagation_possible fonctionne pour un pattern possible de m
               byrow = TRUE
             )
             expect_true(
-              is_mine_propagation_possible(grid, mines_left = NA, matrix(0, nrow(grid), ncol(grid)))
+              is_mine_propagation_possible(grid, mines_left = NA, init_solved_around(grid))
             )
             expect_true(
-              is_mine_propagation_possible(grid, mines_left = 1, matrix(0, nrow(grid), ncol(grid)))
+              is_mine_propagation_possible(grid, mines_left = 1, init_solved_around(grid))
             )
             expect_true(
-              is_mine_propagation_possible(grid, mines_left = 0, matrix(0, nrow(grid), ncol(grid)))
+              is_mine_propagation_possible(grid, mines_left = 0, init_solved_around(grid))
             )
             
             # situation complexe où il faut connaître le nombre de mines pour pouvoir avancer
@@ -56,8 +57,9 @@ test_that("is_mine_propagation_possible fonctionne pour un pattern possible de m
               nrow = 10,
               byrow = TRUE
             )
+
             expect_true(
-              is_mine_propagation_possible(grid, mines_left = NA, grid * 0)
+              is_mine_propagation_possible(grid, mines_left = NA, init_solved_around(grid))
             )
             
             grid <- matrix(
@@ -77,11 +79,11 @@ test_that("is_mine_propagation_possible fonctionne pour un pattern possible de m
               byrow = TRUE
             )
             expect_true(
-              is_mine_propagation_possible(grid, mines_left = 6, matrix(0, nrow(grid), ncol(grid)))
+              is_mine_propagation_possible(grid, mines_left = 6, init_solved_around(grid))
             )
             # oui c'est une solution sans le total de mines, c'est jusqu'on peut pu jouer, mais la partie est valide
             expect_true(
-              is_mine_propagation_possible(grid, mines_left = NA, matrix(0, nrow(grid), ncol(grid)))
+              is_mine_propagation_possible(grid, mines_left = NA, init_solved_around(grid))
             )
             
             # patterns complexe avec combinaisons et nombre de mines total important
@@ -98,13 +100,13 @@ test_that("is_mine_propagation_possible fonctionne pour un pattern possible de m
               byrow = TRUE
             )
             expect_true(
-              is_mine_propagation_possible(grid, mines_left = NA, matrix(0, nrow(grid), ncol(grid)))
+              is_mine_propagation_possible(grid, mines_left = NA, init_solved_around(grid))
             )
             expect_true(
-              is_mine_propagation_possible(grid, mines_left = 6, matrix(0, nrow(grid), ncol(grid)))
+              is_mine_propagation_possible(grid, mines_left = 6, init_solved_around(grid))
             )
             expect_true(
-              is_mine_propagation_possible(grid, mines_left = 5, matrix(0, nrow(grid), ncol(grid)))
+              is_mine_propagation_possible(grid, mines_left = 5, init_solved_around(grid))
             )
             grid <- matrix(
               c(
@@ -119,13 +121,13 @@ test_that("is_mine_propagation_possible fonctionne pour un pattern possible de m
               byrow = TRUE
             )
             expect_true(
-              is_mine_propagation_possible(grid, mines_left = NA, matrix(0, nrow(grid), ncol(grid)))
+              is_mine_propagation_possible(grid, mines_left = NA, init_solved_around(grid))
             )
             expect_true(
-              is_mine_propagation_possible(grid, mines_left = 4, matrix(0, nrow(grid), ncol(grid)))
+              is_mine_propagation_possible(grid, mines_left = 4, init_solved_around(grid))
             )
             expect_false(
-              is_mine_propagation_possible(grid, mines_left = 5, matrix(0, nrow(grid), ncol(grid)))
+              is_mine_propagation_possible(grid, mines_left = 5, init_solved_around(grid))
             )
           }
 )
@@ -167,13 +169,10 @@ test_that("is_mine_propagation_possible avec des boîtes inconnues", {
     ncol = 5,
     byrow = TRUE
   )
+  solved <- init_solved_around(grid)
   expect_true(
-    is_mine_propagation_possible(grid, mines_left = 5, grid * 0)
+    is_mine_propagation_possible(grid, mines_left = 5, solved)
   )
-  solved <- grid * 0
-  for (i in seq_len(length(solved))) {
-    solved <- update_solved_around(grid, solved, i)
-  }
   expect_false(
     is_mine_propagation_possible(grid, mines_left = 6, solved)
   )
@@ -222,10 +221,93 @@ test_that("is_mine_propagation dans des parties avancées", {
     nrow = 17,
     byrow = TRUE
   )
-  solved_around <- grid * 0
-  solved_around[grid == 0] <- 1
-  solved_around[c(1:13, 18:30, 35:47, 52:64, 69:78, 86:94, 120:125, 137:142)] <- 1
+  solved_around <- init_solved_around(grid)
   expect_true(
     is_mine_propagation_possible(grid, mines_left = 12, solved_around)
+  )
+})
+
+test_that("is_mine_propagation dans des parties avancées", {
+  grid <- matrix(
+    c(
+      0, 1, -5, 1, 0, 1, -10, -10, -10,
+      0, 1, 1, 1, 1, 2, -10, -10, -10,
+      0 ,0, 0, 0, 1, -5, 2, 3, -10,
+      0, 0, 1, 2, 4, 3, 2, 2, -10,
+      0, 0, 2, -5, -5, -5, 2, 1, -10,
+      0, 0, 3, -5, -8, -9, -10, -10, -10,
+      1, 1, 3, -5, 3, 2, -10, -10, -10,
+      2, -5, 2, 1, 1, 1, -10, -10, -10,
+      -5, 4, 3, 1, 1, 1, -10, -10, -10,
+      -10, -5, -10, -10, 2, -10, -10, -10, -10,
+      rep(-10, 7 * 9)
+    ),
+    nrow = 17,
+    byrow = TRUE
+  )
+  solved_around <- init_solved_around(grid)
+  expect_true(
+    is_mine_propagation_possible(grid, mines_left = 31, solved_around, click_order = matrix(c(7, 6, 5, 6), nrow = 2))
+  )
+})
+
+test_that("is_mine_propagation dans des parties avancées", {
+  grid <- matrix(
+    c(
+      0, 1, -5, 1, 0, 1, -10, -10, -10,
+      0, 1, 1, 1, 1, 2, -10, -10, -10,
+      0 ,0, 0, 0, 1, -5, 2, 3, -10,
+      0, 0, 1, 2, 4, 3, 2, 2, -10,
+      0, 0, 2, -5, -5, -5, 2, 1, -10,
+      0, 0, 3, -5, -9, -8, -10, -10, -10,
+      1, 1, 3, -5, 3, 2, -10, -10, -10,
+      2, -5, 2, 1, 1, 1, -10, -10, -10,
+      -5, 4, 3, 1, 1, 1, -10, -10, -10,
+      -9, -5, -10, -10, 2, -10, -10, -10, -10,
+      rep(-10, 7 * 9)
+    ),
+    nrow = 17,
+    byrow = TRUE
+  )
+  solved_around <- init_solved_around(grid)
+  debugonce(is_mine_propagation_possible)
+  expect_false(
+    is_mine_propagation_possible(grid, mines_left = 30, solved_around, click_order = matrix(c(7, 6, 5, 6), nrow = 2))
+  )
+  grid[10] <- -8
+  solved_around <- init_solved_around(grid)
+  expect_false(
+    is_mine_propagation_possible(grid, mines_left = 31, solved_around, click_order = matrix(c(7, 6, 5, 6), nrow = 2))
+  )
+})
+
+test_that("is_mine_propagation pour des cas clusters indépendants", {
+  grid <- matrix(
+    c(
+      0, 1, -5, 1, 0, 1, -10, -10, -10,
+      0, 1, 1, 1, 1, 2, -10, -10, -10,
+      0, 0, 0, 0, 1, -5, 2, 3, -10,
+      0, 0, 1, 2, 4, 3, 2, 2, -10,
+      0, 0, 2, -5, -5, -5, 2, 1, -10,
+      0, 0, 3, -5, -10, -10, -10, -10, -10,
+      1, 1, 3, -5, 3, 2, -10, -10, -10,
+      2, -5, 2, 1, 1, 1, -10, -10, -10,
+      -5, 4, 3, 1, 1, 1, -10, -10, -10,
+      -10, -5, -10, -10, 2, -10, -10, -10, -10,
+      -10, -10, -10, -10, -10, -10, -10, -10, -10,
+      -10, -10, -10, -10, -10, -10, -10, -10, 3,
+      -10, -10, -10, -10, -10, 1, -10, -10, -10,
+      -10, -10, -10, -10, -10, -10, -10, -10, -10,
+      -10, -10, -10, -10, -10, -10, -10, -10, -10,
+      -10, -10, -10, -10, -10, -10, -10, -10, -10,
+      1, -10, 1, -10, -10, -10, -10, -10, -10
+    ),
+    nrow = 17,
+    byrow = TRUE
+  )
+  solved_around <- init_solved_around(grid)
+  
+  expect_true(
+    is_mine_propagation_possible(grid, mines_left = 31, solved_around, click_order = matrix(c(7, 5), ncol = 2))
   )
 })

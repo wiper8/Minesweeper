@@ -67,6 +67,7 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
   
   # je prend une cellule avec un chiffre qui a >= 1 inconnu autour
   for (i in i_to_investigate) {
+    print(paste0("i: ", i))
     tmp <- count_core(grid, i)
     values <- tmp$values
     positions <- tmp$positions
