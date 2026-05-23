@@ -291,7 +291,6 @@ test_that("can_deduce_pattern n'a pas de bug de récursion quasi-infinie", {
     byrow = TRUE
   )
   solved_around <- init_solved_around(grid)
-  set.seed(1L)
   tmp <- can_deduce_pattern(grid, mines_left = 32, solved_around, FALSE, click_order = matrix(c(7, 5), nrow = 1), ori = TRUE)
   expect_true(
     is.list(tmp) && length(tmp) == 2 && is.logical(tmp[[2]])
