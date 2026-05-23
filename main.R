@@ -19,12 +19,11 @@ set.seed(2026L)
 show_mines_difficulty(compare_clickers(n = 200, c(6, 4)))
 show_mines_difficulty(compare_clickers(n = 200, c(17, 9)))
 
-# TODO aussi évaluer le temps pour résoudre. Car je souhaite trouver l'espérance de temps avant une première solution 
-# avec n mines, donc parfois plus de mines = essais plus courts = plus d'essais = pas nécessairement plus long
-# si p = 2% avec t=3min, vs p=1% avec t=1min, 1/2% * 3 > 1/1% * 1
-
 hypothesis_test(20, total_mines = 10, dims = c(17, 9), random_clicker, certain_else_random_clicker)
 hypothesis_test(50, total_mines = 56, dims = c(17, 9), certain_else_random_clicker, human_clicker)
+
+show_first_click_probs(n = 15, total_mines = 13, dims = c(10, 5))
+show_first_click_probs(n = 15, total_mines = 40, dims = c(17, 9))
 
 compute_probs_success(n = 100, total_mines = 7, c(10, 8), human_clicker) # begginner
 compute_probs_success(n = 100, total_mines = 15, c(14, 9), human_clicker) # easy
