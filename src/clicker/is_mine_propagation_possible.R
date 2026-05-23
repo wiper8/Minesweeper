@@ -1,14 +1,25 @@
+source("src/fast_setdiff.R")
 source("src/simulate_game.R")
 source("src/game_engine/init_solved_around.R")
 
 #' À partir d'une hypothèse de mines, continuer la partie et évaluer s'il y aura une incohérence ou non
 #'
-is_mine_propagation_possible <- function(grid, mines_left = NA, solved_around, ...) {
+is_mine_propagation_possible <- function(grid, mines_left = NA, solved_around, to_clusterise = TRUE, ...) {
   if (!is_grid_possible(grid)) return(FALSE)
   if (is_game_over(grid, mines_left) == 1) return(TRUE)
-  
+
+  if (!to_clusterise) {
+    propagated_game_end <- main_game_loop(grid, mines_left, certain_core, solved_around = solved_around,
+                                          hypothesis = TRUE, ...)
+    
+    if (propagated_game_end[[2]] == "partie impossible") return(FALSE)
+    if (propagated_game_end[[2]] == "le clicker ne sait pu quoi faire") return(TRUE)
+    if (propagated_game_end[[2]] == "win") return(TRUE)
+    if (propagated_game_end[[2]] == "lost") browser() # ne serait pas supposer perdre avec certain_core comme clicker
+    browser()
+  }
+
   clusters <- independant_clusters(grid, solved_around, mines_left)
-  
   if (length(clusters) == 1) {
     propagated_game_end <- main_game_loop(grid, mines_left, certain_core, solved_around = solved_around,
                                           hypothesis = TRUE, ...)
@@ -77,7 +88,7 @@ independant_clusters <- function(grid, solved_around, mines_left) {
   if (all(solved_around == -1)) {
     return(list(list(
       grid = grid,
-      solved_around = init_solved_around(grid),
+      solved_around = init_solved_around(grid, which(solved_around == -1)),
       bornes_mines = c(mines_left, mines_left),
       possible = "NA",
       last_success_mines = NA
@@ -85,11 +96,8 @@ independant_clusters <- function(grid, solved_around, mines_left) {
   }
   
   res <- list()
-  potential_cluster <- grid * 0 + 1
-  for (i in seq_along(potential_cluster)) {
-    if (solved_around[i] == -1) {
-      potential_cluster[i] <- 0
-    }
+  potential_cluster <- grid * 0 + (solved_around != -1)
+  for (i in which(potential_cluster == 1)) {
     if (potential_cluster[i] == 1) {
       clust <- create_cluster_from_i(grid, i)
       if (any(clust == 1)) {
@@ -105,7 +113,7 @@ independant_clusters <- function(grid, solved_around, mines_left) {
         
         res[[length(res) + 1]] <- list(
           grid = tmp_grid,
-          solved_around = init_solved_around(tmp_grid),
+          solved_around = init_solved_around(tmp_grid, which(solved_around == -1)),
           bornes_mines = bornes_mines1,
           possible = rep("NA", diff(bornes_mines1) + 1),
           last_success_mines = NA
@@ -121,29 +129,16 @@ create_cluster_from_i <- function(grid, i, cluster = NULL) {
   if (is.null(cluster)) cluster <- grid * 0
   tmp <- square_pos_and_get_around_square(i_to_position(i, dim(grid)), grid)
   positions <- tmp[[1]]
-  if (any(tmp[[2]] %in% 0:9)) {
+  if (any(tmp[[2]] > 0)) {
     cluster[i] <- 1
     potential_neighboords <- position_to_i_mat(positions, dim(grid))
-    potential_neighboords <- setdiff( # exclure le centre
-      potential_neighboords,
-      i
-    )
-    potential_neighboords <- setdiff( # exclure les case déjà dans le cluster
-      potential_neighboords,
-      which(cluster == 1)
-    )
+
+    # exclure les cases déjà dans le cluster
+    potential_neighboords <- potential_neighboords[cluster[potential_neighboords] != 1]
+
     # exclure les voisins inconnus ou qui n'apporte pas d'information possible
-    if (grid[i] == unknown_box) {
-      potential_neighboords <- setdiff(
-        potential_neighboords,
-        which(grid %in% c(unknown_box, flag_on_mine, flag_on_no_mine, hypothetical_mine, hypothetical_no_mine))
-      )
-    }
-    if (grid[i] %in% c(flag_on_mine, flag_on_no_mine, hypothetical_mine, hypothetical_no_mine)) {
-      potential_neighboords <- setdiff(
-        potential_neighboords,
-        which(grid == unknown_box)
-      )
+    if (grid[i] %in% hp_brings_no_info_to_center_unknown) {
+      potential_neighboords <- potential_neighboords[!grid[potential_neighboords] %in% hp_brings_no_info_to_center_unknown]
     }
     for (j in potential_neighboords) {
       cluster <- create_cluster_from_i(

@@ -32,8 +32,8 @@ priority_investigate <- function(grid, solved_around) {
   seuil_priorite <- 0.15
   mines_left_around_grid <- grid * NA
   n_unknown_grid <- grid * NA
-  for (i in which(grid > 0 & solved_around %in% -1:0)) {
-    if (solved_around[i] %in% -1:0) {
+  for (i in which(grid > 0 & solved_around < 1)) {
+    if (solved_around[i] < 1) {
       pos <- i_to_position(i, dim(grid))
       values <- get_around_square(pos, grid)
       unknown <- !values %in% known

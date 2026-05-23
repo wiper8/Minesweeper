@@ -8,6 +8,6 @@ compute_probs_success <- function(n, total_mines, dims = c(17, 9), clicker) {
   list(
     mean = mean(wins),
     interval = prob_interval(sum(wins), n),
-    pct_done = mean(pct_done)
+    avg_pct_done = mean(pct_done)
   )
 }

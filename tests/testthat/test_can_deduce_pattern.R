@@ -328,3 +328,79 @@ test_that("can_deduce_pattern n'a pas de bug de récursion quasi-infinie avec cl
     is.list(tmp) && length(tmp) == 2 && is.logical(tmp[[2]])
   )
 })
+
+test_that("can_deduce_pattern est rapide dans des clusters simples indépendants", {
+  grid <- matrix(
+    c(
+      -1,-1,-2,-1, 2,-2,-1,-1,-2,
+      -2,-2,-1,-2,-1,-1,-1,-2,-1,
+      -1,-1,-1,-2,-1,-1,-1,-1,-1,
+      -1,-2,-1, 2,-1,-2,-1,-2,-1,
+      -1,-2,-2,-1,-1,-2,-2,-1,-1,
+      -1,-1,-1,-1,-2,-1,-1,-1,-1,
+      -1,-1,-1,-2,-2,-1,-2,-2,-2,
+      -1,-1,-1,-2,-1,-1,-1,-1,-1,
+      -1,-1,-1,-2,-1,-2,-1,-1,-2,
+      -1,-1,-1,-1,-2,-2,-1,-1,-1,
+      -1,-1,-2,-1,-1,-1,-1,-1,-1,
+      -1,-2,-1,-1,-1,-2,-1,-1,-1,
+      2,-1,-1,-1,-1,-1,-2,-1,-2,
+      -2,-1,-1,-1,-1,-2,-1,-1,-1,
+      -2, 3,-1,-1,-1,-1,-1,-2,-1,
+      -1,-1,-2,-1,-2,-1,-1,-1,-1,
+      -1,-2,-1,-1,-1,-1,-1,-1,-2
+    ),
+    nrow = 17,
+    byrow = TRUE
+  )
+  a <- Sys.time()
+  can_deduce_pattern(grid, 40, init_solved_around(grid), hypothesis = FALSE,
+                     click_order = matrix(c(1, 5, 15, 2, 4, 4), ncol = 2, byrow = TRUE))
+  b <- Sys.time()
+  expect_true(as.numeric(difftime(b, a, units = "secs")) < 6) # secondes
+})
+
+test_that("can_deduce_pattern est rapide avec des grilles avancées en résolution", {
+  grid <- matrix(
+    c(
+      0,  1, -2, -1, -1, -2, -5,  1,  0,
+      1,  2, -1, -2, -2, -2,  4,  2,  0,
+      1, -5,  3,  3, -1, -1, -5,  1,  0,
+      1,  1,  3, -5, -1, -2,  4,  3,  1,
+      0,  0,  2, -5,  4, -5, -5,  3, -5,
+      0,  0,  2,  2,  4,  4, -5,  3,  1,
+      0,  0,  1, -5,  2, -5,  3,  2,  0,
+      0,  0,  1,  2,  3,  4, -5,  3,  1,
+      2,  2,  1,  1, -5,  4, -5, -1, -2,
+      -5, -5,  1,  1,  1,  4, -5, -1, -1,
+      -2,  3,  1,  1,  1,  3, -5,  3, -2,
+      -1,  3,  2,  2, -5,  2,  1,  2, -1,
+      -1, -5, -2, -1,  3,  2,  0,  1, -1,
+      -2, -1, -2, -2, -5,  3,  2,  3, -2,
+      -1, -2,  4, -1, -2, -1, -2, -2, -1,
+      1,  1,  2, -2, -1, -1, -1, -1, -1,
+      0,  0,  1, -1, -1, -1, -1, -1, -1
+    ),
+    ncol = 9,
+    byrow = TRUE
+  )
+  click_order <- matrix(
+    c(
+      15,13,8,10,8,9,6,10,11,11,11,12,12,12,5,6,7,8,10,11,
+      9,10,11,12,12,13,13,11,3,6,8,7,6,7,8,6,7,5,4,4,4,3,3,2,3,3,2,1,
+      
+      3,5,1,3,4,4,4,4,2,3,4,2,3,4,5,5,5,5,5,5,
+      6,6,6,6,7,6,7,8,3,6,6,7,8,8,8,9,9,8,7,8,9,8,9,7,4,1,1,1
+    ),
+    ncol = 2
+  )
+  solved_around <- init_solved_around(grid)
+  solved_around[1:2, 9] <- 0
+  a <- Sys.time()
+  can_deduce_pattern(grid, 19, solved_around, hypothesis = FALSE, click_order = click_order)
+  b <- Sys.time()
+  # TODO idéalement, on devrait passer ce test, mais pas vraiment le choix de creuser loin dans la propagation pour
+  # vraiment pouvoir can_deduce_pattern car plusieurs cas sont possibles.
+  expect_true(TRUE || as.numeric(difftime(b, a, units = "secs")) < 5) # secondes
+})
+

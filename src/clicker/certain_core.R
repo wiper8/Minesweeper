@@ -43,13 +43,28 @@ can_click_all_around <- function(grid, solved_around) {
   NULL
 }
 
-can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, click_order = NULL, ...) {
+can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, click_order = NULL, to_clusterise = TRUE, ...) {
   impossible <- TRUE # pour hypothesis = TRUE
   reached_prop <- FALSE
   i_to_investigate <- find_best_i_to_investigate(grid, solved_around, click_order)
 
+  mines_left_init <- mines_left
+  grid_init <- grid
+  solved_around_init <- solved_around
+  clusters <- if (to_clusterise) {
+    independant_clusters(grid, solved_around, mines_left)
+  } else {
+    NULL
+  }
+
+  # car possible qu'on soit bloqué ET qu'il n'y ait aucun i_to_investigate disponible, qu'il faut guess random
+  if (length(i_to_investigate) == 0 && !hypothesis) impossible <- FALSE
+
   # je prend une cellule avec un chiffre qui a >= 1 inconnu autour
   for (i in i_to_investigate) {
+    mines_left <- mines_left_init
+    grid <- grid_init
+    solved_around <- solved_around_init
     tmp <- count_core(grid, i)
     values <- tmp$values
     positions <- tmp$positions
@@ -68,6 +83,22 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
     # dans les situations où on propage un flag, ça peut arriver
     if (mines_left_around < 0 || n_unknown < mines_left_around || isTRUE(mines_left < mines_left_around)) return("impossible")
 
+    if (!is.null(clusters)) {
+      cluster_concerned <- sapply(clusters, function(clust) clust$solved_around[i] != -1)
+      tmp <- clusters[[which(cluster_concerned)]]
+      grid <- tmp$grid
+      solved_around <- tmp$solved_around
+      # rajouter les mines déjà flagguées des autres clusters
+      if (any(!cluster_concerned)) {
+        mines_left <- mines_left + sum(sapply(
+          clusters[!cluster_concerned],
+          function(clust) {
+            sum(clust$grid == flag_on_mine)
+          }
+        ))
+      }
+    }
+    
     combins <- combn(n_unknown, mines_left_around)
     cache <- rep(NA, ncol(combins))
 
@@ -85,6 +116,7 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
         mines_left = mines_left,
         cache = cache[!mines_has_mine_i],
         click_order = click_order,
+        to_clusterise = FALSE,
         ...
       )
       possible <- possible[!is.na(possible)]
@@ -111,6 +143,7 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
         mines_left = mines_left,
         cache = cache[mines_has_mine_i],
         click_order = click_order,
+        to_clusterise = FALSE,
         ...
       )
       possible <- possible[!is.na(possible)]

@@ -22,3 +22,4 @@ known_but_no_flag <- setdiff(known, c(flag_on_mine, flag_on_no_mine))
 
 hp_flags <- c(flag_on_mine, flag_on_no_mine, hypothetical_mine)
 hp_to_hypo_no_mine <- c(covered_mine, covered_no_mine, uncovered_mine, uncovered_no_mine)
+hp_brings_no_info_to_center_unknown <- c(unknown_box, flag_on_mine, flag_on_no_mine, hypothetical_mine, hypothetical_no_mine)

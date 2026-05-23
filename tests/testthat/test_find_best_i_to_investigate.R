@@ -1,5 +1,24 @@
 source(here("src/clicker/find_best_i_to_investigate.R"))
 
+test_that("find_best_i_to_investigate peut retourner un vecteur de longueur 0 dans des edge cases", {
+  grid <- matrix(
+    c(
+      -2, -1, -1, -1,
+      -2, -1, -1, -2,
+      -1, -1, -1, -2,
+      -1, -1, -1, -1,
+      -5, -5, -1, -1,
+      3, -5, -1, -1
+    ),
+    nrow = 6,
+    byrow = TRUE
+  )
+  expect_equal(
+    length(find_best_i_to_investigate(grid, solved_around = init_solved_around(grid), click_order = NULL)),
+    0
+  )
+})
+
 test_that("find_best_i_to_investigate works", {
   grid <- matrix(
     c(

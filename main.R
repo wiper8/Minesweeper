@@ -13,32 +13,12 @@ simulate_game(40, c(17, 9), certain_else_random_clicker)
 set.seed(2026L)
 compute_probs_success(n = 1000, total_mines = 56, c(17, 9), random_clicker)
 
-# TODO retirer cette section ci-dessous, c'est pour générer un bug précis où le nb de combins est trop élevé
-n <- 28
-time <- rep(NA, n)
-completed <- rep(NA, n)
-set.seed(2026L)
-for (i in seq_len(n)) {
-  print(i)
-  a <- Sys.time()
-  tmp <- simulate_game(40, c(17, 9), certain_else_random_clicker)
-  b <- Sys.time()
-  time[i] <- as.numeric(difftime(b, a, units = "secs"))
-  completed[i] <- mean(tmp[[1]] %in% known)
-}
-
-summary(time)
-ggplot() +
-  geom_histogram(aes(x = time))
-
-ggplot() +
-  geom_point(aes(x = time, y = completed))
-
 set.seed(2026L)
 compute_probs_success(n = 100, total_mines = 40, c(17, 9), certain_else_random_clicker)
 compute_probs_success(n = 100, total_mines = 56, c(17, 9), certain_else_random_clicker)
 
 # graphique
+set.seed(2026L)
 show_mines_difficulty(compare_clickers(n = 200, c(6, 4)))
 show_mines_difficulty(compare_clickers(n = 200, c(17, 9)))
 
