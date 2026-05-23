@@ -25,7 +25,7 @@ show_mines_difficulty <- function(df) {
   ggplot(df) +
     geom_line(aes(x = total_mines, y = probs, col = clicker)) +
     geom_line(aes(x = total_mines, y = probs, col = clicker)) +
-    geom_line(aes(x = total_mines, y = pct_done, col = clicker), linetype = "dashed") +
+    geom_line(aes(x = total_mines, y = avg_pct_done, col = clicker), linetype = "dashed") +
     geom_ribbon(aes(x = total_mines, ymin = probs_low, ymax = probs_high, fill = clicker), alpha = 0.2)
   # TODO ajouter des seuils visuels de facile, moyen, difficile, expert en me basant sur les probs de réussite des vraies applications
 }
@@ -35,7 +35,7 @@ compute_mines_probs_df <- function(n, dims, ...) {
   probs <- rep(NA, length(mines))
   probs_low <- rep(NA, length(mines))
   probs_high <- rep(NA, length(mines))
-  pct_done <- rep(NA, length(mines))
+  avg_pct_done <- rep(NA, length(mines))
 
   stop_threshold <- 1 / 100
   for (i in seq_along(probs)) {
@@ -44,7 +44,7 @@ compute_mines_probs_df <- function(n, dims, ...) {
     probs[i] <- tmp[[1]]
     probs_low[i] <- tmp[[2]][1]
     probs_high[i] <- tmp[[2]][2]
-    pct_done[i] <- tmp[[3]]
+    avg_pct_done[i] <- tmp[[3]]
     if (probs_high[i] <= stop_threshold) {
       print(paste0("stopped at ", i, " / ", length(probs)))
       break
@@ -55,14 +55,14 @@ compute_mines_probs_df <- function(n, dims, ...) {
     probs[i] <- tmp[[1]]
     probs_low[i] <- tmp[[2]][1]
     probs_high[i] <- tmp[[2]][2]
-    pct_done[i] <- tmp[[3]]
+    avg_pct_done[i] <- tmp[[3]]
     if (probs_high[i] <= stop_threshold) {
       print(paste0("stopped at ", i, " / ", length(probs)))
       break
     }
   }
   
-  data.frame(total_mines = mines, probs = probs, probs_low = probs_low, probs_high = probs_high, pct_done = pct_done)
+  data.frame(total_mines = mines, probs = probs, probs_low = probs_low, probs_high = probs_high, avg_pct_done = avg_pct_done)
 }
 
 hypothesis_test <- function(n, total_mines, dims = c(17, 9), clicker1, clicker2) {

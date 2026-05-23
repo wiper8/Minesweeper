@@ -2,6 +2,7 @@ source("src/fast_apply.R")
 source("src/indicies/count.R")
 source("src/game_engine/is_grid_possible.R")
 source("src/clicker/is_mine_propagation_possible.R")
+source("src/clicker/find_best_i_to_investigate.R")
 
 certain_core <- function(grid, mines_left, solved_around, hypothesis, ...) {
   tmp <- can_flag_all_around(grid, mines_left, solved_around)
@@ -42,55 +43,68 @@ can_click_all_around <- function(grid, solved_around) {
   NULL
 }
 
-can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, click_order = NULL) {
+can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, click_order = NULL, to_clusterise = TRUE, ...) {
   impossible <- TRUE # pour hypothesis = TRUE
   reached_prop <- FALSE
-  if (is.null(click_order)) {
-    i_to_investigate <- which(grid > 0 & solved_around == 0)
+  i_to_investigate <- find_best_i_to_investigate(grid, solved_around, click_order)
+
+  mines_left_init <- mines_left
+  grid_init <- grid
+  solved_around_init <- solved_around
+  clusters <- if (to_clusterise) {
+    independant_clusters(grid, solved_around, mines_left)
   } else {
-    i_to_investigate <- position_to_i_mat(click_order[rev(seq_len(nrow(click_order))), , drop = FALSE], dim(grid))
-    # s'assurer de juste investiguer les cases pertinentes
-    i_to_investigate_filtered <- i_to_investigate[grid[i_to_investigate] > 0 & solved_around[i_to_investigate] == 0]
-    # au cas où on en oubli, quand des cases sont révélées automatiquement sans avoir été cliquées
-    to_union <- which(grid > 0 & solved_around == 0)
-    # et les ajouter en ordre de proximité au dernier clicked
-    to_union <- to_union[order(sapply(to_union, function(i) {
-      coordinates <- i_to_position(i, dims = dim(grid))
-      # distance de manhattan
-      sum(abs(coordinates - i_to_position(i_to_investigate[1], dim(grid))))
-    }))]
-    i_to_investigate <- union(
-      i_to_investigate_filtered,
-      to_union
-    )
+    NULL
   }
+
+  # car possible qu'on soit bloqué ET qu'il n'y ait aucun i_to_investigate disponible, qu'il faut guess random
+  if (length(i_to_investigate) == 0 && !hypothesis) impossible <- FALSE
 
   # je prend une cellule avec un chiffre qui a >= 1 inconnu autour
   for (i in i_to_investigate) {
+    mines_left <- mines_left_init
+    grid <- grid_init
+    solved_around <- solved_around_init
     tmp <- count_core(grid, i)
     values <- tmp$values
     positions <- tmp$positions
     unknown <- !values %in% known
     n_unknown <- sum(unknown)
-    
+
     # car quand on essaie un drapeau et de le propager, ça peut arriver qu'il n'y a plus de combinaisons
     if (n_unknown == 0) next
     reached_prop <- TRUE
-    
+
     mines_left_around <- count_mines_left_around(grid, i, values)
     # appliquer toutes les combins de mines autour, et vérifier s'il y a une certitude
     pos_unknown <- positions[unknown, , drop = FALSE]
-    
+
     # tester toutes les combinaisons autour de cette case, vérifier s'il y a toujours ou jamais un drapeau
     # dans les situations où on propage un flag, ça peut arriver
     if (mines_left_around < 0 || n_unknown < mines_left_around || isTRUE(mines_left < mines_left_around)) return("impossible")
+
+    if (!is.null(clusters)) {
+      cluster_concerned <- sapply(clusters, function(clust) clust$solved_around[i] != -1)
+      tmp <- clusters[[which(cluster_concerned)]]
+      grid <- tmp$grid
+      solved_around <- tmp$solved_around
+      # rajouter les mines déjà flagguées des autres clusters
+      if (any(!cluster_concerned)) {
+        mines_left <- mines_left + sum(sapply(
+          clusters[!cluster_concerned],
+          function(clust) {
+            sum(clust$grid == flag_on_mine)
+          }
+        ))
+      }
+    }
     
     combins <- combn(n_unknown, mines_left_around)
     cache <- rep(NA, ncol(combins))
 
     for (mine_i in seq_len(n_unknown)) {
       mines_has_mine_i <- fast_apply(combins, 2, function(comb) mine_i %in% comb)
-      
+
       # je me questionne : parmi les mines restantes autour,
       # si je ne flag JAMAIS une cellule et que toutes les combinaisons ne sont pas possibles,
       # c'est que je dois la flagguer
@@ -101,7 +115,9 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
         solved_around = solved_around,
         mines_left = mines_left,
         cache = cache[!mines_has_mine_i],
-        click_order = click_order
+        click_order = click_order,
+        to_clusterise = FALSE,
+        ...
       )
       possible <- possible[!is.na(possible)]
       cache[which(!mines_has_mine_i)[seq_along(possible)]] <- possible
@@ -116,7 +132,7 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
         # is_mine_propagation_possible qui va dire TRUE
         return(NULL)
       }
-      
+
       # si à l'inverse, je flag la cellule, et que toutes les situations sont impossibles, c'est qu'il n'y a pas de mine!
       # donc la cliquer
       possible <- which_combins_possible(
@@ -126,7 +142,9 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
         solved_around = solved_around,
         mines_left = mines_left,
         cache = cache[mines_has_mine_i],
-        click_order = click_order
+        click_order = click_order,
+        to_clusterise = FALSE,
+        ...
       )
       possible <- possible[!is.na(possible)]
       cache[which(mines_has_mine_i)[seq_along(possible)]] <- possible

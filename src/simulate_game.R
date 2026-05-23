@@ -41,15 +41,23 @@ init_grid_after_first_click <- function(grid, pos, total_mines) {
   grid
 }
 
-main_game_loop <- function(grid, mines_left, clicker, solved_around, hypothesis = FALSE, ...) {
+main_game_loop <- function(grid, mines_left, clicker, solved_around, hypothesis = FALSE, click_order = NULL, ...) {
+  seuil_verbose_duration_click <- 5
   repeat {
+    a <- Sys.time()
     # choisir la prochaine action
-    tmp <- clicker(grid, mines_left = mines_left, solved_around = solved_around, hypothesis = hypothesis, ...)
+    tmp <- clicker(grid, mines_left = mines_left, solved_around = solved_around, hypothesis = hypothesis,
+                   click_order = click_order, ...)
+    b <- Sys.time()
+    duration_for_click <- as.numeric(difftime(b, a, units = "secs"))
+    if (duration_for_click > seuil_verbose_duration_click) {
+      print(paste0("slow selection after ", nrow(click_order), " clicked. ", round(duration_for_click), " secs"))
+    }
     if (hypothesis && isTRUE(all.equal(tmp, "impossible"))) return(list(grid, "partie impossible", solved_around))
     if (isTRUE(all.equal(tmp, "impossible"))) browser()
     if (hypothesis && is.null(tmp)) return(list(grid, "le clicker ne sait pu quoi faire", solved_around))
     if (is.null(tmp)) browser()
-    
+    if (tmp[[2]]) click_order <- rbind(click_order, tmp[[1]])
     tmp2 <- apply_action(grid, tmp[[1]], tmp[[2]], mines_left, solved_around = solved_around, hypothesis = hypothesis, ...)
     grid <- tmp2[[1]]
     mines_left <- tmp2[[3]]

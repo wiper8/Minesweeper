@@ -1,3 +1,4 @@
+source("src/fast_setdiff.R")
 source("src/indicies/i_and_positions.R")
 source("src/indicies/get_around_square.R")
 source("src/indicies/square_pos.R")
@@ -16,7 +17,7 @@ source("src/game_engine/compute_box_number.R")
 #' @export
 #'
 #' @examples
-#' update_grid(matrix(c(-1, -1, -1, -2, -1, -1, -1, -1, -3), nrow = 3, ncol = 3), NA, FALSE)
+#' update_grid(matrix(c(-1, -1, -1, -2, -1, -1, -1, -1, -3), nrow = 3, ncol = 3), NA)
 update_grid <- function(grid, mines_left, solved_around = grid * 0 - 1, hypothesis = FALSE, backlog = NULL, ...) {
   for (i in which(grid == uncovered_no_mine)) {
     if (hypothesis && grid[i] == uncovered_no_mine) grid[i] <- hypothetical_no_mine
@@ -45,20 +46,21 @@ update_grid <- function(grid, mines_left, solved_around = grid * 0 - 1, hypothes
       solved_around <- tmp[[2]]
       mines_left <- tmp[[3]]
     } else {
-      solved_around <- update_solved_around(grid, solved_around, i)
-      
       # où on aurait cliqué
-      if (!is.null(backlog)) {
-        k <- position_to_i_mat(backlog, dim(grid))
-        for (j in k) {
-          solved_around <- update_solved_around(grid, solved_around, j)
-        }
+      k <- if (is.null(backlog)) {
+        i
+      } else {
+        unique(c(i, position_to_i_mat(backlog, dim(grid))))
       }
-      
+
+      for (j in k) {
+        solved_around <- update_solved_around(grid, solved_around, j)
+      }
+
       # où on aurait pas cliqué, mais potentiellement 0 -> 1
       around_pos <- square_pos(pos, grid)
-      k <- position_to_i_mat(around_pos, dim(grid))
-      for (j in k) {
+      k2 <- position_to_i_mat(around_pos, dim(grid))
+      for (j in fast_setdiff_no_unique(k2, k)) {
         solved_around <- update_solved_around(grid, solved_around, j, around_too = FALSE)
       }
     }

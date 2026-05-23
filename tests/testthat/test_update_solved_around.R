@@ -24,10 +24,9 @@ test_that("update_solved_around met à jour autour du i ciblé", {
     ncol = 9,
     byrow = TRUE
   )
-  # cas où on vient d'ajouter un flag
   expect_equal(
     update_solved_around(grid, solved_around, 26)[17],
-    0
+    -1
   )
   expect_equal(
     update_solved_around(grid, solved_around, 28)[28],
@@ -49,5 +48,29 @@ test_that("update_solved_around met à jour autour du i ciblé", {
   expect_equal(
     update_solved_around(grid, solved_around, 65)[c(57, 58, 66)],
     c(0, 0, 0)
+  )
+})
+
+test_that("update_solved_around ne considère pas un flag comme un info pour aider à identifier la case du centre", {
+  grid <- matrix(
+    c(
+      -10, -5,
+      -10, -10
+    ),
+    ncol = 2,
+    byrow = TRUE
+  )
+  solved_around <- matrix(
+    c(
+      -1, -1,
+      -1, -1
+    ),
+    ncol = 2,
+    byrow = TRUE
+  )
+  # cas où on vient d'ajouter un flag
+  expect_equal(
+    update_solved_around(grid, solved_around, 1)[2],
+    -1
   )
 })

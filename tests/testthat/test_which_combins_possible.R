@@ -147,3 +147,51 @@ test_that("which_combins_possible pour des cas complexes", {
     c(FALSE, FALSE, FALSE)
   )
 })
+
+test_that("which_combins_possible pour des cas complexes", {
+  grid <- matrix(
+    c(
+      -8, -8, -5, -10, -10,
+      1, 3, 3, 4, -10,
+      -9, 3, -5, -10, -10,
+      -8, 4, -5, 3, 1,
+      2, -5, 2, 1, 0,
+      -9, 2, 1, 0, 0,
+      -8, 1, 0, 0, 0,
+      1, 2, 1, 2, 1,
+      -9, 3, -5, 3, -5,
+      -10, -10, -10, -10, -10
+    ),
+    nrow = 10,
+    byrow = TRUE
+  )
+  solved_around <- init_solved_around(grid)
+  
+  expect_false(
+    which_combins_possible(
+      grid,
+      matrix(1, nrow = 1),
+      matrix(c(10, 10, 10, 1:3), ncol = 2),
+      solved_around = solved_around,
+      mines_left = 3
+    )[1]
+  )
+  expect_false(
+    which_combins_possible(
+      grid,
+      matrix(2, nrow = 1),
+      matrix(c(10, 10, 10, 1:3), ncol = 2),
+      solved_around = solved_around,
+      mines_left = 3
+    )[1]
+  )
+  expect_true(
+    which_combins_possible(
+      grid,
+      matrix(3, nrow = 1),
+      matrix(c(10, 10, 10, 1:3), ncol = 2),
+      solved_around = solved_around,
+      mines_left = 3
+    )[1]
+  )
+})
