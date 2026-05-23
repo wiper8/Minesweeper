@@ -52,7 +52,7 @@ apply_action <- function(grid, pos, action, mines_left, solved_around = grid * 0
 #' @param i entier : indice de la case qui vient d'être actionnée, peu importe l'action
 #' @param around_too : est-ce qu'on suppose qu'on a cliqué sur les cases autour de la cellule également ?
 update_solved_around <- function(grid, solved_around, i, around_too = TRUE) {
-  if (solved_around[i] %in% -1:0) {
+  if (solved_around[i] <= 0) {
     pos <- i_to_position(i, dim(grid))
     tmp <- square_pos_and_get_around_square(pos, grid)
     positions <- tmp[[1]]

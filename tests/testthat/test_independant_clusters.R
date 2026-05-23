@@ -1,5 +1,23 @@
 source(here("src/clicker/is_mine_propagation_possible.R"))
 
+test_that("independant_clusters associe chaque case à un seul cluster au maximum", {
+  grid <- matrix(
+    c(
+      0, 0, 1, -1,
+      0, 0, 2, -2,
+      0, 0, 3, -2,
+      1, 1, 2, -2,
+      -2, -1, -1, -1
+    ),
+    ncol = 4,
+    byrow = TRUE
+  )
+  clusters <- independant_clusters(grid, init_solved_around(grid), mines_left = NA)
+  expect_true(
+    all(sapply(seq_along(grid), function(i) sum(sapply(clusters, function(clust) clust$solved_around[i] != -1)) <= 1))
+  )
+})
+
 test_that("independant_clusters fonctionne pour des hypothesis = FALSE", {
   grid <- matrix(
     c(

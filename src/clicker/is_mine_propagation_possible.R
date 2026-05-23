@@ -86,9 +86,10 @@ try_solve_a_cluster <- function(clusters, clust_i, mines_left, grid, ...) {
 
 independant_clusters <- function(grid, solved_around, mines_left) {
   if (all(solved_around == -1)) {
+    new_solved_around <- init_solved_around(grid, which(solved_around == -1))
     return(list(list(
       grid = grid,
-      solved_around = init_solved_around(grid, which(solved_around == -1)),
+      solved_around = new_solved_around,
       bornes_mines = c(mines_left, mines_left),
       possible = "NA",
       last_success_mines = NA
@@ -111,9 +112,10 @@ independant_clusters <- function(grid, solved_around, mines_left) {
         
         if (all(tmp_grid == -10)) browser() # impossible de créer un cluster vide
         
+        new_solved_around <- init_solved_around(tmp_grid, which(solved_around == -1))
         res[[length(res) + 1]] <- list(
           grid = tmp_grid,
-          solved_around = init_solved_around(tmp_grid, which(solved_around == -1)),
+          solved_around = new_solved_around,
           bornes_mines = bornes_mines1,
           possible = rep("NA", diff(bornes_mines1) + 1),
           last_success_mines = NA
@@ -140,6 +142,8 @@ create_cluster_from_i <- function(grid, i, cluster = NULL) {
     if (grid[i] %in% hp_brings_no_info_to_center_unknown) {
       potential_neighboords <- potential_neighboords[!grid[potential_neighboords] %in% hp_brings_no_info_to_center_unknown]
     }
+    # voie rapide pour les voisins dévoilés : automatiquements ajoutés au cluster
+    cluster[potential_neighboords][grid[potential_neighboords] > 0] <- 1
     for (j in potential_neighboords) {
       cluster <- create_cluster_from_i(
         grid,

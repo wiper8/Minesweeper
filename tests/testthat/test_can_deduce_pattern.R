@@ -161,7 +161,7 @@ test_that("can_deduce_pattern ajoute les flags qui sont certains autour des case
 })
 
 test_that("can_deduce_pattern works for well known minesweeper patterns", {
-  res <- mapply(can_deduce_pattern, patterns, NA, sapply(patterns, function(mat) mat * 0), FALSE, SIMPLIFY = FALSE)
+  res <- mapply(can_deduce_pattern, patterns, NA, sapply(patterns, init_solved_around), FALSE, SIMPLIFY = FALSE)
   expect_true(
     all(!sapply(res, is.null))
   )
