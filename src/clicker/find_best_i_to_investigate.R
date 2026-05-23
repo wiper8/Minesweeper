@@ -1,5 +1,5 @@
-source(here("src/indicies/i_and_positions.R"))
-source(here("src/indicies/get_around_square.R"))
+source("src/indicies/i_and_positions.R")
+source("src/indicies/get_around_square.R")
 
 find_best_i_to_investigate <- function(grid, solved_around, click_order) {
   priorities_i <- priority_investigate(grid, solved_around)
