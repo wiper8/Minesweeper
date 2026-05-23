@@ -16,11 +16,11 @@ source("src/clicker/random_first_click.R")
 #'
 #' @examples
 #' simulate_game(10, c(10, 8), random_clicker)
-simulate_game <- function(total_mines, dims = c(17, 9), clicker) {
+simulate_game <- function(total_mines, dims = c(17, 9), clicker, first_click = NULL) {
   grid <- matrix(NA, nrow = dims[1], ncol = dims[2])
   # TODO changer pour une meilleure fonction, il est possible que commencer au centre ou aux coins est avantageux
   # faiblement
-  first_click <- random_first_click(dims)
+  if (is.null(first_click)) first_click <- random_first_click(dims)
   grid <- init_grid_after_first_click(grid, first_click, total_mines)
   solved_around <- matrix(-1, nrow = nrow(grid), ncol = ncol(grid))
   mines_left <- total_mines

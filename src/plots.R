@@ -1,7 +1,51 @@
 library(ggplot2)
+source("src/indicies/i_and_positions.R")
 
-show_first_click_probs <- function(total_mines, dims) {
-  # TODO
+show_first_click_probs <- function(n, total_mines, dims) {
+  ### TODO fonction à compléter
+  # positions de clicks initiaux à essayer, sans symétries
+  first_click_to_try <- expand.grid(seq_len(ceiling(dims[1] / 2)), seq_len(ceiling(dims[2] / 2))) |> unname() |> as.matrix()
+  upper_left <- apply(
+    first_click_to_try,
+    1,
+    function(first_click) {
+      print(paste0(position_to_i(first_click, dims), " / ", prod(dims)))
+      # TODO remplacer par human_clicker
+      all_simuls <- replicate(n, simulate_game(total_mines, dims, certain_else_random_clicker, first_click = first_click), simplify = FALSE)
+      wins <- mean(sapply(all_simuls, function(lst) lst[[2]] == "win"))
+    }
+  ) |>
+    matrix(nrow = ceiling(dims[1] / 2))
+
+  # Limiter les symétries en ne faisant pas le expand.grid au complet et en propagant les résultats
+  # en miroitant les symmétries
+  left <- upper_left
+  right <- upper_left[, seq_len(dims[2] - ncol(upper_left)), drop = FALSE]
+  right <- right[, rev(seq_len(ncol(right))), drop = FALSE]
+  full_row_block <- cbind(left, right)
+  # Mirror vertically (top-bottom)
+  top <- full_row_block
+  bottom <- full_row_block[seq_len(dims[1] - nrow(upper_left)), , drop = FALSE]
+  bottom <- bottom[rev(seq_len(nrow(bottom))), , drop = FALSE]
+  res <- rbind(top, bottom)
+
+  # plot
+  df <- data.frame(
+    row = rep(seq_len(dims[1]), times = dims[2]),
+    col = rep(seq_len(dims[2]), each = dims[1]),
+    value = as.vector(res)
+  )
+  print(
+    ggplot(df, aes(x = col, y = row, fill = value)) +
+      geom_tile(color = "white") +
+      scale_fill_gradient(low = "red", high = "green") +
+      scale_y_reverse() +
+      coord_fixed() +
+      theme_minimal() +
+      labs(x = "Column", y = "Row", fill = "Value")
+  )
+
+  res
 }
 
 show_box_probs <- function(total_mines, grid) {
