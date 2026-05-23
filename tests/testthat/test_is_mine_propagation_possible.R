@@ -61,7 +61,7 @@ test_that("is_mine_propagation_possible fonctionne pour un pattern possible de m
             expect_true(
               is_mine_propagation_possible(grid, mines_left = NA, init_solved_around(grid))
             )
-            
+
             grid <- matrix(
               c(
                 -1, -1, -5, -2, -1,
@@ -306,7 +306,7 @@ test_that("is_mine_propagation pour des cas clusters indépendants", {
     byrow = TRUE
   )
   solved_around <- init_solved_around(grid)
-  
+
   expect_true(
     is_mine_propagation_possible(grid, mines_left = 31, solved_around, click_order = matrix(c(7, 5), ncol = 2))
   )
