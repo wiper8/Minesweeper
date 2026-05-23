@@ -9,7 +9,7 @@ show_first_click_probs <- function(n, total_mines, dims) {
     first_click_to_try,
     1,
     function(first_click) {
-      print(paste0(position_to_i(first_click, dims), " / ", prod(dims)))
+      print(paste0(position_to_i(first_click, dims), " / ", nrow(first_click_to_try)))
       # TODO remplacer par human_clicker
       all_simuls <- replicate(n, simulate_game(total_mines, dims, certain_else_random_clicker, first_click = first_click), simplify = FALSE)
       wins <- mean(sapply(all_simuls, function(lst) lst[[2]] == "win"))

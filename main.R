@@ -22,6 +22,7 @@ show_mines_difficulty(compare_clickers(n = 200, c(17, 9)))
 hypothesis_test(20, total_mines = 10, dims = c(17, 9), random_clicker, certain_else_random_clicker)
 hypothesis_test(50, total_mines = 56, dims = c(17, 9), certain_else_random_clicker, human_clicker)
 
+show_first_click_probs(n = 15, total_mines = 13, dims = c(10, 5))
 show_first_click_probs(n = 15, total_mines = 40, dims = c(17, 9))
 
 compute_probs_success(n = 100, total_mines = 7, c(10, 8), human_clicker) # begginner
