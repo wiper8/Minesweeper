@@ -2,6 +2,7 @@ source("src/fast_apply.R")
 source("src/indicies/count.R")
 source("src/game_engine/is_grid_possible.R")
 source("src/clicker/is_mine_propagation_possible.R")
+source("src/clicker/find_best_i_to_investigate.R")
 
 certain_core <- function(grid, mines_left, solved_around, hypothesis, ...) {
   tmp <- can_flag_all_around(grid, mines_left, solved_around)
@@ -45,29 +46,10 @@ can_click_all_around <- function(grid, solved_around) {
 can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, click_order = NULL, ...) {
   impossible <- TRUE # pour hypothesis = TRUE
   reached_prop <- FALSE
-  if (is.null(click_order)) {
-    i_to_investigate <- which(grid > 0 & solved_around == 0)
-  } else {
-    i_to_investigate <- position_to_i_mat(click_order[rev(seq_len(nrow(click_order))), , drop = FALSE], dim(grid))
-    # s'assurer de juste investiguer les cases pertinentes
-    i_to_investigate_filtered <- i_to_investigate[grid[i_to_investigate] > 0 & solved_around[i_to_investigate] == 0]
-    # au cas où on en oubli, quand des cases sont révélées automatiquement sans avoir été cliquées
-    to_union <- which(grid > 0 & solved_around == 0)
-    # et les ajouter en ordre de proximité au dernier clicked
-    to_union <- to_union[order(sapply(to_union, function(i) {
-      coordinates <- i_to_position(i, dims = dim(grid))
-      # distance de manhattan
-      sum(abs(coordinates - i_to_position(i_to_investigate[1], dim(grid))))
-    }))]
-    i_to_investigate <- union(
-      i_to_investigate_filtered,
-      to_union
-    )
-  }
+  i_to_investigate <- find_best_i_to_investigate(grid, solved_around, click_order)
   
   # je prend une cellule avec un chiffre qui a >= 1 inconnu autour
   for (i in i_to_investigate) {
-    print(paste0("i: ", i))
     tmp <- count_core(grid, i)
     values <- tmp$values
     positions <- tmp$positions
