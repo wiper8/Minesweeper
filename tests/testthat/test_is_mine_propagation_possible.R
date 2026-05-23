@@ -270,11 +270,15 @@ test_that("is_mine_propagation dans des parties avancées", {
     byrow = TRUE
   )
   solved_around <- init_solved_around(grid)
-  debugonce(is_mine_propagation_possible)
   expect_false(
     is_mine_propagation_possible(grid, mines_left = 30, solved_around, click_order = matrix(c(7, 6, 5, 6), nrow = 2))
   )
   grid[10] <- -8
+  solved_around <- init_solved_around(grid)
+  expect_false(
+    is_mine_propagation_possible(grid, mines_left = 31, solved_around, click_order = matrix(c(7, 6, 5, 6), nrow = 2))
+  )
+  grid[10] <- -10
   solved_around <- init_solved_around(grid)
   expect_false(
     is_mine_propagation_possible(grid, mines_left = 31, solved_around, click_order = matrix(c(7, 6, 5, 6), nrow = 2))
