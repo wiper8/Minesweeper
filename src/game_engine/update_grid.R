@@ -18,12 +18,12 @@ source("src/game_engine/compute_box_number.R")
 #'
 #' @examples
 #' update_grid(matrix(c(-1, -1, -1, -2, -1, -1, -1, -1, -3), nrow = 3, ncol = 3), NA)
-update_grid <- function(grid, mines_left, solved_around = grid * 0 - 1, hypothesis = FALSE, backlog = NULL, ...) {
+update_grid <- function(grid, mines_left, solved_around = grid * 0 - 1, hypothesis = 0, backlog = NULL, ...) {
   for (i in which(grid == uncovered_no_mine)) {
-    if (hypothesis && grid[i] == uncovered_no_mine) grid[i] <- hypothetical_no_mine
+    if (hypothesis == 2 && grid[i] == uncovered_no_mine) grid[i] <- hypothetical_no_mine
     pos <- i_to_position(i, dim(grid))
     square <- get_around_square(pos, grid)
-    if (!hypothesis) grid[i] <- compute_box_number(square, ...) # calculer le chiffre à mettre
+    if (hypothesis != 2) grid[i] <- compute_box_number(square, ...) # calculer le chiffre à mettre
     
     if (grid[i] == 0) {
       update_solved_backlog <- if (is.null(backlog)) {

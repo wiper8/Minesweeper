@@ -44,7 +44,7 @@ can_click_all_around <- function(grid, solved_around) {
 }
 
 can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, click_order = NULL, to_clusterise = TRUE, ...) {
-  impossible <- TRUE # pour hypothesis = TRUE
+  impossible <- TRUE # pour hypothesis = 2
   reached_prop <- FALSE
   i_to_investigate <- find_best_i_to_investigate(grid, solved_around, click_order)
 
@@ -58,7 +58,7 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
   }
 
   # car possible qu'on soit bloqué ET qu'il n'y ait aucun i_to_investigate disponible, qu'il faut guess random
-  if (length(i_to_investigate) == 0 && !hypothesis) impossible <- FALSE
+  if (length(i_to_investigate) == 0 && hypothesis != 2) impossible <- FALSE
 
   global_cache <- list() # cache des cas POSSIBLES, pas confirmés
   
@@ -148,11 +148,11 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
       }
       possible <- possible[!is.na(possible)]
       cache[which(!mines_has_mine_i)[seq_along(possible)]] <- possible
-      if (!hypothesis && all(!possible)) return(list(pos_unknown[mine_i, ], FALSE))
+      if (hypothesis != 2 && all(!possible)) return(list(pos_unknown[mine_i, ], FALSE))
       if (any(possible)) {
         impossible <- FALSE
       }
-      if (hypothesis && !impossible) {
+      if (hypothesis == 2 && !impossible) {
         # on a trouvé un cas possible, on va dire que le clicker ne sait pu quoi faire pour l'instant
         # fonctionne uniquement en mode hypothesis, et parce que certain_core va retourner NULL, et que dans
         # main_game_loop, va trouver une exception "le clicker ne sait pu quoi faire" et renvoyer ça à
@@ -200,21 +200,21 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
       }
       possible <- possible[!is.na(possible)]
       cache[which(mines_has_mine_i)[seq_along(possible)]] <- possible
-      if (!hypothesis && all(!possible)) return(list(pos_unknown[mine_i, ], TRUE))
+      if (hypothesis != 2 && all(!possible)) return(list(pos_unknown[mine_i, ], TRUE))
       if (any(possible)) {
         impossible <- FALSE
       }
-      if (hypothesis && !impossible) {
+      if (hypothesis == 2 && !impossible) {
         return(NULL) # voir commentaire précédent
       }
-      if (hypothesis && isTRUE(all(!cache))) return("impossible")
+      if (hypothesis == 2 && isTRUE(all(!cache))) return("impossible")
     }
   }
   tmp <- deduce_unknown_boxes(grid, mines_left)
   if (!is.null(tmp)) return(tmp)
   if (isTRUE(all.equal(tmp, "impossible"))) return("impossible")
-  if (!hypothesis && reached_prop && impossible) browser() # pas sensé etre impossible si on n'est pas en exploration
-  if (hypothesis && reached_prop) return("impossible")
+  if (hypothesis != 2 && reached_prop && impossible) browser() # pas sensé etre impossible si on n'est pas en exploration
+  if (hypothesis == 2 && reached_prop) return("impossible")
   NULL # ne sait pas quoi faire
 }
 
@@ -269,7 +269,7 @@ which_combins_possible <- function(grid, combins, pos_unknown, solved_around, mi
 
     for (j in i_to_flag) {
       tmp <- apply_action(grid_tmp_propagate, i_to_position(j, dim(grid_tmp_propagate)), action = FALSE, mines_left,
-                          solved_around, hypothesis = TRUE, ...)
+                          solved_around, hypothesis = 2, ...)
       grid_tmp_propagate <- tmp[[1]]
       mines_left <- tmp[[3]]
       solved_around <- tmp[[4]]
@@ -278,7 +278,7 @@ which_combins_possible <- function(grid, combins, pos_unknown, solved_around, mi
     for (j in i_to_click) {
       j_pos <- i_to_position(j, dim(grid_tmp_propagate))
       tmp <- apply_action(grid_tmp_propagate, j_pos, action = TRUE, mines_left,
-                          solved_around, hypothesis = TRUE, ...)
+                          solved_around, hypothesis = 2, ...)
       grid_tmp_propagate <- tmp[[1]]
       mines_left <- tmp[[3]]
       solved_around <- tmp[[4]]

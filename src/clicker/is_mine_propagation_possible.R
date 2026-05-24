@@ -10,7 +10,7 @@ is_mine_propagation_possible <- function(grid, mines_left = NA, solved_around, t
 
   if (!to_clusterise) {
     propagated_game_end <- main_game_loop(grid, mines_left, certain_core, solved_around = solved_around,
-                                          hypothesis = TRUE, ...)
+                                          hypothesis = 2, ...)
     
     if (propagated_game_end[[2]] == "partie impossible") return(FALSE)
     if (propagated_game_end[[2]] == "le clicker ne sait pu quoi faire") return(TRUE)
@@ -22,7 +22,7 @@ is_mine_propagation_possible <- function(grid, mines_left = NA, solved_around, t
   clusters <- independant_clusters(grid, solved_around, mines_left)
   if (length(clusters) == 1) {
     propagated_game_end <- main_game_loop(grid, mines_left, certain_core, solved_around = solved_around,
-                                          hypothesis = TRUE, ...)
+                                          hypothesis = 2, ...)
     
     if (propagated_game_end[[2]] == "partie impossible") return(FALSE)
     if (propagated_game_end[[2]] == "le clicker ne sait pu quoi faire") return(TRUE)
@@ -47,7 +47,7 @@ try_solve_a_cluster <- function(clusters, clust_i, mines_left, grid, ...) {
   # simuler une nouvelle partie avec un clicker certain
   propagated_game_end <- main_game_loop(
     clusters[[clust_i]]$grid, trials_order[1], certain_core,
-    solved_around = clusters[[clust_i]]$solved_around, hypothesis = TRUE, ...
+    solved_around = clusters[[clust_i]]$solved_around, hypothesis = 2, ...
   )
   
   # si ça fonctionne, tenter de résoudre les autres clusters en ajustant récursivement les mines restantes

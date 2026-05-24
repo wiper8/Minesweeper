@@ -171,7 +171,7 @@ test_that("update_grid fonctionne lors de propagation hypothesis", {
   )
 
   expect_equal(
-    update_grid(grid4, 28, solved_around4, hypothesis = TRUE)[[2]],
+    update_grid(grid4, 28, solved_around4, hypothesis = 2)[[2]],
     matrix(
       c(
         rep(1, 5), rep(0, 4),
@@ -193,7 +193,7 @@ test_that("update_grid fonctionne lors de propagation hypothesis", {
   grid4[6, 5] <- -9
   grid4[6, 6] <- -3
   expect_equal(
-    update_grid(grid4, 28, solved_around4, hypothesis = TRUE)[[2]][45:47],
+    update_grid(grid4, 28, solved_around4, hypothesis = 2)[[2]][45:47],
     c(1, 1, 1)
   )
 })

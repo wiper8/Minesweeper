@@ -1,4 +1,10 @@
-probabilistic_clicker <- function(grid, mines_left, solved_around, hypothesis, click_order = NULL, to_clusterise = TRUE, ...) {
+probabilistic_clicker <- function(grid, ...) {
+  probs_grid <- compute_grid_probabilities(grid, ...)
+  next_i <- which.min(probs_grid)
+  list(i_to_position(next_i, dim(grid)), TRUE, "probabilistic")
+}
+
+compute_grid_probabilities <- function(grid, mines_left, solved_around, hypothesis, click_order = NULL, to_clusterise = TRUE, ...) {
   i_to_investigate <- find_best_i_to_investigate(grid, solved_around, click_order)
   
   mines_left_init <- mines_left
@@ -10,7 +16,7 @@ probabilistic_clicker <- function(grid, mines_left, solved_around, hypothesis, c
     NULL
   }
   
-  probs_grid <- grid * 0
+  probs_grid <- grid * NA
 
   # je prend une cellule avec un chiffre qui a >= 1 inconnu autour
   for (i in i_to_investigate) {
@@ -52,10 +58,11 @@ probabilistic_clicker <- function(grid, mines_left, solved_around, hypothesis, c
     
     around_probs <- rep(NA, n_unknown)
     for (mine_i in seq_len(n_unknown)) {
-      click_order_tmp <- rbind(click_order, positions[unknown, , drop = FALSE][mine_i, ])
+      next_click <- positions[unknown, , drop = FALSE][mine_i, ]
+      click_order_tmp <- rbind(click_order, next_click)
       around_probs[mine_i] <- compute_mine_probability(
         grid,
-        positions[unknown, , drop = FALSE][mine_i, ],
+        next_click,
         mines_left = mines_left,
         solved_around = solved_around,
         click_order = click_order_tmp,
@@ -64,7 +71,7 @@ probabilistic_clicker <- function(grid, mines_left, solved_around, hypothesis, c
       )
     }
   }
-  # TODO calculer prob d'une cellule 100% inconnue et indépendante
-  # TODO choisir la plus basse prob et cliquer dessus
-  
+  if (any(is.na(probs_grid))) browser()
+  if (any(probs_grid == 0 | probs_grid == 1)) browser() # pas sensé déclancher car certain_core devrait tout trouver
+  probs_grid
 }

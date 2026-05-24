@@ -18,7 +18,7 @@ test_that("independant_clusters associe chaque case à un seul cluster au maximu
   )
 })
 
-test_that("independant_clusters fonctionne pour des hypothesis = FALSE", {
+test_that("independant_clusters fonctionne pour des hypothesis != 2", {
   grid <- matrix(
     c(
       -5, 4, -5, 3, -2, 1,
