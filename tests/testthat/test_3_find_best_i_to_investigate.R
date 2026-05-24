@@ -19,6 +19,40 @@ test_that("find_best_i_to_investigate peut retourner un vecteur de longueur 0 da
   )
 })
 
+test_that("find_best_i_to_investigate ne retourne pas de NA", {
+  grid <- matrix(
+    c(
+      -1, -2, -2, -1,
+      -2, -2, -2, -2,
+      -1, -2, -2, -2,
+      -5, -5, -5, -5,
+      5, -5, 5, 2,
+      -5, -5, 2, 0
+    ),
+    nrow = 6,
+    byrow = TRUE
+  )
+  solved_around <- init_solved_around(grid2)
+  solved_around[6, 3:4] <- 0
+  expect_true(
+    all(!is.na(
+      find_best_i_to_investigate(
+        grid, solved_around,
+        click_order = matrix(
+          c(
+            5, 1,
+            6, 3,
+            5, 3,
+            6, 4
+          ),
+          ncol = 2,
+          byrow = TRUE
+        )
+      )
+    ))
+  )
+})
+
 test_that("find_best_i_to_investigate works", {
   grid <- matrix(
     c(

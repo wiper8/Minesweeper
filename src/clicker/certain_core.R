@@ -215,7 +215,7 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
   tmp <- deduce_unknown_boxes(grid, mines_left)
   if (!is.null(tmp)) return(tmp)
   if (isTRUE(all.equal(tmp, "impossible"))) return("impossible")
-  if (!hypothesis && impossible) browser() # pas sensé etre impossible si on n'est pas en exploration
+  if (!hypothesis && reached_prop && impossible) browser() # pas sensé etre impossible si on n'est pas en exploration
   if (hypothesis && reached_prop) return("impossible")
   NULL # ne sait pas quoi faire
 }
