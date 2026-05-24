@@ -43,8 +43,7 @@ can_click_all_around <- function(grid, solved_around) {
   NULL
 }
 
-can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, click_order = NULL, to_clusterise = TRUE, 
-                               verbose = FALSE, ...) {
+can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, click_order = NULL, to_clusterise = TRUE, ...) {
   impossible <- TRUE # pour hypothesis = TRUE
   reached_prop <- FALSE
   i_to_investigate <- find_best_i_to_investigate(grid, solved_around, click_order)
@@ -65,7 +64,6 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
   
   # je prend une cellule avec un chiffre qui a >= 1 inconnu autour
   for (i in i_to_investigate) {
-    if (verbose) print(i)
     mines_left <- mines_left_init
     grid <- grid_init
     solved_around <- solved_around_init
