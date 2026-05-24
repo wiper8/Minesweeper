@@ -399,6 +399,6 @@ test_that("can_deduce_pattern est rapide avec des grilles avancées en résoluti
   a <- Sys.time()
   can_deduce_pattern(grid, 19, solved_around, hypothesis = FALSE, click_order = click_order)
   b <- Sys.time()
-  expect_true(as.numeric(difftime(b, a, units = "secs")) < 5.5) # secondes
+  expect_true(as.numeric(difftime(b, a, units = "secs")) < 4) # secondes
 })
 

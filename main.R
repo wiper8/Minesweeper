@@ -26,8 +26,9 @@ hypothesis_test(20, total_mines = 10, dims = c(17, 9), random_clicker, certain_e
 hypothesis_test(50, total_mines = 56, dims = c(17, 9), certain_else_random_clicker, human_clicker)
 
 # pour optimiser où cliquer au début d'une partie (coin, côté ou centre)
-show_first_click_probs(n = 15, total_mines = 13, dims = c(10, 5))
-show_first_click_probs(n = 15, total_mines = 40, dims = c(17, 9))
+set.seed(2026L)
+show_first_click_probs(n = 200, total_mines = 13, dims = c(10, 5))
+show_first_click_probs(n = 100, total_mines = 40, dims = c(17, 9))
 
 # estimer les probabilités de succès selon les niveaux préétablis d'une application
 compute_probs_success(n = 100, total_mines = 7, c(10, 8), human_clicker) # begginner

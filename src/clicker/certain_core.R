@@ -43,7 +43,8 @@ can_click_all_around <- function(grid, solved_around) {
   NULL
 }
 
-can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, click_order = NULL, to_clusterise = TRUE, ...) {
+can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, click_order = NULL, to_clusterise = TRUE, 
+                               verbose = FALSE, ...) {
   impossible <- TRUE # pour hypothesis = TRUE
   reached_prop <- FALSE
   i_to_investigate <- find_best_i_to_investigate(grid, solved_around, click_order)
@@ -60,10 +61,11 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
   # car possible qu'on soit bloqué ET qu'il n'y ait aucun i_to_investigate disponible, qu'il faut guess random
   if (length(i_to_investigate) == 0 && !hypothesis) impossible <- FALSE
 
-  global_cache <- list()
+  global_cache <- list() # cache des cas POSSIBLES, pas confirmés
   
   # je prend une cellule avec un chiffre qui a >= 1 inconnu autour
   for (i in i_to_investigate) {
+    if (verbose) print(i)
     mines_left <- mines_left_init
     grid <- grid_init
     solved_around <- solved_around_init
@@ -126,20 +128,22 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
         not_in_cache_yet <- !any(sapply(
           global_cache,
           function(cache_lst) {
-            isTRUE(all.equal.numeric(
-              cache_lst[[1]],
-              pos_unknown[combins[, !mines_has_mine_i, drop = FALSE][, k], , drop = FALSE],
-              check.attributes = FALSE
-            ))
+            all(
+              cache_lst[[1]] %in%
+                position_to_i_mat(pos_unknown[combins[, !mines_has_mine_i, drop = FALSE][, k], , drop = FALSE], dim(grid))
+            )
           }
         ))
         if (not_in_cache_yet) {
           global_cache[[length(global_cache) + 1]] <- list(
-            pos_unknown[
-              combins[, !mines_has_mine_i, drop = FALSE][, k],
-              ,
-              drop = FALSE
-            ],
+            position_to_i_mat(
+              pos_unknown[
+                combins[, !mines_has_mine_i, drop = FALSE][, k],
+                ,
+                drop = FALSE
+              ],
+              dim(grid)
+            ),
             possible[k]
           )
         }
@@ -176,20 +180,22 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
         not_in_cache_yet <- !any(sapply(
           global_cache,
           function(cache_lst) {
-            isTRUE(all.equal.numeric(
-              cache_lst[[1]],
-              pos_unknown[combins[, mines_has_mine_i, drop = FALSE][, k], , drop = FALSE],
-              check.attributes = FALSE
-            ))
+            all(
+              cache_lst[[1]] %in%
+                position_to_i_mat(pos_unknown[combins[, mines_has_mine_i, drop = FALSE][, k], , drop = FALSE], dim(grid))
+            )
           }
         ))
         if (not_in_cache_yet) {
           global_cache[[length(global_cache) + 1]] <- list(
-            pos_unknown[
-              combins[, mines_has_mine_i, drop = FALSE][, k],
-              ,
-              drop = FALSE
-            ],
+            position_to_i_mat(
+              pos_unknown[
+                combins[, mines_has_mine_i, drop = FALSE][, k],
+                ,
+                drop = FALSE
+              ],
+              dim(grid)
+            ),
             possible[k]
           )
         }
@@ -203,6 +209,7 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
       if (hypothesis && !impossible) {
         return(NULL) # voir commentaire précédent
       }
+      if (hypothesis && isTRUE(all(!cache))) return("impossible")
     }
   }
   tmp <- deduce_unknown_boxes(grid, mines_left)
@@ -245,18 +252,14 @@ which_combins_possible <- function(grid, combins, pos_unknown, solved_around, mi
       which(sapply(
         global_cache,
         function(cache_lst) {
-          isTRUE(all.equal.numeric(
-            cache_lst[[1]],
-            pos_unknown[combin, , drop = FALSE],
-            check.attributes = FALSE
-          ))
+          all(
+            cache_lst[[1]] %in% position_to_i_mat(pos_unknown[combin, , drop = FALSE], dim(grid))
+          )
         }
       ))
     }
     if (!is.null(find_in_global_cache) && any(find_in_global_cache)) {
-      if (length(find_in_global_cache) > 1) browser()
-      if (length(global_cache[[find_in_global_cache]]) < 2) browser()
-      possible[i] <- global_cache[[find_in_global_cache]][[2]]
+      possible[i] <- all(sapply(global_cache[find_in_global_cache], function(x) x[[2]]))
       next
     }
     # supposer des mines
