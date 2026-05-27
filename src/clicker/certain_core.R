@@ -21,9 +21,9 @@ can_flag_all_around <- function(grid, mines_left, solved_around) {
     positions <- tmp$positions
     n_unknown <- count_unknown(grid, i, values)
     if (n_unknown > 0 && count_mines_left_around(grid, i, values) == n_unknown) {
-      if (isTRUE(mines_left == 0)) return("impossible")
       unknown <- !values %in% known
-      return(list(positions[unknown, , drop = FALSE][1, ], FALSE))
+      if (isTRUE(mines_left - sum(unknown) < 0)) return("impossible")
+      return(apply(positions[unknown, , drop = FALSE], 1, function(pos) list(pos, FALSE), simplify = FALSE))
     }
   }
   NULL
@@ -37,7 +37,7 @@ can_click_all_around <- function(grid, solved_around) {
     n_unknown <- count_unknown(grid, i, values)
     if (n_unknown > 0 && count_mines_left_around(grid, i, values) == 0) {
       unknown <- !values %in% known
-      return(list(positions[unknown, , drop = FALSE][1, ], TRUE))
+      return(apply(positions[unknown, , drop = FALSE], 1, function(pos) list(pos, TRUE), simplify = FALSE))
     }
   }
   NULL
@@ -148,7 +148,7 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
       }
       possible <- possible[!is.na(possible)]
       cache[which(!mines_has_mine_i)[seq_along(possible)]] <- possible
-      if (!hypothesis && all(!possible)) return(list(pos_unknown[mine_i, ], FALSE))
+      if (!hypothesis && all(!possible)) return(list(list(pos_unknown[mine_i, ], FALSE)))
       if (any(possible)) {
         impossible <- FALSE
       }
@@ -200,7 +200,7 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
       }
       possible <- possible[!is.na(possible)]
       cache[which(mines_has_mine_i)[seq_along(possible)]] <- possible
-      if (!hypothesis && all(!possible)) return(list(pos_unknown[mine_i, ], TRUE))
+      if (!hypothesis && all(!possible)) return(list(list(pos_unknown[mine_i, ], TRUE)))
       if (any(possible)) {
         impossible <- FALSE
       }
@@ -222,10 +222,10 @@ deduce_unknown_boxes <- function(grid, mines_left) {
   if (is.na(mines_left)) return(NULL)
   known_boxes <- grid %in% known
   if (mines_left < 0) return("impossible")
-  if (mines_left == 0) return(list(i_to_position(which(!known_boxes)[1], dim(grid)), TRUE))
+  if (mines_left == 0) return(lapply(which(!known_boxes), function(i) list(i_to_position(i, dim(grid)), TRUE)))
   no_info_boxes <- sum(!known_boxes)
   if (no_info_boxes < mines_left) return("impossible")
-  if (no_info_boxes == mines_left) return(list(i_to_position(which(!known_boxes)[1], dim(grid)), FALSE))
+  if (no_info_boxes == mines_left) return(lapply(which(!known_boxes), function(i) list(i_to_position(i, dim(grid)), FALSE)))
   NULL
 }
 

@@ -32,7 +32,7 @@ test_that("find_best_i_to_investigate ne retourne pas de NA", {
     nrow = 6,
     byrow = TRUE
   )
-  solved_around <- init_solved_around(grid2)
+  solved_around <- init_solved_around(grid)
   solved_around[6, 3:4] <- 0
   expect_true(
     all(!is.na(
