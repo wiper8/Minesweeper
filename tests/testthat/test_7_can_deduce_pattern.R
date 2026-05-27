@@ -125,7 +125,7 @@ test_that("can_deduce_pattern peut déduire un pattern simple", {
   )
   expect_equal(
     can_deduce_pattern(grid, NA, grid * 0, FALSE),
-    list(c(1, 1), TRUE)
+    list(list(c(1, 1), TRUE))
   )
 })
 
@@ -156,7 +156,7 @@ test_that("can_deduce_pattern ajoute les flags qui sont certains autour des case
   )
   expect_equal(
     can_deduce_pattern(grid, NA, grid * 0, FALSE),
-    list(c(1, 1), FALSE)
+    list(list(c(1, 1), FALSE))
   )
 })
 
@@ -217,10 +217,10 @@ test_that("can_deduce_pattern peut déduire un pattern si le nombre total de min
   tmp <- can_deduce_pattern(grid, mines_left = 6, solved_around, FALSE)
   
   expect_true(
-    grid[tmp[[1]][1], tmp[[1]][2]] == ifelse(tmp[[2]], -1, -2)
+    grid[tmp[[1]][[1]][1], tmp[[1]][[1]][2]] == ifelse(tmp[[1]][[2]], -1, -2)
   )
   expect_true(
-    !(all(tmp[[1]] == c(1, 1)) & tmp[[2]] == FALSE) # ne pas flagguer le premier carré
+    !(all(tmp[[1]][[1]] == c(1, 1)) & tmp[[1]][[2]] == FALSE) # ne pas flagguer le premier carré
   )
   expect_false(
     is.list(can_deduce_pattern(grid, mines_left = NA, grid * 0, FALSE))
@@ -242,7 +242,7 @@ test_that("can_deduce_pattern peut déduire un pattern si le nombre total de min
   )
   tmp <- can_deduce_pattern(grid, 5, grid * 0, FALSE)
   expect_true(
-    grid[tmp[[1]][1], tmp[[1]][2]] == ifelse(tmp[[2]], -1, -2)
+    grid[tmp[[1]][[1]][1], tmp[[1]][[1]][2]] == ifelse(tmp[[1]][[2]], -1, -2)
   )
   grid <- matrix(
     c(
@@ -258,7 +258,7 @@ test_that("can_deduce_pattern peut déduire un pattern si le nombre total de min
   )
   tmp <- can_deduce_pattern(grid, 6, grid * 0, FALSE)
   expect_true(
-    grid[tmp[[1]][1], tmp[[1]][2]] == ifelse(tmp[[2]], -1, -2)
+    grid[tmp[[1]][[1]][1], tmp[[1]][[1]][2]] == ifelse(tmp[[1]][[2]], -1, -2)
   )
   expect_equal(
     can_deduce_pattern(grid, NA, grid * 0, FALSE),
@@ -293,7 +293,7 @@ test_that("can_deduce_pattern n'a pas de bug de récursion quasi-infinie", {
   solved_around <- init_solved_around(grid)
   tmp <- can_deduce_pattern(grid, mines_left = 32, solved_around, FALSE, click_order = matrix(c(7, 5), nrow = 1), ori = TRUE)
   expect_true(
-    is.list(tmp) && length(tmp) == 2 && is.logical(tmp[[2]])
+    is.list(tmp) && length(tmp) == 1 && is.logical(tmp[[1]][[2]])
   )
 })
 
@@ -325,7 +325,7 @@ test_that("can_deduce_pattern n'a pas de bug de récursion quasi-infinie avec cl
   set.seed(1L)
   tmp <- can_deduce_pattern(grid, mines_left = sum(grid == covered_mine), solved_around, hypothesis = FALSE)
   expect_true(
-    is.list(tmp) && length(tmp) == 2 && is.logical(tmp[[2]])
+    is.list(tmp) && length(tmp) == 1 && is.logical(tmp[[1]][[2]])
   )
 })
 
@@ -357,7 +357,7 @@ test_that("can_deduce_pattern est rapide dans des clusters simples indépendants
   can_deduce_pattern(grid, 40, init_solved_around(grid), hypothesis = FALSE,
                      click_order = matrix(c(1, 5, 15, 2, 4, 4), ncol = 2, byrow = TRUE))
   b <- Sys.time()
-  expect_true(as.numeric(difftime(b, a, units = "secs")) < 6) # secondes
+  expect_true(as.numeric(difftime(b, a, units = "secs")) < 2) # secondes
 })
 
 test_that("can_deduce_pattern est rapide avec des grilles avancées en résolution", {
@@ -415,7 +415,7 @@ test_that("can_deduce_pattern fonctionne dans de rares edge cases", {
     nrow = 6,
     byrow = TRUE
   )
-  solved_around <- init_solved_around(grid2)
+  solved_around <- init_solved_around(grid)
   solved_around[6, 3:4] <- 0
   expect_equal(
     can_deduce_pattern(

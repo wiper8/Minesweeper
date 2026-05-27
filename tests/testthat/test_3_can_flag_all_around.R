@@ -12,7 +12,7 @@ test_that("can_flag_all_around ajoute les flags qui sont certains autour des cas
   )
   expect_equal(
     can_flag_all_around(grid, 1, grid * 0),
-    list(c(1, 1), FALSE)
+    list(list(c(1, 1), FALSE))
   )
   
   grid <- matrix(
@@ -26,7 +26,7 @@ test_that("can_flag_all_around ajoute les flags qui sont certains autour des cas
   )
   expect_equal(
     can_flag_all_around(grid, 3, grid * 0),
-    list(c(1, 5), FALSE)
+    list(list(c(1, 5), FALSE), list(c(2, 5), FALSE))
   )
   
   grid <- matrix(
@@ -40,7 +40,7 @@ test_that("can_flag_all_around ajoute les flags qui sont certains autour des cas
   )
   expect_equal(
     can_flag_all_around(grid, 1, grid * 0),
-    list(c(3, 1), FALSE)
+    list(list(c(3, 1), FALSE))
   )
 })
 
@@ -56,7 +56,7 @@ test_that("can_flag_all_around ne peut ajouter de drapeau s'il ne reste pas de m
   )
   expect_equal(
     can_flag_all_around(grid, 1, grid * 0),
-    list(c(1, 1), FALSE)
+    list(list(c(1, 1), FALSE))
   )
   
   grid <- matrix(
