@@ -3,7 +3,6 @@ source("src/indicies/get_around_square.R")
 
 find_best_i_to_investigate <- function(grid, solved_around, click_order) {
   priorities_i <- priority_investigate(grid, solved_around)
-  if (length(priorities_i) > 0) return(priorities_i)
   
   if (is.null(click_order)) {
     i_to_investigate <- which(grid > 0 & solved_around == 0)
@@ -24,7 +23,7 @@ find_best_i_to_investigate <- function(grid, solved_around, click_order) {
       to_union
     )
   }
-  i_to_investigate
+  unique(c(priorities_i, i_to_investigate))
 }
 
 

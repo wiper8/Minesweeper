@@ -6,7 +6,8 @@ smart_clicker <- function(grid, mines_left, ...) {
   if (!is.null(tmp)) {
     return(tmp)
   }
-  tmp <- probabilistic_clicker(grid, mines_left, solved_around, hypothesis, ...)
+  browser()
+  tmp <- probabilistic_clicker(grid, mines_left = mines_left, ...)
   if (!is.null(tmp)) {
     return(tmp)
   }

@@ -1,43 +1,58 @@
-compute_mine_probability <- function(grid, mine_pos, mines_left, solved_around, ...) {
-  mines_left_init <- mines_left
-  solved_around_init <- solved_around
+source("src/clicker/certain_core.R")
 
-  # TODO finir la fonction
-  grid_tmp_propagate <- convert_grid_solution_to_human_grid(grid, solved_around, ...)
-
-  # apposer une mine temporaire
-  tmp <- apply_action(grid_tmp_propagate, mine_pos, action = FALSE, mines_left,
-                      solved_around, hypothesis = 1, ...)
-  grid_tmp_propagate <- tmp[[1]]
-  mines_left <- tmp[[3]]
-  solved_around <- tmp[[4]]
-  # compter le nombre de simulations possibles
-  combins_with_mine <- count_combins_possible(grid_tmp_propagate, mines_left, solved_around, ...)
-
-  mines_left <- mines_left_init
-  solved_around <- solved_around_init
-
-  # retirer la mine et poser une non-mines temporaire
-  tmp <- apply_action(grid_tmp_propagate, mine_pos, action = TRUE, mines_left,
-                      solved_around, hypothesis = 1, ...)
-  grid_tmp_propagate <- tmp[[1]]
-  mines_left <- tmp[[3]]
-  solved_around <- tmp[[4]]
-
-  # compter le nombre de simulations possibles
-  combins_without_mine <- count_combins_possible(grid_tmp_propagate, mines_left, solved_around, ...)
-
-  combins_with_mine / (combins_with_mine + combins_without_mine)
+compute_mine_probability <- function(grid, mine_i, all_combins) {
+  # TODO attention s'il faudra pondérer par la prob d'avoir N mines dans mines_left (surtout pour les cas de bornes de mines variables)
+  sum(sapply(all_combins, function(sub_grid) {
+    if (sub_grid[mine_i] != hypothetical_no_mine && sub_grid[mine_i] != hypothetical_mine) browser()
+    sub_grid[mine_i] == hypothetical_mine
+  })) / length(all_combins)
 }
 
-count_combins_possible <- function(grid, mines_left, solved_around, ...) {
-  # TODO
+generate_all_combins <- function(grid, bornes_mines, solved_around, ...) {
+  grid_tmp_propagate <- convert_grid_solution_to_human_grid(grid, solved_around, ...)
+  
+  lapply(bornes_mines[1]:bornes_mines[2], function(mines_left_init) {
+    # pour s'assurer de résoudre les cas certain car le fait de modifier mines_left peut en causer
+    tmp <- main_game_loop(grid_tmp_propagate, mines_left_init, certain_core, solved_around, hypothesis = TRUE)
+    grid_tmp_propagate <- tmp[[1]]
+    solved_around <- tmp[[3]]
+    mines_left <- tmp[[4]]
+    if (tmp[[2]] == "win") {
+      return(list(mines_left = mines_left_init, list(grid_tmp_propagate)))
+    }
+    # TODO attention, pourrait arriver qu'il ne reste que du solved_around 1 et -1
+    next_i <- which(grid_tmp_propagate == -10 & solved_around == 0)
+    if (length(next_i) == 0) {
+      next_i <- which(grid_tmp_propagate == -10 & solved_around == -1)
+    }
+    if (length(next_i) == 0) {
+      browser()
+    }
+    next_i <- next_i[1] # TODO mieux choisir le prochain next_i, soit avec probabilitées, le prioritise, ou le click_order
+    
+    no_mine_combins <- get_situational_combins(grid_tmp_propagate, i_to_position(next_i, dim(grid)), action = FALSE,
+                                               mines_left_init, solved_around, hypothesis = 1, ...)
+    
+    mine_combins <- get_situational_combins(grid_tmp_propagate, i_to_position(next_i, dim(grid)), action = TRUE,
+                                            mines_left_init, solved_around, hypothesis = 1, ...)
+    
+    list(mines_left = mines_left_init, append(no_mine_combins, mine_combins))
+  })
+}
+
+get_situational_combins <- function(grid_tmp_propagate, pos, action = FALSE,
+                                    mines_left, solved_around, hypothesis = 1, ...) {
+  # apposer une mine temporaire
+  tmp <- apply_action(grid_tmp_propagate, pos, action = action, mines_left,
+                              solved_around, hypothesis = hypothesis, ...)
   # propager la partie
-  tmp <- main_game_loop(grid, mines_left, certain_core, solved_around, hypothesis = 1, ...)
-  if (tmp[[2]] == "win") { # TODO vérifier que c'est le seul bon critère d'arrêt
-    return(1)
+  tmp <- main_game_loop(tmp[[1]], tmp[[3]], certain_core, tmp[[4]], hypothesis = hypothesis, ...)
+  
+  if (tmp[[2]] == "win") {
+    return(tmp[1])
   }
-  if (tmp[[2]] == "le clicker ne sait pu quoi faire") { # TODO vérifier que c'est le seul bon critère d'arrêt
-    return(1)
+  if (tmp[[2]] == "le clicker ne sait pu quoi faire") {
+    return(generate_all_combins(tmp[[1]], c(tmp[[4]], tmp[[4]]), tmp[[3]], ...)[[1]][[2]])
   }
+  browser() # pas sensé déclencher
 }

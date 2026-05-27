@@ -4,17 +4,18 @@ probabilistic_clicker <- function(grid, ...) {
   list(i_to_position(next_i, dim(grid)), TRUE, "probabilistic")
 }
 
-compute_grid_probabilities <- function(grid, mines_left, solved_around, hypothesis, click_order = NULL, to_clusterise = TRUE, ...) {
+compute_grid_probabilities <- function(grid, mines_left, solved_around, hypothesis, click_order = NULL, ...) {
   i_to_investigate <- find_best_i_to_investigate(grid, solved_around, click_order)
   
   mines_left_init <- mines_left
   grid_init <- grid
   solved_around_init <- solved_around
-  clusters <- if (to_clusterise) {
-    independant_clusters(grid, solved_around, mines_left)
-  } else {
-    NULL
-  }
+  clusters <- independant_clusters(grid, solved_around, mines_left, precise_bounds = TRUE)
+  
+  clusters_all_combins_cache <- lapply(clusters, function(lst) {
+    generate_all_combins(lst$grid, lst$bornes_mines, lst$solved_around) # TODO pour les bornes de mines à gérer
+  })
+  browser() # TODO section ci-dessous non complétée
   
   probs_grid <- grid * NA
 
@@ -59,19 +60,25 @@ compute_grid_probabilities <- function(grid, mines_left, solved_around, hypothes
     around_probs <- rep(NA, n_unknown)
     for (mine_i in seq_len(n_unknown)) {
       next_click <- positions[unknown, , drop = FALSE][mine_i, ]
-      click_order_tmp <- rbind(click_order, next_click)
-      around_probs[mine_i] <- compute_mine_probability(
-        grid,
-        next_click,
-        mines_left = mines_left,
-        solved_around = solved_around,
-        click_order = click_order_tmp,
-        to_clusterise = FALSE,
-        ...
-      )
+      if (is.na(probs_grid[next_click[1], next_click[2]])) {
+        click_order_tmp <- rbind(click_order, next_click)
+
+        around_probs[mine_i] <- compute_mine_probability(
+          grid,
+          position_to_i(next_click, dim(grid)),
+          if (!is.null(clusters)) {
+            clusters_all_combins_cache[[which(cluster_concerned)]]
+          } else {
+            clusters_all_combins_cache[[1]]
+          }
+        )  
+      } else {
+        around_probs[mine_i] <- probs_grid[next_click[1], next_click[2]]
+      }
     }
+    probs_grid[position_to_i_mat(positions[unknown, , drop = FALSE], dim(grid))] <- around_probs
   }
-  if (any(is.na(probs_grid))) browser()
-  if (any(probs_grid == 0 | probs_grid == 1)) browser() # pas sensé déclancher car certain_core devrait tout trouver
+  if (any(is.na(probs_grid) & grid_init < 0)) browser()
+  if (any(sum(probs_grid == 0 | probs_grid == 1, na.rm = TRUE))) browser() # pas sensé déclancher car certain_core devrait tout trouver
   probs_grid
 }

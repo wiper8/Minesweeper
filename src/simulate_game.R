@@ -54,9 +54,13 @@ main_game_loop <- function(grid, mines_left, clicker, solved_around, hypothesis 
       print(paste0("slow selection after ", nrow(click_order), " clicked. ", round(duration_for_click), " secs"))
       if (duration_for_click > 60) browser()
     }
-    if (hypothesis == 2 && isTRUE(all.equal(tmp, "impossible"))) return(list(grid, "partie impossible", solved_around))
+    # "partie impossible"
+    # ne devrait pas être possible car
+    # quand on calcule les probabilitées, c'est que tous les clics étaient possibles
+    if (hypothesis == 1 && isTRUE(all.equal(tmp, "impossible"))) browser()
+    if (hypothesis == 2 && isTRUE(all.equal(tmp, "impossible"))) return(list(grid, "partie impossible", solved_around, mines_left))
     if (isTRUE(all.equal(tmp, "impossible"))) browser()
-    if (hypothesis == 2 && is.null(tmp)) return(list(grid, "le clicker ne sait pu quoi faire", solved_around))
+    if (hypothesis != 0 && is.null(tmp)) return(list(grid, "le clicker ne sait pu quoi faire", solved_around, mines_left))
     if (is.null(tmp)) browser()
     if (tmp[[2]]) click_order <- rbind(click_order, tmp[[1]])
     tmp2 <- apply_action(grid, tmp[[1]], tmp[[2]], mines_left, solved_around = solved_around, hypothesis = hypothesis, ...)
@@ -64,9 +68,9 @@ main_game_loop <- function(grid, mines_left, clicker, solved_around, hypothesis 
     mines_left <- tmp2[[3]]
     solved_around <- tmp2[[4]]
     if (tmp2[[2]] == 1) {
-      if (hypothesis == 2 && !is_grid_possible(grid)) return(list(grid, "partie impossible", solved_around))
-      return(list(grid, "win", solved_around))
+      if (hypothesis == 2 && !is_grid_possible(grid)) return(list(grid, "partie impossible", solved_around, mines_left))
+      return(list(grid, "win", solved_around, mines_left))
     }
-    if (tmp2[[2]] == -1) return(list(grid, "lost", solved_around))
+    if (tmp2[[2]] == -1) return(list(grid, "lost", solved_around, mines_left))
   }
 }

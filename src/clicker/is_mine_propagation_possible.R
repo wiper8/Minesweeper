@@ -84,7 +84,7 @@ try_solve_a_cluster <- function(clusters, clust_i, mines_left, grid, ...) {
   }
 }
 
-independant_clusters <- function(grid, solved_around, mines_left) {
+independant_clusters <- function(grid, solved_around, mines_left, precise_bounds = FALSE) {
   if (all(solved_around == -1)) {
     new_solved_around <- init_solved_around(grid, which(solved_around == -1))
     return(list(list(
@@ -102,17 +102,52 @@ independant_clusters <- function(grid, solved_around, mines_left) {
     if (potential_cluster[i] == 1) {
       clust <- create_cluster_from_i(grid, i)
       if (any(clust == 1)) {
+
         # compter les bornes de mines
         bornes_mines1 <- c(0, sum(!grid[potential_cluster == 1 & clust == 1] %in% known))
+
         potential_cluster[potential_cluster == 1] <- 1 - clust[potential_cluster == 1]
-        
+
         # cacher les boxes non dans le cluster en cours
         tmp_grid <- grid
         tmp_grid[clust == 0] <- -10
-        
+
         if (all(tmp_grid == -10)) browser() # impossible de créer un cluster vide
-        
+
         new_solved_around <- init_solved_around(tmp_grid, which(solved_around == -1))
+
+        if (precise_bounds) {
+          # préciser les bornes
+          mines_target_ratio <- if (is.na(mines_left)) 0.5 else mines_left / sum(!tmp_grid %in% known)
+          trials_order <- seq(bornes_mines1[1], bornes_mines1[2])
+          ratios <- trials_order / sum(!tmp_grid[new_solved_around != -1] %in% known)
+          trials_order <- trials_order[order(abs(ratios - mines_target_ratio))]
+          tmp_mines_left <- trials_order[1]
+          tmp_mines_left_min <- tmp_mines_left
+          repeat {
+            possible <- is_mine_propagation_possible(tmp_grid, tmp_mines_left_min, new_solved_around, to_clusterise = FALSE)
+            if (possible) {
+              tmp_mines_left_min <- tmp_mines_left_min - 1
+            } else {
+              break
+            }
+          }
+          tmp_mines_left_max <- tmp_mines_left + 1
+          repeat {
+            possible <- is_mine_propagation_possible(tmp_grid, tmp_mines_left_max, new_solved_around, to_clusterise = FALSE)
+            if (possible) {
+              tmp_mines_left_max <- tmp_mines_left_max + 1
+            } else {
+              break
+            }
+          }
+          # dégresser de 1 car ce sont les valeurs que j'ai testées sans savoir si elles étaient possibles
+          tmp_mines_left_min <- tmp_mines_left_min + 1
+          tmp_mines_left_max <- tmp_mines_left_max - 1
+          if (tmp_mines_left_min > tmp_mines_left_max) browser() # impossible
+          bornes_mines1 <- c(tmp_mines_left_min, tmp_mines_left_max)
+        }
+
         res[[length(res) + 1]] <- list(
           grid = tmp_grid,
           solved_around = new_solved_around,
