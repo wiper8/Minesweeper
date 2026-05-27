@@ -10,7 +10,7 @@ compute_mine_probability <- function(grid, mine_i, all_combins) {
 
 generate_all_combins <- function(grid, bornes_mines, solved_around, ...) {
   grid_tmp_propagate <- convert_grid_solution_to_human_grid(grid, solved_around, ...)
-  
+
   lapply(bornes_mines[1]:bornes_mines[2], function(mines_left_init) {
     # pour s'assurer de résoudre les cas certain car le fait de modifier mines_left peut en causer
     tmp <- main_game_loop(grid_tmp_propagate, mines_left_init, certain_core, solved_around, hypothesis = TRUE)

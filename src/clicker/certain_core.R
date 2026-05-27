@@ -210,7 +210,7 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
       if (hypothesis == 2 && isTRUE(all(!cache))) return("impossible")
     }
   }
-  tmp <- deduce_unknown_boxes(grid, mines_left)
+  tmp <- deduce_unknown_boxes(grid_init, mines_left_init)
   if (!is.null(tmp)) return(tmp)
   if (isTRUE(all.equal(tmp, "impossible"))) return("impossible")
   if (hypothesis != 2 && reached_prop && impossible) browser() # pas sensé etre impossible si on n'est pas en exploration
@@ -226,6 +226,18 @@ deduce_unknown_boxes <- function(grid, mines_left) {
   no_info_boxes <- sum(!known_boxes)
   if (no_info_boxes < mines_left) return("impossible")
   if (no_info_boxes == mines_left) return(list(i_to_position(which(!known_boxes)[1], dim(grid)), FALSE))
+  solved_around <- init_solved_around(grid)
+  clusters <- independant_clusters(grid, solved_around, mines_left, precise_bounds = TRUE)
+  # si toutes les mines sont assurément dans les clusters, je peux cliquer dans le vide
+  if (sum(sapply(clusters, function(clust) clust$bornes_mines[1])) == mines_left) {
+    next_i <- fast_setdiff(
+      seq_along(solved_around),
+      unique(unlist(sapply(clusters, function(clust) which(clust$solved_around != -1 | grid != unknown_box))))
+    )[1]
+    if (length(next_i) != 1) browser() # pas supposé
+    if (is.na(next_i)) browser()
+    return(list(i_to_position(next_i, dim(grid)), TRUE))
+  }
   NULL
 }
 

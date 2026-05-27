@@ -1,6 +1,10 @@
+source("src/clicker/compute_mine_probability.R")
+
 probabilistic_clicker <- function(grid, ...) {
+  # temporairement, mettre des probs à 0.1, d'autres à 0.9
   probs_grid <- compute_grid_probabilities(grid, ...)
-  next_i <- which.min(probs_grid)
+  # temporairement, sélectionner une boîte aléatoirement au lieu de directement le plus bas
+  next_i <- sample(which(probs_grid == min(probs_grid)), 1)
   list(i_to_position(next_i, dim(grid)), TRUE, "probabilistic")
 }
 
@@ -10,12 +14,14 @@ compute_grid_probabilities <- function(grid, mines_left, solved_around, hypothes
   mines_left_init <- mines_left
   grid_init <- grid
   solved_around_init <- solved_around
+  
   clusters <- independant_clusters(grid, solved_around, mines_left, precise_bounds = TRUE)
   
   clusters_all_combins_cache <- lapply(clusters, function(lst) {
-    generate_all_combins(lst$grid, lst$bornes_mines, lst$solved_around) # TODO pour les bornes de mines à gérer
+    browser()
+    generate_all_combins(lst$grid, (lst$bornes_mines[1]:lst$bornes_mines[2])[lst$possible], lst$solved_around)
   })
-  browser() # TODO section ci-dessous non complétée
+  # browser() # TODO section ci-dessous non complétée
   
   probs_grid <- grid * NA
 
@@ -40,23 +46,21 @@ compute_grid_probabilities <- function(grid, mines_left, solved_around, hypothes
     # tester toutes les combinaisons autour de cette case, vérifier s'il y a toujours ou jamais un drapeau
     # dans les situations où on propage un flag, ça peut arriver
     if (mines_left_around < 0 || n_unknown < mines_left_around || isTRUE(mines_left < mines_left_around)) browser()
-    
-    if (!is.null(clusters)) {
-      cluster_concerned <- sapply(clusters, function(clust) clust$solved_around[i] != -1)
-      tmp <- clusters[[which(cluster_concerned)]]
-      grid <- tmp$grid
-      solved_around <- tmp$solved_around
-      # rajouter les mines déjà flagguées des autres clusters
-      if (any(!cluster_concerned)) {
-        mines_left <- mines_left + sum(sapply(
-          clusters[!cluster_concerned],
-          function(clust) {
-            sum(clust$grid == flag_on_mine)
-          }
-        ))
-      }
+
+    cluster_concerned <- sapply(clusters, function(clust) clust$solved_around[i] != -1)
+    tmp <- clusters[[which(cluster_concerned)]]
+    grid <- tmp$grid
+    solved_around <- tmp$solved_around
+    # rajouter les mines déjà flagguées des autres clusters
+    if (any(!cluster_concerned)) {
+      mines_left <- mines_left + sum(sapply(
+        clusters[!cluster_concerned],
+        function(clust) {
+          sum(clust$grid == flag_on_mine)
+        }
+      ))
     }
-    
+
     around_probs <- rep(NA, n_unknown)
     for (mine_i in seq_len(n_unknown)) {
       next_click <- positions[unknown, , drop = FALSE][mine_i, ]
@@ -66,12 +70,10 @@ compute_grid_probabilities <- function(grid, mines_left, solved_around, hypothes
         around_probs[mine_i] <- compute_mine_probability(
           grid,
           position_to_i(next_click, dim(grid)),
-          if (!is.null(clusters)) {
-            clusters_all_combins_cache[[which(cluster_concerned)]]
-          } else {
-            clusters_all_combins_cache[[1]]
-          }
-        )  
+          # traitement temporaire pour simplifier tous les cas selon nb de mines dans le cluster
+          lapply(clusters_all_combins_cache[[which(cluster_concerned)]], function(lst) lst[[2]]) |>
+            unlist(recursive = FALSE)
+        )
       } else {
         around_probs[mine_i] <- probs_grid[next_click[1], next_click[2]]
       }
@@ -80,5 +82,9 @@ compute_grid_probabilities <- function(grid, mines_left, solved_around, hypothes
   }
   if (any(is.na(probs_grid) & grid_init < 0)) browser()
   if (any(sum(probs_grid == 0 | probs_grid == 1, na.rm = TRUE))) browser() # pas sensé déclancher car certain_core devrait tout trouver
+  # TODO ajout temporaire pour simplifier les probs vu qu'elles ne sont pas pondérées
+  probs_grid[!is.na(probs_grid) & probs_grid != 0 & probs_grid != 1 & probs_grid == min(probs_grid, na.rm = TRUE)] <- 0.1
+  probs_grid[!is.na(probs_grid) & probs_grid != 0 & probs_grid != 1 & probs_grid > min(probs_grid, na.rm = TRUE)] <- 0.9
+
   probs_grid
 }

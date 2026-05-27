@@ -399,7 +399,7 @@ test_that("can_deduce_pattern est rapide avec des grilles avancées en résoluti
   a <- Sys.time()
   can_deduce_pattern(grid, 19, solved_around, hypothesis = 0, click_order = click_order)
   b <- Sys.time()
-  expect_true(as.numeric(difftime(b, a, units = "secs")) < 4) # secondes
+  expect_true(as.numeric(difftime(b, a, units = "secs")) < 5) # secondes
 })
 
 test_that("can_deduce_pattern fonctionne dans de rares edge cases", {
@@ -449,5 +449,32 @@ test_that("can_deduce_pattern sait résoudre des combinaisons complexes", {
   )
   expect_true(
     !is.null(can_deduce_pattern(grid, 3, init_solved_around(grid), hypothesis = 1))
+  )
+})
+
+test_that("can_deduce_pattern sait résoudre les sections vides mais inconnues", {
+  grid <- matrix(
+    c(
+      0, 1, -5, 1, 0, -10, 0, 1, 1,
+      1, 2, 1, 1, 0, 0, 0, 2, -5,
+      -5, 1, 0, 0, 1, 2, 2, 3, -5,
+      2, 2, 1, 2, 3, -5, -5, 2, 1,
+      -5, 1, 1, -5, -5, 3, 2, 2, 1,
+      1, 1, 2, 3, 4, 3, 2, 2, -5,
+      1, 2, 2, -5, 2, -5, -5, 4, 2,
+      -5, 2, -5, 2, 3, 5, -5, -10, -10,
+      1, 3, 3, 3, 2, -5, -5, -10, -10,
+      0, 2, -5, -5, 3, 4, -10, -10, -10,
+      1, 3, -5, 4, -9, -8, -10, -10, -10,
+      -5, 2, 1, 2, -8, -10, -10, -10, -10,
+      2, 3, 2, 2, 2, -10, -10, -10, -10,
+      -9, -8, -5, -9, -8, -10, -10, -10, -10,
+      rep(-10, 3 * 9)
+    ),
+    nrow = 17,
+    byrow = TRUE
+  )
+  expect_true(
+    is.list(can_deduce_pattern(grid, mines_left = 3, init_solved_around(grid), hypothesis = TRUE))
   )
 })

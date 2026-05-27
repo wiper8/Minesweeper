@@ -119,40 +119,30 @@ independant_clusters <- function(grid, solved_around, mines_left, precise_bounds
         if (precise_bounds) {
           # préciser les bornes
           mines_target_ratio <- if (is.na(mines_left)) 0.5 else mines_left / sum(!tmp_grid %in% known)
-          trials_order <- seq(bornes_mines1[1], bornes_mines1[2])
-          ratios <- trials_order / sum(!tmp_grid[new_solved_around != -1] %in% known)
-          trials_order <- trials_order[order(abs(ratios - mines_target_ratio))]
-          tmp_mines_left <- trials_order[1]
-          tmp_mines_left_min <- tmp_mines_left
-          repeat {
-            possible <- is_mine_propagation_possible(tmp_grid, tmp_mines_left_min, new_solved_around, to_clusterise = FALSE)
-            if (possible) {
-              tmp_mines_left_min <- tmp_mines_left_min - 1
-            } else {
-              break
-            }
+          tmp_mines_left_min <- bornes_mines1[1]
+          possibilities <- rep(NA, diff(bornes_mines1) + 1)
+          trials <- bornes_mines1[1]:bornes_mines1[2]
+          for (n in seq_along(trials)) {
+            possibilities[n] <- is_mine_propagation_possible(
+              tmp_grid,
+              trials[n],
+              new_solved_around,
+              to_clusterise = FALSE
+            )
           }
-          tmp_mines_left_max <- tmp_mines_left + 1
-          repeat {
-            possible <- is_mine_propagation_possible(tmp_grid, tmp_mines_left_max, new_solved_around, to_clusterise = FALSE)
-            if (possible) {
-              tmp_mines_left_max <- tmp_mines_left_max + 1
-            } else {
-              break
-            }
-          }
-          # dégresser de 1 car ce sont les valeurs que j'ai testées sans savoir si elles étaient possibles
-          tmp_mines_left_min <- tmp_mines_left_min + 1
-          tmp_mines_left_max <- tmp_mines_left_max - 1
-          if (tmp_mines_left_min > tmp_mines_left_max) browser() # impossible
-          bornes_mines1 <- c(tmp_mines_left_min, tmp_mines_left_max)
+          if (all(!possibilities)) browser() # impossible
+          keep <- c(which(possibilities)[1], tail(which(possibilities), 1))
+          bornes_mines1 <- trials[keep]
+          possibilities <- possibilities[keep[1]:keep[2]]
+        } else {
+          possibilities <- rep("NA", diff(bornes_mines1) + 1)
         }
 
         res[[length(res) + 1]] <- list(
           grid = tmp_grid,
           solved_around = new_solved_around,
           bornes_mines = bornes_mines1,
-          possible = rep("NA", diff(bornes_mines1) + 1),
+          possible = possibilities,
           last_success_mines = NA
         )
       }

@@ -122,7 +122,3 @@ test_that("compute_mine_probability calcule les bonnes probabilitées", {
     1 / 9
   )
 })
-
-test_that("compute_mine_probability calcule les bonnes probabilitées dans des cas complexes de clusters indépendants", {
-  # TODO
-})
