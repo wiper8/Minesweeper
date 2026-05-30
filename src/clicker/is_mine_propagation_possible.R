@@ -18,7 +18,7 @@ is_mine_propagation_possible <- function(grid, mines_left = NA, solved_around, t
     if (propagated_game_end[[2]] == "lost") browser() # ne serait pas supposer perdre avec certain_core comme clicker
     browser()
   }
-
+  
   clusters <- independant_clusters(grid, solved_around, mines_left)
   if (length(clusters) <= 2) {
     propagated_game_end <- main_game_loop(grid, mines_left, certain_core, solved_around = solved_around,
