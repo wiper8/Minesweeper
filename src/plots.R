@@ -56,9 +56,8 @@ compare_clickers <- function(n, dims, ...) {
   df_random <- cbind(compute_mines_probs_df(n, dims, clicker = random_clicker, ...), clicker = "random")
   print("certain")
   df_certain <- cbind(compute_mines_probs_df(n, dims, clicker = certain_else_random_clicker, ...), clicker = "certain")
-  # print("smart")
-  # df_smart <- cbind(compute_mines_probs_df(n, dims, clicker = smart_clicker), clicker = "smart")
-  # df <- rbind(df_random, df_certain, df_smart)
+  print("smart")
+  df_smart <- cbind(compute_mines_probs_df(n, dims, clicker = smart_clicker), clicker = "smart")
   rbind(df_random, df_certain, df_smart)
 }
 

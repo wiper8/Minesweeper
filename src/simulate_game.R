@@ -62,16 +62,18 @@ main_game_loop <- function(grid, mines_left, clicker, solved_around, hypothesis 
     if (isTRUE(all.equal(tmp, "impossible"))) browser()
     if (hypothesis != 0 && is.null(tmp)) return(list(grid, "le clicker ne sait pu quoi faire", solved_around, mines_left))
     if (is.null(tmp)) browser()
-    
-    if (tmp[[2]]) click_order <- rbind(click_order, tmp[[1]])
-    tmp2 <- apply_action(grid, tmp[[1]], tmp[[2]], mines_left, solved_around = solved_around, hypothesis = hypothesis, ...)
-    grid <- tmp2[[1]]
-    mines_left <- tmp2[[3]]
-    solved_around <- tmp2[[4]]
-    if (tmp2[[2]] == 1) {
-      if (hypothesis == 2 && !is_grid_possible(grid)) return(list(grid, "partie impossible", solved_around, mines_left))
-      return(list(grid, "win", solved_around, mines_left))
+
+    for (new_action in tmp) {
+      if (new_action[[2]]) click_order <- rbind(click_order, new_action[[1]])
+      tmp2 <- apply_action(grid, new_action[[1]], new_action[[2]], mines_left, solved_around = solved_around, hypothesis = hypothesis, ...)
+      grid <- tmp2[[1]]
+      mines_left <- tmp2[[3]]
+      solved_around <- tmp2[[4]]
+      if (tmp2[[2]] == 1) {
+        if (hypothesis == 2 && !is_grid_possible(grid)) return(list(grid, "partie impossible", solved_around, mines_left))
+        return(list(grid, "win", solved_around, mines_left))
+      }
+      if (tmp2[[2]] == -1) return(list(grid, "lost", solved_around, mines_left))
     }
-    if (tmp2[[2]] == -1) return(list(grid, "lost", solved_around, mines_left))
   }
 }

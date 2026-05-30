@@ -23,7 +23,7 @@ apply_action <- function(grid, pos, action, mines_left, solved_around = grid * 0
   i <- position_to_i(pos, dim(grid))
   
   # actions sur des cases déjà révélées, ignorer
-  if (!isTRUE(grid[i] >= 0) && !isFALSE(grid[i] >= 0)) browser()
+  if (!isTRUE(grid[i] >= 0) && !isFALSE(grid[i] >= 0)) browser() # pour éviter des bogues
   if (grid[i] >= 0) return(list(grid, is_game_over(grid, mines_left), mines_left, solved_around))
   
   # flag
