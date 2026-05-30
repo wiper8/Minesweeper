@@ -47,7 +47,7 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
   impossible <- TRUE # pour hypothesis = TRUE
   reached_prop <- FALSE
   i_to_investigate <- find_best_i_to_investigate(grid, solved_around, click_order)
-  
+
   mines_left_init <- mines_left
   grid_init <- grid
   solved_around_init <- solved_around
@@ -57,12 +57,12 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
   } else {
     NULL
   }
-  
+
   # car possible qu'on soit bloqué ET qu'il n'y ait aucun i_to_investigate disponible, qu'il faut guess random
   if (length(i_to_investigate) == 0 && !hypothesis) impossible <- FALSE
-  
+
   global_cache <- list() # cache des cas POSSIBLES, pas confirmés
-  
+
   # je prend une cellule avec un chiffre qui a >= 1 inconnu autour
   for (i in i_to_investigate) {
     mines_left <- mines_left_init
@@ -73,22 +73,22 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
     positions <- tmp$positions
     unknown <- !values %in% known
     n_unknown <- sum(unknown)
-    
+
     # car quand on essaie un drapeau et de le propager, ça peut arriver qu'il n'y a plus de combinaisons
     if (n_unknown == 0) next
     reached_prop <- TRUE
-    
+
     mines_left_around <- count_mines_left_around(grid, i, values)
     # appliquer toutes les combins de mines autour, et vérifier s'il y a une certitude
     pos_unknown <- positions[unknown, , drop = FALSE]
-    
+
     # tester toutes les combinaisons autour de cette case, vérifier s'il y a toujours ou jamais un drapeau
     # dans les situations où on propage un flag, ça peut arriver
     if (mines_left_around < 0 || n_unknown < mines_left_around || isTRUE(mines_left < mines_left_around)) return("impossible")
-    
+
     if (!is.null(clusters)) {
       cluster_concerned <- sapply(clusters$clusters, function(clust) clust$in_cluster[i] == 1)
-      if (!is.logical(cluster_concerned)) browser()
+      if (!is.logical(cluster_concerned) || length(cluster_concerned) == 0) browser()
       tmp <- clusters$clusters[[which(cluster_concerned)]]
       grid <- tmp$grid
       solved_around <- tmp$solved_around
@@ -102,10 +102,10 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
         ))
       }
     }
-    
+
     combins <- combn(n_unknown, mines_left_around)
     cache <- rep(NA, ncol(combins))
-    
+
     for (mine_i in seq_len(n_unknown)) {
       mines_has_mine_i <- fast_apply(combins, 2, function(comb) mine_i %in% comb)
       

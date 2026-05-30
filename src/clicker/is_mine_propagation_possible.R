@@ -38,7 +38,6 @@ try_solve_a_cluster <- function(clusters, clust_i, mines_left, grid, ...) {
   mines_target_ratio <- if (is.na(mines_left)) 0.5 else mines_left / sum(!grid %in% known)
   trials_order <- seq(clusters[[clust_i]]$bornes_mines[1], clusters[[clust_i]]$bornes_mines[2])
   # filtrer
-  browser() # TODO valider que je n'ai pas mis de `possible` à TRUE ou FALSE
   trials_order <- trials_order[clusters[[clust_i]]$possible %in% c("oui", "NA")]
   ratios <- trials_order / sum(!clusters[[clust_i]]$grid[clusters[[clust_i]]$solved_around != -1] %in% known)
   trials_order <- trials_order[order(abs(ratios - mines_target_ratio))]
