@@ -51,6 +51,7 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
   mines_left_init <- mines_left
   grid_init <- grid
   solved_around_init <- solved_around
+  
   clusters <- if (to_clusterise) {
     independant_clusters(grid, solved_around, mines_left)
   } else {
@@ -61,7 +62,7 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
   if (length(i_to_investigate) == 0 && !hypothesis) impossible <- FALSE
 
   global_cache <- list() # cache des cas POSSIBLES, pas confirmés
-  
+
   # je prend une cellule avec un chiffre qui a >= 1 inconnu autour
   for (i in i_to_investigate) {
     mines_left <- mines_left_init
@@ -86,21 +87,22 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
     if (mines_left_around < 0 || n_unknown < mines_left_around || isTRUE(mines_left < mines_left_around)) return("impossible")
 
     if (!is.null(clusters)) {
-      cluster_concerned <- sapply(clusters, function(clust) clust$solved_around[i] != -1)
-      tmp <- clusters[[which(cluster_concerned)]]
+      cluster_concerned <- sapply(clusters$clusters, function(clust) clust$in_cluster[i] == 1)
+      if (!is.logical(cluster_concerned) || length(cluster_concerned) == 0) browser()
+      tmp <- clusters$clusters[[which(cluster_concerned)]]
       grid <- tmp$grid
       solved_around <- tmp$solved_around
       # rajouter les mines déjà flagguées des autres clusters
       if (any(!cluster_concerned)) {
         mines_left <- mines_left + sum(sapply(
-          clusters[!cluster_concerned],
+          clusters$clusters[!cluster_concerned],
           function(clust) {
             sum(clust$grid == flag_on_mine)
           }
         ))
       }
     }
-    
+
     combins <- combn(n_unknown, mines_left_around)
     cache <- rep(NA, ncol(combins))
 
