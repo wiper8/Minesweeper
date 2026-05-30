@@ -20,7 +20,7 @@ is_mine_propagation_possible <- function(grid, mines_left = NA, solved_around, t
   }
 
   clusters <- independant_clusters(grid, solved_around, mines_left)
-  if (length(clusters) == 1) {
+  if (length(clusters) <= 2) {
     propagated_game_end <- main_game_loop(grid, mines_left, certain_core, solved_around = solved_around,
                                           hypothesis = TRUE, ...)
     
@@ -30,7 +30,7 @@ is_mine_propagation_possible <- function(grid, mines_left = NA, solved_around, t
     if (propagated_game_end[[2]] == "lost") browser() # ne serait pas supposer perdre avec certain_core comme clicker
     browser()
   } else {
-    try_solve_a_cluster(clusters, 1, mines_left, grid, ...)
+    try_solve_a_cluster(clusters$clusters, 1, mines_left, grid, ...)
   }
 }
 
@@ -38,6 +38,7 @@ try_solve_a_cluster <- function(clusters, clust_i, mines_left, grid, ...) {
   mines_target_ratio <- if (is.na(mines_left)) 0.5 else mines_left / sum(!grid %in% known)
   trials_order <- seq(clusters[[clust_i]]$bornes_mines[1], clusters[[clust_i]]$bornes_mines[2])
   # filtrer
+  browser() # TODO valider que je n'ai pas mis de `possible` à TRUE ou FALSE
   trials_order <- trials_order[clusters[[clust_i]]$possible %in% c("oui", "NA")]
   ratios <- trials_order / sum(!clusters[[clust_i]]$grid[clusters[[clust_i]]$solved_around != -1] %in% known)
   trials_order <- trials_order[order(abs(ratios - mines_target_ratio))]
@@ -57,13 +58,14 @@ try_solve_a_cluster <- function(clusters, clust_i, mines_left, grid, ...) {
     
     if (clust_i == length(clusters)) { # on a atteint le dernier cluster à tester
       # dernière vérification que le total de mines utilisé est plausible
-      no_cluster <- matrix(TRUE, nrow = nrow(clusters[[1]]$solved_around), ncol = ncol(clusters[[1]]$solved_around))
+      in_void_cluster <- matrix(TRUE, nrow = nrow(clusters[[1]]$solved_around), ncol = ncol(clusters[[1]]$solved_around))
       for (mat in lapply(clusters, function(x) x$solved_around == -1)) {
-        no_cluster <- no_cluster & mat
+        in_void_cluster <- in_void_cluster & mat
       }
-      in_no_cluster <- sum(no_cluster)
+      nb_in_void_cluster <- sum(in_void_cluster)
       
-      if ((mines_left - trials_order[1]) >= 0 && (mines_left - trials_order[1]) <= in_no_cluster) return(TRUE)
+      browser() # TODO valider ce if, pour quand je suis dans le dernier cluster de void
+      if ((mines_left - trials_order[1]) >= 0 && (mines_left - trials_order[1]) <= nb_in_void_cluster) return(TRUE)
       return(FALSE) # pas un cas possible
     }
     if ((clust_i + 1) > length(clusters)) browser()
@@ -85,53 +87,80 @@ try_solve_a_cluster <- function(clusters, clust_i, mines_left, grid, ...) {
 }
 
 independant_clusters <- function(grid, solved_around, mines_left) {
-  if (all(solved_around == -1)) {
-    new_solved_around <- init_solved_around(grid, which(solved_around == -1))
-    return(list(list(
-      grid = grid,
-      solved_around = new_solved_around,
-      bornes_mines = c(mines_left, mines_left),
-      possible = "NA",
-      last_success_mines = NA
-    )))
-  }
+  groups <- list()
   
-  res <- list()
   potential_cluster <- grid * 0 + (solved_around != -1)
+  in_any_cluster <- matrix(FALSE, nrow = nrow(grid), ncol = ncol(grid))
+
   for (i in which(potential_cluster == 1)) {
     if (potential_cluster[i] == 1) {
       clust <- create_cluster_from_i(grid, i)
-      if (any(clust == 1)) {
+      in_next_cluster <- !in_any_cluster & clust
+      if (any(in_any_cluster & clust)) browser() # pas supposé que des boîes soient dans plusieurs clusters
+      if (any(in_next_cluster)) {
         # compter les bornes de mines
-        bornes_mines1 <- c(0, sum(!grid[potential_cluster == 1 & clust == 1] %in% known))
+        bornes_mines1 <- c(0, min(mines_left, sum(!grid[potential_cluster == 1 & in_next_cluster] %in% known)))
         potential_cluster[potential_cluster == 1] <- 1 - clust[potential_cluster == 1]
         
         # cacher les boxes non dans le cluster en cours
         tmp_grid <- grid
-        tmp_grid[clust == 0] <- -10
-        
-        if (all(tmp_grid == -10)) browser() # impossible de créer un cluster vide
-        
+        tmp_grid[clust == 0] <- unknown_box
+
+        if (all(tmp_grid == unknown_box)) browser() # impossible de créer un cluster vide
+
         new_solved_around <- init_solved_around(tmp_grid, which(solved_around == -1))
-        res[[length(res) + 1]] <- list(
+        groups[[length(groups) + 1]] <- list(
           grid = tmp_grid,
           solved_around = new_solved_around,
+          in_cluster = in_next_cluster,
           bornes_mines = bornes_mines1,
-          possible = rep("NA", diff(bornes_mines1) + 1),
+          possible = if (is.na(mines_left)) NA else rep("NA", diff(bornes_mines1) + 1),
           last_success_mines = NA
         )
+        
+        in_any_cluster <- in_any_cluster | in_next_cluster
       }
     }
   }
-  
-  res
+
+  # le dernier cluster est le "void" inconnu
+  # cacher les boxes non dans le cluster en cours
+  tmp_grid <- grid * 0 + unknown_box
+  new_solved_around <- grid * 0 - 1
+  if (length(groups) == 0) {
+    bornes_mines1 <- c(mines_left, mines_left)
+  } else {
+    bornes_mines1 <- mines_left - c(
+      sum(sapply(groups, function(clust) {
+        clust$bornes_mines[2]
+      })), 
+      sum(sapply(groups, function(clust) {
+        clust$bornes_mines[1]
+      }))
+    )
+    bornes_mines1[1] <- max(0, bornes_mines1[1])
+    bornes_mines1[2] <- min(mines_left, bornes_mines1[2])
+  }
+
+  list(
+    # void est un groupe spécial de cases sans aucune information
+    void = list(
+      grid = tmp_grid,
+      solved_around = new_solved_around,
+      in_cluster = !in_any_cluster,
+      bornes_mines = bornes_mines1,
+      possible = if (is.na(mines_left)) NA else rep("NA", diff(bornes_mines1) + 1),
+      last_success_mines = NA
+    ),
+    clusters = groups
+  )
 }
 
 create_cluster_from_i <- function(grid, i, cluster = NULL) {
   if (is.null(cluster)) cluster <- grid * 0
   tmp <- square_pos_and_get_around_square(i_to_position(i, dim(grid)), grid)
   positions <- tmp[[1]]
-  if (any(tmp[[2]] > 0)) {
+  if (any(tmp[[2]] >= 0)) {
     cluster[i] <- 1
     potential_neighboords <- position_to_i_mat(positions, dim(grid))
 
