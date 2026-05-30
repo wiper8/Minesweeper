@@ -108,7 +108,7 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
 
     for (mine_i in seq_len(n_unknown)) {
       mines_has_mine_i <- fast_apply(combins, 2, function(comb) mine_i %in% comb)
-      
+
       # je me questionne : parmi les mines restantes autour,
       # si je ne flag JAMAIS une cellule et que toutes les combinaisons ne sont pas possibles,
       # c'est que je dois la flagguer
