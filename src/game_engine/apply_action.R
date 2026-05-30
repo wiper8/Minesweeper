@@ -28,7 +28,9 @@ apply_action <- function(grid, pos, action, mines_left, solved_around = grid * 0
   
   # flag
   if (!action) {
-    if (isTRUE(mines_left <= 0)) stop("aucun drapeau disponible")
+    if (isTRUE(mines_left <= 0)) {
+      stop("aucun drapeau disponible")
+    }
     tmp <- flagguer(grid, i, mines_left)
     grid <- tmp[[1]]
     mines_left <- tmp[[2]]

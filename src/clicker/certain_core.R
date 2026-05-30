@@ -21,9 +21,9 @@ can_flag_all_around <- function(grid, mines_left, solved_around) {
     positions <- tmp$positions
     n_unknown <- count_unknown(grid, i, values)
     if (n_unknown > 0 && count_mines_left_around(grid, i, values) == n_unknown) {
-      if (isTRUE(mines_left == 0)) return("impossible")
       unknown <- !values %in% known
-      return(list(positions[unknown, , drop = FALSE][1, ], FALSE))
+      if (isTRUE(mines_left - sum(unknown) < 0)) return("impossible")
+      return(apply(positions[unknown, , drop = FALSE], 1, function(pos) list(pos, FALSE), simplify = FALSE))
     }
   }
   NULL
@@ -37,7 +37,7 @@ can_click_all_around <- function(grid, solved_around) {
     n_unknown <- count_unknown(grid, i, values)
     if (n_unknown > 0 && count_mines_left_around(grid, i, values) == 0) {
       unknown <- !values %in% known
-      return(list(positions[unknown, , drop = FALSE][1, ], TRUE))
+      return(apply(positions[unknown, , drop = FALSE], 1, function(pos) list(pos, TRUE), simplify = FALSE))
     }
   }
   NULL
@@ -51,6 +51,7 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
   mines_left_init <- mines_left
   grid_init <- grid
   solved_around_init <- solved_around
+  
   clusters <- if (to_clusterise) {
     independant_clusters(grid, solved_around, mines_left)
   } else {
@@ -61,7 +62,7 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
   if (length(i_to_investigate) == 0 && hypothesis != 2) impossible <- FALSE
 
   global_cache <- list() # cache des cas POSSIBLES, pas confirmés
-  
+
   # je prend une cellule avec un chiffre qui a >= 1 inconnu autour
   for (i in i_to_investigate) {
     mines_left <- mines_left_init
@@ -86,21 +87,22 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
     if (mines_left_around < 0 || n_unknown < mines_left_around || isTRUE(mines_left < mines_left_around)) return("impossible")
 
     if (!is.null(clusters)) {
-      cluster_concerned <- sapply(clusters, function(clust) clust$solved_around[i] != -1)
-      tmp <- clusters[[which(cluster_concerned)]]
+      cluster_concerned <- sapply(clusters$clusters, function(clust) clust$in_cluster[i] == 1)
+      if (!is.logical(cluster_concerned) || length(cluster_concerned) == 0) browser()
+      tmp <- clusters$clusters[[which(cluster_concerned)]]
       grid <- tmp$grid
       solved_around <- tmp$solved_around
       # rajouter les mines déjà flagguées des autres clusters
       if (any(!cluster_concerned)) {
         mines_left <- mines_left + sum(sapply(
-          clusters[!cluster_concerned],
+          clusters$clusters[!cluster_concerned],
           function(clust) {
             sum(clust$grid == flag_on_mine)
           }
         ))
       }
     }
-    
+
     combins <- combn(n_unknown, mines_left_around)
     cache <- rep(NA, ncol(combins))
 
@@ -148,7 +150,7 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
       }
       possible <- possible[!is.na(possible)]
       cache[which(!mines_has_mine_i)[seq_along(possible)]] <- possible
-      if (hypothesis != 2 && all(!possible)) return(list(pos_unknown[mine_i, ], FALSE))
+      if (hypothesis != 2 && all(!possible)) return(list(list(pos_unknown[mine_i, ], FALSE)))
       if (any(possible)) {
         impossible <- FALSE
       }
@@ -200,7 +202,7 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
       }
       possible <- possible[!is.na(possible)]
       cache[which(mines_has_mine_i)[seq_along(possible)]] <- possible
-      if (hypothesis != 2 && all(!possible)) return(list(pos_unknown[mine_i, ], TRUE))
+      if (hypothesis != 2 && all(!possible)) return(list(list(pos_unknown[mine_i, ], TRUE)))
       if (any(possible)) {
         impossible <- FALSE
       }
@@ -222,22 +224,21 @@ deduce_unknown_boxes <- function(grid, mines_left) {
   if (is.na(mines_left)) return(NULL)
   known_boxes <- grid %in% known
   if (mines_left < 0) return("impossible")
-  if (mines_left == 0) return(list(i_to_position(which(!known_boxes)[1], dim(grid)), TRUE))
+  if (mines_left == 0) return(lapply(which(!known_boxes), function(i) list(i_to_position(i, dim(grid)), TRUE)))
   no_info_boxes <- sum(!known_boxes)
   if (no_info_boxes < mines_left) return("impossible")
-  if (no_info_boxes == mines_left) return(list(i_to_position(which(!known_boxes)[1], dim(grid)), FALSE))
+  if (no_info_boxes == mines_left) return(list(list(i_to_position(which(!known_boxes)[1], dim(grid)), FALSE)))
   solved_around <- init_solved_around(grid)
   clusters <- independant_clusters(grid, solved_around, mines_left, precise_bounds = TRUE)
+
   # si toutes les mines sont assurément dans les clusters, je peux cliquer dans le vide
-  if (sum(sapply(clusters, function(clust) clust$bornes_mines[1])) == mines_left) {
-    next_i <- fast_setdiff(
-      seq_along(solved_around),
-      unique(unlist(sapply(clusters, function(clust) which(clust$solved_around != -1 | grid != unknown_box))))
-    )[1]
+  if (sum(sapply(clusters$clusters, function(clust) clust$bornes_mines[1])) == mines_left) {
+    next_i <- which(clusters$void$in_cluster)[1]
     if (length(next_i) != 1) browser() # pas supposé
     if (is.na(next_i)) browser()
     return(list(i_to_position(next_i, dim(grid)), TRUE))
   }
+
   NULL
 }
 

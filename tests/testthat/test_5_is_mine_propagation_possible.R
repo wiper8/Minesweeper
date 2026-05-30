@@ -15,6 +15,7 @@ test_that("is_mine_propagation_possible fonctionne généralement", {
   )
   grid[2, 2] <- -5
   grid[2, 3] <- -1
+  debugonce(is_mine_propagation_possible)
   expect_true(
     is_mine_propagation_possible(grid, mines_left = 0, init_solved_around(grid))
   )
