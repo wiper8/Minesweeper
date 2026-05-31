@@ -57,11 +57,11 @@ test_that("is_mine_propagation_possible fonctionne pour un pattern possible de m
               nrow = 10,
               byrow = TRUE
             )
-            
+
             expect_true(
               is_mine_propagation_possible(grid, mines_left = NA, init_solved_around(grid))
             )
-            
+
             grid <- matrix(
               c(
                 -1, -1, -5, -2, -1,

@@ -19,7 +19,7 @@ is_mine_propagation_possible <- function(grid, mines_left = NA, solved_around, t
     browser()
     stop("erreur")
   }
-  
+
   clusters <- independant_clusters(grid, solved_around, mines_left)
   if (length(clusters) <= 2) {
     propagated_game_end <- main_game_loop(grid, mines_left, certain_core, solved_around = solved_around,
@@ -104,7 +104,7 @@ independant_clusters <- function(grid, solved_around, mines_left, precise_bounds
   
   potential_cluster <- grid * 0 + (solved_around != -1)
   in_any_cluster <- matrix(FALSE, nrow = nrow(grid), ncol = ncol(grid))
-  
+
   for (i in which(potential_cluster == 1)) {
     if (potential_cluster[i] == 1) {
       clust <- create_cluster_from_i(grid, i)
@@ -239,10 +239,10 @@ create_cluster_from_i <- function(grid, i, cluster = NULL) {
   if (any(tmp[[2]] >= 0)) {
     cluster[i] <- 1
     potential_neighboords <- position_to_i_mat(positions, dim(grid))
-    
+
     # exclure les cases déjà dans le cluster
     potential_neighboords <- potential_neighboords[cluster[potential_neighboords] != 1]
-    
+
     # exclure les voisins inconnus ou qui n'apporte pas d'information possible
     if (grid[i] %in% hp_brings_no_info_to_center_unknown) {
       potential_neighboords <- potential_neighboords[!grid[potential_neighboords] %in% hp_brings_no_info_to_center_unknown]
