@@ -121,42 +121,36 @@ independant_clusters <- function(grid, solved_around, mines_left, precise_bounds
           possibilities <- if (is.na(mines_left)) NA else rep("NA", diff(bornes_mines1) + 1)
           
           trials <- bornes_mines1[1]:bornes_mines1[2]
-          for (n in seq_along(trials)) {
-            # préciser les bornes
-            tmp_grid <- grid
-            # pour simplifier, on met des mines partout ailleurs
-            tmp_grid[clust == 0] <- flag_on_mine
-            new_solved_around <- init_solved_around(tmp_grid)
-            
-            # résoudre le cluster avec `trials[n]` mines
-            possibilities[n] <- is_mine_propagation_possible(
-              convert_grid_solution_to_human_grid(tmp_grid, new_solved_around),
-              trials[n],
-              new_solved_around,
-              to_clusterise = FALSE
-            )
-            possibilities <- as.logical(possibilities)
-            
-            # résoudre le reste sans le cluster avec mines_left - trials[n] mines
-            tmp_grid <- grid
-            tmp_grid[clust == 1] <- flag_on_mine
-            new_solved_around <- init_solved_around(tmp_grid)
-            
-            possibilities[n] <- possibilities[n] &&
-              is_mine_propagation_possible(
-                convert_grid_solution_to_human_grid(tmp_grid, new_solved_around),
-                mines_left - trials[n],
-                new_solved_around,
-                to_clusterise = FALSE
-              )
+          left <- 1
+          right <- length(trials)
+          min_possible <- NA
+          max_possible <- NA
+          while (left <= right) {
+            possibility <- test_trial(grid, mines_left, clust, trials[left])
+            if (possibility) {
+              min_possible <- trials[left]
+              break
+            } else {
+              left <- left + 1
+            }
           }
-          keep <- c(which(possibilities)[1], tail(which(possibilities), 1))
-          bornes_mines1 <- trials[keep]
-          possibilities <- possibilities[keep[1]:keep[2]]
+          while (right >= left) {
+            possibility <- test_trial(grid, mines_left, clust, trials[right])
+            if (possibility) {
+              max_possible <- trials[right]
+              break
+            } else {
+              right <- right - 1
+            }
+          }
+
+          # keep <- c(which(possibilities)[1], tail(which(possibilities), 1))
+          bornes_mines1 <- c(min_possible, max_possible) # trials[keep]
+          # possibilities <- possibilities[keep[1]:keep[2]]
         } else {
           possibilities <- if (is.na(mines_left)) NA else rep("NA", diff(bornes_mines1) + 1)
         }
-        
+
         tmp_grid <- grid
         tmp_grid[clust == 0] <- unknown_box
         if (all(tmp_grid == unknown_box)) browser() # impossible de créer un cluster vide
@@ -236,4 +230,35 @@ create_cluster_from_i <- function(grid, i, cluster = NULL) {
     }
   }
   cluster
+}
+
+test_trial <- function(grid, mines_left, clust, trial) {
+  print(trial)
+  # préciser les bornes
+  tmp_grid <- grid
+  # pour simplifier, on met des mines partout ailleurs
+  tmp_grid[clust == 0] <- flag_on_mine
+  new_solved_around <- init_solved_around(tmp_grid)
+  
+  # résoudre le cluster avec `trial` mines
+  res <- is_mine_propagation_possible(
+    convert_grid_solution_to_human_grid(tmp_grid, new_solved_around),
+    trial,
+    new_solved_around,
+    to_clusterise = FALSE
+  )
+  res <- as.logical(res)
+  
+  # résoudre le reste sans le cluster avec mines_left - trial mines
+  tmp_grid <- grid
+  tmp_grid[clust == 1] <- flag_on_mine
+  new_solved_around <- init_solved_around(tmp_grid)
+  
+  res &&
+    is_mine_propagation_possible(
+      convert_grid_solution_to_human_grid(tmp_grid, new_solved_around),
+      mines_left - trial,
+      new_solved_around,
+      to_clusterise = FALSE
+    )
 }
