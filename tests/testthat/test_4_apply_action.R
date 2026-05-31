@@ -31,7 +31,7 @@ test_that("pas de révélation de case quand on clique en mode hypothesis", {
   grid[2, 2] <- -9
   grid[1, 3] <- -1
   expect_equal(
-    apply_action(grid, c(1, 3), TRUE, 1, hypothesis = TRUE)[[1]][1, 3],
+    apply_action(grid, c(1, 3), TRUE, 1, hypothesis = 2)[[1]][1, 3],
     -8
   )
 })
@@ -92,7 +92,7 @@ test_that("Erreur dans apply_action si aucun drapeau n'est disponible et qu'on t
 })
 
 test_that("apply_action ne s'étend pas trop de 0", {
-  grid2 <- matrix(
+  grid <- matrix(
     c(
       -2, -1, -1, -1, -1, -1, -1, -2, -1,
       -2, -2, -1, -2, -1, -1, -1, -1, -1,
@@ -107,7 +107,7 @@ test_that("apply_action ne s'étend pas trop de 0", {
     ncol = 9,
     byrow = TRUE
   )
-  solved_around <- apply_action(grid2, c(5, 6), TRUE, 25, grid2 * 0 - 1)[[4]]
+  solved_around <- apply_action(grid, c(5, 6), TRUE, 25, grid * 0 - 1)[[4]]
   expect_equal(
     solved_around,
     matrix(

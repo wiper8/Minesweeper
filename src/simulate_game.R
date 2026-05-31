@@ -41,7 +41,7 @@ init_grid_after_first_click <- function(grid, pos, total_mines) {
   grid
 }
 
-main_game_loop <- function(grid, mines_left, clicker, solved_around, hypothesis = FALSE, click_order = NULL, ...) {
+main_game_loop <- function(grid, mines_left, clicker, solved_around, hypothesis = 0, click_order = NULL, ...) {
   seuil_verbose_duration_click <- 5
   repeat {
     a <- Sys.time()
@@ -52,23 +52,29 @@ main_game_loop <- function(grid, mines_left, clicker, solved_around, hypothesis 
     duration_for_click <- as.numeric(difftime(b, a, units = "secs"))
     if (duration_for_click > seuil_verbose_duration_click) {
       print(paste0("slow selection after ", nrow(click_order), " clicked. ", round(duration_for_click), " secs"))
+      if (duration_for_click > 60) browser()
     }
-    if (hypothesis && isTRUE(all.equal(tmp, "impossible"))) return(list(grid, "partie impossible", solved_around))
+    # "partie impossible"
+    # ne devrait pas être possible car
+    # quand on calcule les probabilitées, c'est que tous les clics étaient possibles
+    if (hypothesis == 1 && isTRUE(all.equal(tmp, "impossible"))) browser()
+    if (hypothesis == 2 && isTRUE(all.equal(tmp, "impossible"))) return(list(grid, "partie impossible", solved_around, mines_left))
     if (isTRUE(all.equal(tmp, "impossible"))) browser()
-    if (hypothesis && is.null(tmp)) return(list(grid, "le clicker ne sait pu quoi faire", solved_around))
+    if (hypothesis != 0 && is.null(tmp)) return(list(grid, "le clicker ne sait pu quoi faire", solved_around, mines_left))
     if (is.null(tmp)) browser()
     
     for (new_action in tmp) {
       if (new_action[[2]]) click_order <- rbind(click_order, new_action[[1]])
+      if (any(is.na(new_action[[1]]))) browser()
       tmp2 <- apply_action(grid, new_action[[1]], new_action[[2]], mines_left, solved_around = solved_around, hypothesis = hypothesis, ...)
       grid <- tmp2[[1]]
       mines_left <- tmp2[[3]]
       solved_around <- tmp2[[4]]
       if (tmp2[[2]] == 1) {
-        if (hypothesis && !is_grid_possible(grid)) return(list(grid, "partie impossible", solved_around))
-        return(list(grid, "win", solved_around))
+        if (hypothesis == 2 && !is_grid_possible(grid)) return(list(grid, "partie impossible", solved_around, mines_left))
+        return(list(grid, "win", solved_around, mines_left))
       }
-      if (tmp2[[2]] == -1) return(list(grid, "lost", solved_around))
+      if (tmp2[[2]] == -1) return(list(grid, "lost", solved_around, mines_left))
     }
   }
 }

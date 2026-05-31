@@ -18,7 +18,7 @@ unknown_box <- -10L
 
 # pour accélérer les calculs, pas besoin de réinstancier à chaque fois
 known <- c(0:9, flag_on_mine, flag_on_no_mine, hypothetical_mine, hypothetical_no_mine)
-known_but_no_flag <- setdiff(known, c(flag_on_mine, flag_on_no_mine))
+known_but_no_flag <- setdiff(known, c(flag_on_mine, flag_on_no_mine, hypothetical_mine))
 
 hp_flags <- c(flag_on_mine, flag_on_no_mine, hypothetical_mine)
 hp_to_hypo_no_mine <- c(covered_mine, covered_no_mine, uncovered_mine, uncovered_no_mine)
