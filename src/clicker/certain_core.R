@@ -47,22 +47,22 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
   impossible <- TRUE # pour hypothesis = 2
   reached_prop <- FALSE
   i_to_investigate <- find_best_i_to_investigate(grid, solved_around, click_order)
-  
+
   mines_left_init <- mines_left
   grid_init <- grid
   solved_around_init <- solved_around
-  
+
   clusters <- if (to_clusterise) {
     independant_clusters(grid, solved_around, mines_left)
   } else {
     NULL
   }
-  
+
   # car possible qu'on soit bloqué ET qu'il n'y ait aucun i_to_investigate disponible, qu'il faut guess random
   if (length(i_to_investigate) == 0 && hypothesis != 2) impossible <- FALSE
-  
+
   global_cache <- list() # cache des cas POSSIBLES, pas confirmés
-  
+
   # je prend une cellule avec un chiffre qui a >= 1 inconnu autour
   for (i in i_to_investigate) {
     mines_left <- mines_left_init
@@ -73,19 +73,19 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
     positions <- tmp$positions
     unknown <- !values %in% known
     n_unknown <- sum(unknown)
-    
+
     # car quand on essaie un drapeau et de le propager, ça peut arriver qu'il n'y a plus de combinaisons
     if (n_unknown == 0) next
     reached_prop <- TRUE
-    
+
     mines_left_around <- count_mines_left_around(grid, i, values)
     # appliquer toutes les combins de mines autour, et vérifier s'il y a une certitude
     pos_unknown <- positions[unknown, , drop = FALSE]
-    
+
     # tester toutes les combinaisons autour de cette case, vérifier s'il y a toujours ou jamais un drapeau
     # dans les situations où on propage un flag, ça peut arriver
     if (mines_left_around < 0 || n_unknown < mines_left_around || isTRUE(mines_left < mines_left_around)) return("impossible")
-    
+
     if (!is.null(clusters)) {
       cluster_concerned <- sapply(clusters$clusters, function(clust) clust$in_cluster[i] == 1)
       if (!is.logical(cluster_concerned) || length(cluster_concerned) == 0) browser()
@@ -102,13 +102,13 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
         ))
       }
     }
-    
+
     combins <- combn(n_unknown, mines_left_around)
     cache <- rep(NA, ncol(combins))
-    
+
     for (mine_i in seq_len(n_unknown)) {
       mines_has_mine_i <- fast_apply(combins, 2, function(comb) mine_i %in% comb)
-      
+
       # je me questionne : parmi les mines restantes autour,
       # si je ne flag JAMAIS une cellule et que toutes les combinaisons ne sont pas possibles,
       # c'est que je dois la flagguer
@@ -161,7 +161,7 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
         # is_mine_propagation_possible qui va dire TRUE
         return(NULL)
       }
-      
+
       # si à l'inverse, je flag la cellule, et que toutes les situations sont impossibles, c'est qu'il n'y a pas de mine!
       # donc la cliquer
       possible <- which_combins_possible(
@@ -213,7 +213,6 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
     }
   }
   tmp <- deduce_unknown_boxes(grid_init, mines_left_init)
-  if (any(is.na(tmp[[1]][[1]]))) browser()
   if (!is.null(tmp)) return(tmp)
   if (isTRUE(all.equal(tmp, "impossible"))) return("impossible")
   if (hypothesis != 2 && reached_prop && impossible) browser() # pas sensé etre impossible si on n'est pas en exploration
@@ -370,7 +369,7 @@ which_combins_possible <- function(grid, combins, pos_unknown, solved_around, mi
     i_to_flag <- position_to_i_mat(pos_unknown[combin, , drop = FALSE], dim(grid))
     i_to_click <- position_to_i_mat(pos_unknown[-combin, , drop = FALSE], dim(grid))
     i_to_click <- i_to_click[grid[i_to_click] %in% hp_to_hypo_no_mine]
-    
+
     for (j in i_to_flag) {
       tmp <- apply_action(grid_tmp_propagate, i_to_position(j, dim(grid_tmp_propagate)), action = FALSE, mines_left,
                           solved_around, hypothesis = 2, ...)
@@ -378,7 +377,7 @@ which_combins_possible <- function(grid, combins, pos_unknown, solved_around, mi
       mines_left <- tmp[[3]]
       solved_around <- tmp[[4]]
     }
-    
+
     for (j in i_to_click) {
       j_pos <- i_to_position(j, dim(grid_tmp_propagate))
       tmp <- apply_action(grid_tmp_propagate, j_pos, action = TRUE, mines_left,
@@ -388,7 +387,7 @@ which_combins_possible <- function(grid, combins, pos_unknown, solved_around, mi
       solved_around <- tmp[[4]]
       click_order <- rbind(click_order, j_pos)
     }
-    
+
     possible[i] <- is_mine_propagation_possible(grid_tmp_propagate, mines_left = mines_left,
                                                 solved_around = solved_around, click_order = click_order, ...)
     if (possible[i]) break # early exist cause the calling function (which_combins_possible) checks for all FALSE
