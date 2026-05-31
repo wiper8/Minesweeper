@@ -20,15 +20,17 @@ compute_grid_probabilities <- function(grid, mines_left, solved_around, hypothes
   clusters <- independant_clusters(grid, solved_around, mines_left)
   
   # TODO # recalculer les bornes précies des mines clusters
-  precise_clusters_bounds_all()
+  clusters <- precise_clusters_bounds_all(grid, solved_around, mines_left, clusters)
   
   # void probs
   # TODO approximatif pour l'instant
   void_prob <- mean(clusters$void$bornes_mines) / sum(clusters$void$in_cluster)
   probs_grid[clusters$void$in_cluster] <- void_prob
-  
+
+  browser()
+  # TODO très lent
   clusters_all_combins_cache <- lapply(clusters$clusters, function(lst) {
-    generate_all_combins(lst$grid, (lst$bornes_mines[1]:lst$bornes_mines[2])[lst$possible == "TRUE"], lst$solved_around)
+    generate_all_combins(lst$grid, (lst$bornes_mines[1]:lst$bornes_mines[2])[lst$possible], lst$solved_around)
   })
   
   # je prend une cellule avec un chiffre qui a au moins un inconnu autour
@@ -87,7 +89,8 @@ compute_grid_probabilities <- function(grid, mines_left, solved_around, hypothes
     probs_grid[position_to_i_mat(positions[unknown, , drop = FALSE], dim(grid))] <- around_probs
   }
   if (any(is.na(probs_grid) & grid_init < 0)) browser()
-  if (any(sum(probs_grid == 0 | probs_grid == 1, na.rm = TRUE))) browser() # pas sensé déclancher car certain_core devrait tout trouver
+  # pas sensé déclancher car certain_core devrait trouver tous les cas certains
+  if (any(sum(probs_grid == 0 | probs_grid == 1, na.rm = TRUE))) browser()
   # TODO ajout temporaire pour simplifier les probs vu qu'elles ne sont pas pondérées
   probs_grid[!is.na(probs_grid) & probs_grid != 0 & probs_grid != 1 & probs_grid == min(probs_grid, na.rm = TRUE)] <- 0.1
   probs_grid[!is.na(probs_grid) & probs_grid != 0 & probs_grid != 1 & probs_grid > min(probs_grid, na.rm = TRUE)] <- 0.9
@@ -96,15 +99,27 @@ compute_grid_probabilities <- function(grid, mines_left, solved_around, hypothes
 }
 
 precise_clusters_bounds_all <- function(grid, solved_around, mines_left, clusters) {
-  # TODO
-  browser()
-  trials <- bornes_mines1[1]:bornes_mines1[2]
+  for (i in seq_along(clusters$clusters)) {
+    tmp <- precise_bounds_one_cluster(clusters$clusters[[i]], grid, mines_left)
+    clusters$clusters[[i]]$bornes_mines <- tmp$bornes
+    clusters$clusters[[i]]$possible <- tmp$possible
+  }
+  tmp <- precise_bounds_one_cluster(clusters$void, grid, mines_left)
+  clusters$void$bornes_mines <- tmp$bornes
+  clusters$void$possible <- tmp$possible
+  clusters
+}
+
+precise_bounds_one_cluster <- function(lst, grid, mines_left) {
+  trials <- lst$bornes_mines[1]:lst$bornes_mines[2]
   left <- 1
   min_possible <- NA
   max_possible <- NA
+  possible <- rep(NA, length(trials))
   while (left <= length(trials)) {
-    possibility <- test_trial(grid, mines_left, clust, trials[left])
+    possibility <- test_trial(grid, mines_left, lst$in_cluster, trials[left])
     if (possibility) {
+      possible[left] <- TRUE
       if (is.na(min_possible)) {
         min_possible <- trials[left]
       } else {
@@ -115,9 +130,10 @@ precise_clusters_bounds_all <- function(grid, solved_around, mines_left, cluster
       } else {
         max_possible <- max(max_possible, trials[left])
       }
+    } else {
+      possible[left] <- FALSE
     }
     left <- left + 1
   }
-  bornes_mines1 <- c(min_possible, max_possible)
+  list(bornes = c(min_possible, max_possible), possible = possible[seq(head(which(possible), 1), tail(which(possible), 1))])
 }
-

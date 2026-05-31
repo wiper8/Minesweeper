@@ -13,20 +13,19 @@ generate_all_combins <- function(grid, mines, solved_around, ...) {
   
   lapply(mines, function(mines_left_init) {
     # pour s'assurer de résoudre les cas certain car le fait de modifier mines_left peut en causer
-    tmp <- main_game_loop(grid_tmp_propagate, mines_left_init, certain_core, solved_around, hypothesis = TRUE)
+    tmp <- main_game_loop(grid_tmp_propagate, mines_left_init, certain_core, solved_around, hypothesis = 1)
     grid_tmp_propagate <- tmp[[1]]
     solved_around <- tmp[[3]]
     mines_left <- tmp[[4]]
     if (tmp[[2]] == "win") {
       return(list(mines_left = mines_left_init, list(grid_tmp_propagate)))
     }
-    # TODO attention, pourrait arriver qu'il ne reste que du solved_around 1 et -1
     next_i <- which(grid_tmp_propagate == -10 & solved_around == 0)
     if (length(next_i) == 0) {
       next_i <- which(grid_tmp_propagate == -10 & solved_around == -1)
     }
     if (length(next_i) == 0) {
-      browser()
+      browser() # pas supposé déclencher
     }
     next_i <- next_i[1] # TODO mieux choisir le prochain next_i, soit avec probabilitées, le prioritise, ou le click_order
     
