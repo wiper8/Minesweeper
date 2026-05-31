@@ -8,10 +8,10 @@ compute_mine_probability <- function(grid, mine_i, all_combins) {
   })) / length(all_combins)
 }
 
-generate_all_combins <- function(grid, bornes_mines, solved_around, ...) {
+generate_all_combins <- function(grid, mines, solved_around, ...) {
   grid_tmp_propagate <- convert_grid_solution_to_human_grid(grid, solved_around, ...)
-
-  lapply(bornes_mines[1]:bornes_mines[2], function(mines_left_init) {
+  
+  lapply(mines, function(mines_left_init) {
     # pour s'assurer de résoudre les cas certain car le fait de modifier mines_left peut en causer
     tmp <- main_game_loop(grid_tmp_propagate, mines_left_init, certain_core, solved_around, hypothesis = TRUE)
     grid_tmp_propagate <- tmp[[1]]
@@ -44,7 +44,7 @@ get_situational_combins <- function(grid_tmp_propagate, pos, action = FALSE,
                                     mines_left, solved_around, hypothesis = 1, ...) {
   # apposer une mine temporaire
   tmp <- apply_action(grid_tmp_propagate, pos, action = action, mines_left,
-                              solved_around, hypothesis = hypothesis, ...)
+                      solved_around, hypothesis = hypothesis, ...)
   # propager la partie
   tmp <- main_game_loop(tmp[[1]], tmp[[3]], certain_core, tmp[[4]], hypothesis = hypothesis, ...)
   

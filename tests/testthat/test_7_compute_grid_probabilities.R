@@ -18,11 +18,11 @@ test_that("compute_grid_probabilities finds good probabilities", {
     compute_grid_probabilities(grid, mines_left = 7, solved_around),
     matrix(
       c(
-        9, 1, 9, 9, 9,
+        9, 1, 9, 1, 9,
         9, NA, NA, NA, 9,
         9, NA, NA, NA, 9,
         1, NA, NA, NA, 9,
-        9, 9, 9, 9, 9
+        1, 9, 9, 9, 9
       ) / 10,
       ncol = 5,
       byrow = TRUE

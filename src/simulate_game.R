@@ -65,6 +65,7 @@ main_game_loop <- function(grid, mines_left, clicker, solved_around, hypothesis 
     
     for (new_action in tmp) {
       if (new_action[[2]]) click_order <- rbind(click_order, new_action[[1]])
+      if (any(is.na(new_action[[1]]))) browser()
       tmp2 <- apply_action(grid, new_action[[1]], new_action[[2]], mines_left, solved_around = solved_around, hypothesis = hypothesis, ...)
       grid <- tmp2[[1]]
       mines_left <- tmp2[[3]]

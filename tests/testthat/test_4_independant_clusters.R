@@ -25,6 +25,9 @@ test_that("independant_clusters fonctionne pour des hypothesis != 2", {
         possible = rep("NA", 6),
         last_success_mines = NA
       ),
+      known_but_does_nothing = list(
+        in_cluster = matrix(FALSE, nrow = nrow(grid), ncol = ncol(grid))
+      ),
       clusters = list(
         list(
           grid = grid,
@@ -54,17 +57,16 @@ test_that("independant_clusters works properly", {
       -10, -5, -10, -10, 2, -10, -10, -10, -10,
       -10, -10, -10, -10, -10, -10, -10, -10, -10,
       -10, -10, -10, -10, -10, -10, -10, -5, 3,
-      -10, -10, -10, -10, -10, 1, -10, -10, -10,
+      -9, -10, -10, -10, -10, 1, -10, -10, -10,
       -10, -10, -10, -10, -10, -10, -10, -10, -10,
       -10, -10, -10, -10, -10, -10, -10, -10, -10,
       -10, -10, -10, -10, -10, -10, -10, -10, -10,
-      1, -10, 1, -10, -10, -10, -10, -10, -10
+      1, -10, 1, -10, -10, -10, -10, -10, -5
     ),
     nrow = 17,
     byrow = TRUE
   )
   solved_around <- init_solved_around(grid)
-
   expect_equal(
     independant_clusters(grid, solved_around, mines_left = 32),
     list(
@@ -85,11 +87,11 @@ test_that("independant_clusters works properly", {
             F, F, F, F, F, F, F, T, T,
             T, T, T, F, F, F, T, F, F,
             T, T, T, T, F, F, F, F, F,
-            T, T, T, T, F, F, F, F, F,
+            F, T, T, T, F, F, F, F, F,
             T, T, T, T, F, F, F, T, T,
             T, T, T, T, T, T, T, T, T,
             F, F, F, F, T, T, T, T, T,
-            F, F, F, F, T, T, T, T, T
+            F, F, F, F, T, T, T, T, F
           ),
           nrow = 17,
           byrow = TRUE
@@ -97,6 +99,31 @@ test_that("independant_clusters works properly", {
         bornes_mines = c(0, 32),
         possible = rep("NA", 33),
         last_success_mines = NA
+      ),
+      known_but_does_nothing = list(
+        in_cluster = matrix(
+          c(
+            F, F, F, F, F, F, F, F, F,
+            F, F, F, F, F, F, F, F, F,
+            F, F, F, F, F, F, F, F, F,
+            F, F, F, F, F, F, F, F, F,
+            F, F, F, F, F, F, F, F, F,
+            F, F, F, F, F, F, F, F, F,
+            F, F, F, F, F, F, F, F, F,
+            F, F, F, F, F, F, F, F, F,
+            F, F, F, F, F, F, F, F, F,
+            F, F, F, F, F, F, F, F, F,
+            F, F, F, F, F, F, F, F, F,
+            F, F, F, F, F, F, F, F, F,
+            T, F, F, F, F, F, F, F, F,
+            F, F, F, F, F, F, F, F, F,
+            F, F, F, F, F, F, F, F, F,
+            F, F, F, F, F, F, F, F, F,
+            F, F, F, F, F, F, F, F, T
+          ),
+          nrow = 17,
+          byrow = TRUE
+        )
       ),
       clusters = list(
         list(
@@ -353,6 +380,52 @@ test_that("independant_clusters works properly", {
           last_success_mines = NA
         )
       )
+    )
+  )
+})
+
+test_that("independant_clusters ne met pas des cases hypothéthiques mais connues dans le void", {
+  grid <- matrix(
+    c(
+      2, -5, -10,
+      -9, -8, -10,
+      -8, -10, -10,
+      -10, -10, -10
+    ),
+    ncol = 3,
+    byrow = TRUE
+  )
+  expect_false(
+    independant_clusters(grid, init_solved_around(grid), 3)$void$in_cluster[3]
+  )
+})
+
+test_that("independant_clusters crée un void adéquat", {
+  grid <- matrix(
+    c(
+      -1, -5, 1, 0,
+      -1, 3, 2, 0,
+      -2, -5, 1, 0,
+      -1, 3, 2, 0,
+      -1, -5, 2, 0,
+      -2, -5, 2, 0
+    ),
+    nrow = 6,
+    byrow = TRUE
+  )
+  expect_equal(
+    independant_clusters(grid, init_solved_around(grid), 2)$void$in_cluster,
+    matrix(
+      c(
+        F, F, F, F,
+        F, F, F, F,
+        F, F, F, F,
+        F, F, F, F,
+        F, F, F, F,
+        T, F, F, F
+      ),
+      nrow = 6,
+      byrow = TRUE
     )
   )
 })

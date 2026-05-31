@@ -16,6 +16,7 @@ random_clicker <- function(grid, ...) {
     browser()
   }
   next_i <- sample2(which(grid %in% c(covered_no_mine, covered_mine)), 1)
+  if (any(is.na(i_to_position(next_i, dim(grid))))) browser()
   list(list(i_to_position(next_i, dim(grid)), TRUE, "random"))
 }
 

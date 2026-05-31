@@ -6,6 +6,7 @@ certain_else_random_clicker <- function(grid, mines_left, ...) {
   if (!is.null(tmp)) {
     return(tmp)
   }
+  if (any(is.na(tmp[[1]]))) browser()
   # si aucune stratégie
   random_clicker(grid, ...)
 }

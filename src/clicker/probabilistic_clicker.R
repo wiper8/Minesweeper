@@ -5,7 +5,8 @@ probabilistic_clicker <- function(grid, ...) {
   probs_grid <- compute_grid_probabilities(grid, ...)
   # temporairement, sélectionner une boîte aléatoirement au lieu de directement le plus bas
   next_i <- sample(which(probs_grid == min(probs_grid)), 1)
-  list(i_to_position(next_i, dim(grid)), TRUE, "probabilistic")
+  browser()
+  list(list(i_to_position(next_i, dim(grid)), TRUE, "probabilistic"))
 }
 
 compute_grid_probabilities <- function(grid, mines_left, solved_around, hypothesis, click_order = NULL, ...) {
@@ -14,18 +15,23 @@ compute_grid_probabilities <- function(grid, mines_left, solved_around, hypothes
   mines_left_init <- mines_left
   grid_init <- grid
   solved_around_init <- solved_around
-  
-  clusters <- independant_clusters(grid, solved_around, mines_left, precise_bounds = "all")
-  
-  clusters_all_combins_cache <- lapply(clusters, function(lst) {
-    browser()
-    generate_all_combins(lst$grid, (lst$bornes_mines[1]:lst$bornes_mines[2])[lst$possible], lst$solved_around)
-  })
-  # browser() # TODO section ci-dessous non complétée
-  
   probs_grid <- grid * NA
-
-  # je prend une cellule avec un chiffre qui a >= 1 inconnu autour
+  
+  clusters <- independant_clusters(grid, solved_around, mines_left)
+  
+  # TODO # recalculer les bornes précies des mines clusters
+  precise_clusters_bounds_all()
+  
+  # void probs
+  # TODO approximatif pour l'instant
+  void_prob <- mean(clusters$void$bornes_mines) / sum(clusters$void$in_cluster)
+  probs_grid[clusters$void$in_cluster] <- void_prob
+  
+  clusters_all_combins_cache <- lapply(clusters$clusters, function(lst) {
+    generate_all_combins(lst$grid, (lst$bornes_mines[1]:lst$bornes_mines[2])[lst$possible == "TRUE"], lst$solved_around)
+  })
+  
+  # je prend une cellule avec un chiffre qui a au moins un inconnu autour
   for (i in i_to_investigate) {
     mines_left <- mines_left_init
     grid <- grid_init
@@ -38,7 +44,7 @@ compute_grid_probabilities <- function(grid, mines_left, solved_around, hypothes
     
     # car quand on essaie un drapeau et de le propager, ça peut arriver qu'il n'y a plus de combinaisons
     if (n_unknown == 0) next
-
+    
     mines_left_around <- count_mines_left_around(grid, i, values)
     # appliquer toutes les combins de mines autour, et vérifier s'il y a une certitude
     pos_unknown <- positions[unknown, , drop = FALSE]
@@ -46,27 +52,27 @@ compute_grid_probabilities <- function(grid, mines_left, solved_around, hypothes
     # tester toutes les combinaisons autour de cette case, vérifier s'il y a toujours ou jamais un drapeau
     # dans les situations où on propage un flag, ça peut arriver
     if (mines_left_around < 0 || n_unknown < mines_left_around || isTRUE(mines_left < mines_left_around)) browser()
-
-    cluster_concerned <- sapply(clusters, function(clust) clust$solved_around[i] != -1)
-    tmp <- clusters[[which(cluster_concerned)]]
+    
+    cluster_concerned <- sapply(clusters$clusters, function(clust) clust$solved_around[i] != -1)
+    tmp <- clusters$clusters[[which(cluster_concerned)]]
     grid <- tmp$grid
     solved_around <- tmp$solved_around
     # rajouter les mines déjà flagguées des autres clusters
     if (any(!cluster_concerned)) {
       mines_left <- mines_left + sum(sapply(
-        clusters[!cluster_concerned],
+        clusters$clusters[!cluster_concerned],
         function(clust) {
           sum(clust$grid == flag_on_mine)
         }
       ))
     }
-
+    
     around_probs <- rep(NA, n_unknown)
     for (mine_i in seq_len(n_unknown)) {
       next_click <- positions[unknown, , drop = FALSE][mine_i, ]
       if (is.na(probs_grid[next_click[1], next_click[2]])) {
         click_order_tmp <- rbind(click_order, next_click)
-
+        
         around_probs[mine_i] <- compute_mine_probability(
           grid,
           position_to_i(next_click, dim(grid)),
@@ -85,6 +91,33 @@ compute_grid_probabilities <- function(grid, mines_left, solved_around, hypothes
   # TODO ajout temporaire pour simplifier les probs vu qu'elles ne sont pas pondérées
   probs_grid[!is.na(probs_grid) & probs_grid != 0 & probs_grid != 1 & probs_grid == min(probs_grid, na.rm = TRUE)] <- 0.1
   probs_grid[!is.na(probs_grid) & probs_grid != 0 & probs_grid != 1 & probs_grid > min(probs_grid, na.rm = TRUE)] <- 0.9
-
+  
   probs_grid
 }
+
+precise_clusters_bounds_all <- function(grid, solved_around, mines_left, clusters) {
+  # TODO
+  browser()
+  trials <- bornes_mines1[1]:bornes_mines1[2]
+  left <- 1
+  min_possible <- NA
+  max_possible <- NA
+  while (left <= length(trials)) {
+    possibility <- test_trial(grid, mines_left, clust, trials[left])
+    if (possibility) {
+      if (is.na(min_possible)) {
+        min_possible <- trials[left]
+      } else {
+        min_possible <- min(min_possible, trials[left])
+      }
+      if (is.na(max_possible)) {
+        max_possible <- trials[left]
+      } else {
+        max_possible <- max(max_possible, trials[left])
+      }
+    }
+    left <- left + 1
+  }
+  bornes_mines1 <- c(min_possible, max_possible)
+}
+

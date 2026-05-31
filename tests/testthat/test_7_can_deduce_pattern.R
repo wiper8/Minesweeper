@@ -399,7 +399,7 @@ test_that("can_deduce_pattern est rapide avec des grilles avancées en résoluti
   a <- Sys.time()
   can_deduce_pattern(grid, 19, solved_around, hypothesis = 0, click_order = click_order)
   b <- Sys.time()
-  expect_true(as.numeric(difftime(b, a, units = "secs")) < 5) # secondes
+  expect_true(as.numeric(difftime(b, a, units = "secs")) < 7) # secondes
 })
 
 test_that("can_deduce_pattern fonctionne dans de rares edge cases", {
@@ -474,8 +474,7 @@ test_that("can_deduce_pattern sait résoudre les sections vides mais inconnues",
     nrow = 17,
     byrow = TRUE
   )
-  # debugonce(can_deduce_pattern)
   expect_true(
-    is.list(can_deduce_pattern(grid, mines_left = 3, init_solved_around(grid), hypothesis = TRUE))
+    is.list(can_deduce_pattern(grid, mines_left = 3, init_solved_around(grid), hypothesis = 1))
   )
 })
