@@ -87,7 +87,9 @@ try_solve_a_cluster <- function(clusters, clust_i, mines_left, grid, ...) {
   }
 }
 
-independant_clusters <- function(grid, solved_around, mines_left, precise_bounds = FALSE) {
+independant_clusters <- function(grid, solved_around, mines_left, precise_bounds = c("none" ,"all", "min", "min-shortcut")) {
+  precise_bounds <- match.arg(precise_bounds)
+
   if (all(solved_around == -1)) {
     new_solved_around <- init_solved_around(grid, which(solved_around == -1))
     return(list(list(
@@ -109,12 +111,37 @@ independant_clusters <- function(grid, solved_around, mines_left, precise_bounds
       in_next_cluster <- !in_any_cluster & clust
       if (any(in_any_cluster & clust)) browser() # pas supposé que des boîtes soient dans plusieurs clusters
       if (any(in_next_cluster)) {
+        in_any_cluster <- in_any_cluster | in_next_cluster
         # compter les bornes de mines du cluster
         bornes_mines1 <- c(0, min(mines_left, sum(!grid[potential_cluster == 1 & in_next_cluster] %in% known)))
         potential_cluster[potential_cluster == 1] <- 1 - clust[potential_cluster == 1]
-        
-        # cacher les boxes non dans le cluster en cours
-        if (precise_bounds) {
+
+        au_moins_2e_clust <- length(groups) >= 1 || any(potential_cluster == 1)
+        if (precise_bounds == "min-shortcut" && !au_moins_2e_clust) {
+          # tester tout de suite avec mines_left
+          # si ce n'est pas possible, on sait que le shortcut dans deduce_unknown_boxes ne déclanchera pas
+          possibility <- test_trial(grid, mines_left, clust, mines_left)
+          if (possibility) {
+            # vérifier si c'est bel et bien la bornes min à mines_left, si oui, on pognera le shortcut dans deduce_unknown_boxes
+            trial <- mines_left - 1
+            while (trial >= 0 && trial >= bornes_mines1[1]) {
+              possibility <- test_trial(grid, mines_left, clust, trial)
+              if (possibility) {
+                # overwrite to skip next if()
+                au_moins_2e_clust <- FALSE
+                # volontairement ne pas overwrite bornes_mines1 pour éviter le shortcut dans deduce_unknown_boxes
+                break
+              } else {
+                trial <- trial - 1
+              }
+            }
+          } else {
+            # overwrite to skip next if()
+            au_moins_2e_clust <- FALSE
+            # volontairement ne pas overwrite bornes_mines1 pour éviter le shortcut dans deduce_unknown_boxes
+          }
+        } 
+        if (precise_bounds %in% c("all", "min") || (precise_bounds == "min-shortcut" && au_moins_2e_clust)) {
           
           mines_target_ratio <- if (is.na(mines_left)) 0.5 else mines_left / sum(!grid %in% known)
           tmp_mines_left_min <- bornes_mines1[1]
@@ -134,23 +161,26 @@ independant_clusters <- function(grid, solved_around, mines_left, precise_bounds
               left <- left + 1
             }
           }
-          while (right >= left) {
-            possibility <- test_trial(grid, mines_left, clust, trials[right])
-            if (possibility) {
-              max_possible <- trials[right]
-              break
-            } else {
-              right <- right - 1
+          if (precise_bounds == "all") {
+            while (right >= left) {
+              possibility <- test_trial(grid, mines_left, clust, trials[right])
+              if (possibility) {
+                max_possible <- trials[right]
+                break
+              } else {
+                right <- right - 1
+              }
             }
+            bornes_mines1 <- c(min_possible, max_possible)
+            # possibilities <- possibilities[keep[1]:keep[2]]
+          } else {
+            bornes_mines1[1] <- min_possible
+            # possibilities <- possibilities[keep[1]:keep[2]]
           }
-
-          # keep <- c(which(possibilities)[1], tail(which(possibilities), 1))
-          bornes_mines1 <- c(min_possible, max_possible) # trials[keep]
-          # possibilities <- possibilities[keep[1]:keep[2]]
-        } else {
+        } else if (precise_bounds == "none") {
           possibilities <- if (is.na(mines_left)) NA else rep("NA", diff(bornes_mines1) + 1)
         }
-
+        
         tmp_grid <- grid
         tmp_grid[clust == 0] <- unknown_box
         if (all(tmp_grid == unknown_box)) browser() # impossible de créer un cluster vide
@@ -165,8 +195,6 @@ independant_clusters <- function(grid, solved_around, mines_left, precise_bounds
           possible = if (is.na(mines_left)) NA else rep("NA", diff(bornes_mines1) + 1),
           last_success_mines = NA
         )
-        
-        in_any_cluster <- in_any_cluster | in_next_cluster
       }
     }
   }
@@ -233,7 +261,6 @@ create_cluster_from_i <- function(grid, i, cluster = NULL) {
 }
 
 test_trial <- function(grid, mines_left, clust, trial) {
-  print(trial)
   # préciser les bornes
   tmp_grid <- grid
   # pour simplifier, on met des mines partout ailleurs

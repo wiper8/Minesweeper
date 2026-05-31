@@ -65,7 +65,6 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
 
   # je prend une cellule avec un chiffre qui a >= 1 inconnu autour
   for (i in i_to_investigate) {
-    if (hypothesis == 0) print(i)
     mines_left <- mines_left_init
     grid <- grid_init
     solved_around <- solved_around_init
@@ -230,9 +229,10 @@ deduce_unknown_boxes <- function(grid, mines_left) {
   if (no_info_boxes < mines_left) return("impossible")
   if (no_info_boxes == mines_left) return(list(list(i_to_position(which(!known_boxes)[1], dim(grid)), FALSE)))
   solved_around <- init_solved_around(grid)
-  clusters <- independant_clusters(grid, solved_around, mines_left, precise_bounds = TRUE)
+  clusters <- independant_clusters(grid, solved_around, mines_left, precise_bounds = "min-shortcut")
   
   # si toutes les mines sont assurément dans les clusters, je peux cliquer dans le vide
+  # SHORTCUT
   if ((length(clusters$clusters) == 0 && mines_left == 0) ||
       (length(clusters$clusters) != 0 && sum(sapply(clusters$clusters, function(clust) clust$bornes_mines[1])) == mines_left)) {
     next_i <- which(clusters$void$in_cluster)[1]

@@ -15,7 +15,7 @@ compute_grid_probabilities <- function(grid, mines_left, solved_around, hypothes
   grid_init <- grid
   solved_around_init <- solved_around
   
-  clusters <- independant_clusters(grid, solved_around, mines_left, precise_bounds = TRUE)
+  clusters <- independant_clusters(grid, solved_around, mines_left, precise_bounds = "all")
   
   clusters_all_combins_cache <- lapply(clusters, function(lst) {
     browser()
