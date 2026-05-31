@@ -76,7 +76,7 @@ compute_mines_probs_df <- function(n, dims, ...) {
   probs_low <- rep(NA, length(mines))
   probs_high <- rep(NA, length(mines))
   avg_pct_done <- rep(NA, length(mines))
-
+  
   stop_threshold <- 1 / 100
   for (i in seq_along(probs)) {
     print(paste0(i, " mines"))

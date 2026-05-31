@@ -15,7 +15,6 @@ test_that("is_mine_propagation_possible fonctionne généralement", {
   )
   grid[2, 2] <- -5
   grid[2, 3] <- -1
-  debugonce(is_mine_propagation_possible)
   expect_true(
     is_mine_propagation_possible(grid, mines_left = 0, init_solved_around(grid))
   )
@@ -58,11 +57,11 @@ test_that("is_mine_propagation_possible fonctionne pour un pattern possible de m
               nrow = 10,
               byrow = TRUE
             )
-
+            
             expect_true(
               is_mine_propagation_possible(grid, mines_left = NA, init_solved_around(grid))
             )
-
+            
             grid <- matrix(
               c(
                 -1, -1, -5, -2, -1,
@@ -314,5 +313,28 @@ test_that("is_mine_propagation pour des cas clusters indépendants", {
 
   expect_true(
     is_mine_propagation_possible(grid, mines_left = 31, solved_around, click_order = matrix(c(7, 5), ncol = 2))
+  )
+})
+
+test_that("is_mine_propagation_possible fonctionne sans perdre la partie", {
+  grid <- matrix(
+    c(
+      -1, -2, -2, -1,
+      -2, -2, -2, -2,
+      -1, -2, -2, -2,
+      -5, -5, -5, -5,
+      5, -5, 5, 2,
+      -5, -5, 2, 0
+    ),
+    ncol = 4,
+    byrow = TRUE
+  )
+  expect_no_error(
+    is_mine_propagation_possible(
+      convert_grid_solution_to_human_grid(grid, init_solved_around(grid)),
+      0,
+      init_solved_around(grid),
+      to_clusterise = FALSE
+    )
   )
 })

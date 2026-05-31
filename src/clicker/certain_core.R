@@ -65,6 +65,7 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
 
   # je prend une cellule avec un chiffre qui a >= 1 inconnu autour
   for (i in i_to_investigate) {
+    if (hypothesis == 0) print(i)
     mines_left <- mines_left_init
     grid <- grid_init
     solved_around <- solved_around_init
@@ -161,7 +162,7 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
         # is_mine_propagation_possible qui va dire TRUE
         return(NULL)
       }
-
+      
       # si à l'inverse, je flag la cellule, et que toutes les situations sont impossibles, c'est qu'il n'y a pas de mine!
       # donc la cliquer
       possible <- which_combins_possible(
@@ -230,15 +231,16 @@ deduce_unknown_boxes <- function(grid, mines_left) {
   if (no_info_boxes == mines_left) return(list(list(i_to_position(which(!known_boxes)[1], dim(grid)), FALSE)))
   solved_around <- init_solved_around(grid)
   clusters <- independant_clusters(grid, solved_around, mines_left, precise_bounds = TRUE)
-
+  
   # si toutes les mines sont assurément dans les clusters, je peux cliquer dans le vide
-  if (sum(sapply(clusters$clusters, function(clust) clust$bornes_mines[1])) == mines_left) {
+  if ((length(clusters$clusters) == 0 && mines_left == 0) ||
+      (length(clusters$clusters) != 0 && sum(sapply(clusters$clusters, function(clust) clust$bornes_mines[1])) == mines_left)) {
     next_i <- which(clusters$void$in_cluster)[1]
     if (length(next_i) != 1) browser() # pas supposé
     if (is.na(next_i)) browser()
     return(list(i_to_position(next_i, dim(grid)), TRUE))
   }
-
+  
   NULL
 }
 
@@ -279,7 +281,7 @@ which_combins_possible <- function(grid, combins, pos_unknown, solved_around, mi
     i_to_flag <- position_to_i_mat(pos_unknown[combin, , drop = FALSE], dim(grid))
     i_to_click <- position_to_i_mat(pos_unknown[-combin, , drop = FALSE], dim(grid))
     i_to_click <- i_to_click[grid[i_to_click] %in% hp_to_hypo_no_mine]
-
+    
     for (j in i_to_flag) {
       tmp <- apply_action(grid_tmp_propagate, i_to_position(j, dim(grid_tmp_propagate)), action = FALSE, mines_left,
                           solved_around, hypothesis = 2, ...)
@@ -287,7 +289,7 @@ which_combins_possible <- function(grid, combins, pos_unknown, solved_around, mi
       mines_left <- tmp[[3]]
       solved_around <- tmp[[4]]
     }
-
+    
     for (j in i_to_click) {
       j_pos <- i_to_position(j, dim(grid_tmp_propagate))
       tmp <- apply_action(grid_tmp_propagate, j_pos, action = TRUE, mines_left,
@@ -297,7 +299,7 @@ which_combins_possible <- function(grid, combins, pos_unknown, solved_around, mi
       solved_around <- tmp[[4]]
       click_order <- rbind(click_order, j_pos)
     }
-
+    
     possible[i] <- is_mine_propagation_possible(grid_tmp_propagate, mines_left = mines_left,
                                                 solved_around = solved_around, click_order = click_order, ...)
     if (possible[i]) break # early exist cause the calling function (which_combins_possible) checks for all FALSE
@@ -307,7 +309,7 @@ which_combins_possible <- function(grid, combins, pos_unknown, solved_around, mi
 
 convert_grid_solution_to_human_grid <- function(grid, solved_around, ...) {
   human_grid <- grid
-  human_grid[solved_around == -1] <- unknown_box
+  human_grid[solved_around == -1 & !grid %in% known] <- unknown_box
   human_grid[human_grid %in% hp_to_hypo_no_mine] <- unknown_box
   human_grid
 }

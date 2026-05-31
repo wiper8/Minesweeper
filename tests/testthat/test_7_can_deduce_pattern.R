@@ -474,6 +474,7 @@ test_that("can_deduce_pattern sait résoudre les sections vides mais inconnues",
     nrow = 17,
     byrow = TRUE
   )
+  # debugonce(can_deduce_pattern)
   expect_true(
     is.list(can_deduce_pattern(grid, mines_left = 3, init_solved_around(grid), hypothesis = TRUE))
   )

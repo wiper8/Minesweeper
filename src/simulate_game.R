@@ -62,7 +62,7 @@ main_game_loop <- function(grid, mines_left, clicker, solved_around, hypothesis 
     if (isTRUE(all.equal(tmp, "impossible"))) browser()
     if (hypothesis != 0 && is.null(tmp)) return(list(grid, "le clicker ne sait pu quoi faire", solved_around, mines_left))
     if (is.null(tmp)) browser()
-
+    
     for (new_action in tmp) {
       if (new_action[[2]]) click_order <- rbind(click_order, new_action[[1]])
       tmp2 <- apply_action(grid, new_action[[1]], new_action[[2]], mines_left, solved_around = solved_around, hypothesis = hypothesis, ...)

@@ -64,7 +64,7 @@ test_that("independant_clusters works properly", {
     byrow = TRUE
   )
   solved_around <- init_solved_around(grid)
-
+  
   expect_equal(
     independant_clusters(grid, solved_around, mines_left = 32),
     list(
