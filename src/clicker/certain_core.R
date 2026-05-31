@@ -212,6 +212,7 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
       if (hypothesis == 2 && isTRUE(all(!cache))) return("impossible")
     }
   }
+  # if (hypothesis == 1) browser()
   tmp <- deduce_unknown_boxes(grid_init, mines_left_init)
   if (!is.null(tmp)) return(tmp)
   if (isTRUE(all.equal(tmp, "impossible"))) return("impossible")
@@ -266,8 +267,11 @@ are_no_mine_in_void <- function(grid, solved_around, mines_left) {
     # SHORTCUT
     # si toutes les mines sont assurément dans les clusters, je peux cliquer dans le vide
     if (sum(clusters_bornes_min_precises) == mines_left) {
-      next_i <- which(clusters$void$in_cluster)[1]
-      return(list(list(i_to_position(next_i, dim(grid)), TRUE)))
+      return(
+        lapply(which(clusters$void$in_cluster), function(next_i) {
+          list(i_to_position(next_i, dim(grid)), TRUE)
+        })
+      )
     }
   }
   FALSE
