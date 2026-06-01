@@ -43,7 +43,8 @@ can_click_all_around <- function(grid, solved_around) {
   NULL
 }
 
-can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, click_order = NULL, to_clusterise = TRUE, ...) {
+can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, click_order = NULL, to_clusterise = TRUE, 
+                               cluster = NULL, ...) {
   impossible <- TRUE # pour hypothesis = 2
   reached_prop <- FALSE
   i_to_investigate <- find_best_i_to_investigate(grid, solved_around, click_order)
@@ -62,6 +63,8 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
   if (length(i_to_investigate) == 0 && hypothesis != 2) impossible <- FALSE
 
   global_cache <- list() # cache des cas POSSIBLES, pas confirmés
+  # pour ne pas mettre de mines dans le void ou d'autres clusters non destinés
+  if (!is.null(cluster)) global_cache <- lapply(which(!cluster), function(i) list(i, FALSE))
 
   # je prend une cellule avec un chiffre qui a >= 1 inconnu autour
   for (i in i_to_investigate) {
@@ -101,6 +104,10 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
           }
         ))
       }
+      # rajouter les mines du known_but_does_nothing
+      mines_left <- mines_left + sum(
+        (grid_init %in% hp_flags)[clusters$known_but_does_nothing$in_cluster]
+      )
     }
 
     combins <- combn(n_unknown, mines_left_around)
@@ -122,6 +129,7 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
         global_cache = global_cache,
         click_order = click_order,
         to_clusterise = FALSE,
+        cluster = cluster,
         ...
       )
       for (k in which(!is.na(possible))) {
@@ -174,6 +182,7 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
         global_cache = global_cache,
         click_order = click_order,
         to_clusterise = FALSE,
+        cluster = cluster,
         ...
       )
       for (k in which(!is.na(possible))) {
@@ -212,8 +221,7 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
       if (hypothesis == 2 && isTRUE(all(!cache))) return("impossible")
     }
   }
-  # if (hypothesis == 1) browser()
-  tmp <- deduce_unknown_boxes(grid_init, mines_left_init)
+  tmp <- deduce_unknown_boxes(grid_init, mines_left_init, cluster)
   if (!is.null(tmp)) return(tmp)
   if (isTRUE(all.equal(tmp, "impossible"))) return("impossible")
   if (hypothesis != 2 && reached_prop && impossible) browser() # pas sensé etre impossible si on n'est pas en exploration
@@ -221,15 +229,24 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
   NULL # ne sait pas quoi faire
 }
 
-deduce_unknown_boxes <- function(grid, mines_left) {
+deduce_unknown_boxes <- function(grid, mines_left, cluster) {
   if (is.na(mines_left)) return(NULL)
   known_boxes <- grid %in% known
+
+  if (!is.null(cluster)) {
+    known_boxes <- known_boxes | !cluster
+    no_info_boxes <- sum(!known_boxes)
+    if (no_info_boxes < mines_left) return("impossible")
+    if (no_info_boxes == mines_left) return(NULL) # ne sait simplement plus quoi cliquer dans les autres clusters
+  }
+
   if (mines_left < 0) return("impossible")
-  if (mines_left == 0) return(lapply(which(!known_boxes), function(i) list(i_to_position(i, dim(grid)), TRUE)))
+  if (mines_left == 0) return(lapply(which(!grid %in% known), function(i) list(i_to_position(i, dim(grid)), TRUE)))
+
   no_info_boxes <- sum(!known_boxes)
   if (no_info_boxes < mines_left) return("impossible")
   if (no_info_boxes == mines_left) return(list(list(i_to_position(which(!known_boxes)[1], dim(grid)), FALSE)))
-  
+
   solved_around <- init_solved_around(grid)
   # on a aucune information sur les boîtes
   if (all(solved_around != 0) && no_info_boxes > mines_left) {
@@ -372,7 +389,7 @@ which_combins_possible <- function(grid, combins, pos_unknown, solved_around, mi
     grid_tmp_propagate <- convert_grid_solution_to_human_grid(grid, solved_around, ...)
     i_to_flag <- position_to_i_mat(pos_unknown[combin, , drop = FALSE], dim(grid))
     i_to_click <- position_to_i_mat(pos_unknown[-combin, , drop = FALSE], dim(grid))
-    i_to_click <- i_to_click[grid[i_to_click] %in% hp_to_hypo_no_mine]
+    i_to_click <- i_to_click[grid[i_to_click] %in% c(unknown_box, hp_to_hypo_no_mine)]
 
     for (j in i_to_flag) {
       tmp <- apply_action(grid_tmp_propagate, i_to_position(j, dim(grid_tmp_propagate)), action = FALSE, mines_left,

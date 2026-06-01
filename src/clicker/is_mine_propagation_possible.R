@@ -102,7 +102,7 @@ independant_clusters <- function(grid, solved_around, mines_left) {
   potential_cluster <- grid * 0 | (solved_around != -1) | grid %in% known
   in_any_cluster <- matrix(FALSE, nrow = nrow(grid), ncol = ncol(grid))
   known_but_does_nothing <- in_any_cluster
-  
+
   for (i in which(potential_cluster)) {
     if (potential_cluster[i]) {
       clust <- create_cluster_from_i(grid, i)
@@ -223,8 +223,8 @@ create_cluster_from_i <- function(grid, i, cluster = NULL) {
 test_trial <- function(grid, mines_left, clust, trial) {
   # préciser les bornes
   tmp_grid <- grid
-  # pour simplifier, on met des mines partout ailleurs
-  tmp_grid[clust == 0] <- flag_on_mine
+  # pour simplifier, on met des no-mines partout ailleurs
+  tmp_grid[clust == 0] <- unknown_box
   new_solved_around <- init_solved_around(tmp_grid)
   
   # résoudre le cluster avec `trial` mines
@@ -232,7 +232,8 @@ test_trial <- function(grid, mines_left, clust, trial) {
     convert_grid_solution_to_human_grid(tmp_grid, new_solved_around),
     trial,
     new_solved_around,
-    to_clusterise = FALSE
+    to_clusterise = FALSE,
+    cluster = clust
   )
   res <- as.logical(res)
   

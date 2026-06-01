@@ -3,6 +3,7 @@ source("src/clicker/random_clicker.R")
 source("src/clicker/probabilistic_clicker.R")
 
 smart_clicker <- function(grid, mines_left, ...) {
+  
   tmp <- certain_core(grid, mines_left, ...)
   if (!is.null(tmp)) {
     return(tmp)

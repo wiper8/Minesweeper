@@ -20,6 +20,7 @@ generate_all_combins <- function(grid, mines, solved_around, ...) {
     if (tmp[[2]] == "win") {
       return(list(mines_left = mines_left_init, list(grid_tmp_propagate)))
     }
+    # vérifier ici que je sample vraiment une mine possible dans le cluster
     next_i <- which(grid_tmp_propagate == -10 & solved_around == 0)
     if (length(next_i) == 0) {
       next_i <- which(grid_tmp_propagate == -10 & solved_around == -1)
@@ -28,7 +29,7 @@ generate_all_combins <- function(grid, mines, solved_around, ...) {
       browser() # pas supposé déclencher
     }
     next_i <- next_i[1] # TODO mieux choisir le prochain next_i, soit avec probabilitées, le prioritise, ou le click_order
-    
+
     no_mine_combins <- get_situational_combins(grid_tmp_propagate, i_to_position(next_i, dim(grid)), action = FALSE,
                                                mines_left_init, solved_around, hypothesis = 1, ...)
     
@@ -51,7 +52,7 @@ get_situational_combins <- function(grid_tmp_propagate, pos, action = FALSE,
     return(tmp[1])
   }
   if (tmp[[2]] == "le clicker ne sait pu quoi faire") {
-    return(generate_all_combins(tmp[[1]], c(tmp[[4]], tmp[[4]]), tmp[[3]], ...)[[1]][[2]])
+    return(generate_all_combins(tmp[[1]], tmp[[4]], tmp[[3]], ...)[[1]][[2]])
   }
   browser() # pas sensé déclencher
 }

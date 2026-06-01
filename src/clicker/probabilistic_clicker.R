@@ -3,9 +3,9 @@ source("src/clicker/compute_mine_probability.R")
 probabilistic_clicker <- function(grid, ...) {
   # temporairement, mettre des probs à 0.1, d'autres à 0.9
   probs_grid <- compute_grid_probabilities(grid, ...)
-  # temporairement, sélectionner une boîte aléatoirement au lieu de directement le plus bas
-  next_i <- sample(which(probs_grid == min(probs_grid)), 1)
   browser()
+  # temporairement, sélectionner une boîte aléatoirement au lieu de directement le plus bas
+  next_i <- sample(which(probs_grid == min(probs_grid, na.rm = TRUE)), 1)
   list(list(i_to_position(next_i, dim(grid)), TRUE, "probabilistic"))
 }
 
@@ -19,7 +19,7 @@ compute_grid_probabilities <- function(grid, mines_left, solved_around, hypothes
   
   clusters <- independant_clusters(grid, solved_around, mines_left)
   
-  # TODO # recalculer les bornes précies des mines clusters
+  # recalculer les bornes précies des mines clusters
   clusters <- precise_clusters_bounds_all(grid, solved_around, mines_left, clusters)
   
   # void probs
@@ -27,8 +27,7 @@ compute_grid_probabilities <- function(grid, mines_left, solved_around, hypothes
   void_prob <- mean(clusters$void$bornes_mines) / sum(clusters$void$in_cluster)
   probs_grid[clusters$void$in_cluster] <- void_prob
 
-  browser()
-  # TODO très lent
+  # TODO vérifier si très lent
   clusters_all_combins_cache <- lapply(clusters$clusters, function(lst) {
     generate_all_combins(lst$grid, (lst$bornes_mines[1]:lst$bornes_mines[2])[lst$possible], lst$solved_around)
   })
@@ -88,7 +87,7 @@ compute_grid_probabilities <- function(grid, mines_left, solved_around, hypothes
     }
     probs_grid[position_to_i_mat(positions[unknown, , drop = FALSE], dim(grid))] <- around_probs
   }
-  if (any(is.na(probs_grid) & grid_init < 0)) browser()
+  if (any(is.na(probs_grid) & !grid_init %in% known)) browser()
   # pas sensé déclancher car certain_core devrait trouver tous les cas certains
   if (any(sum(probs_grid == 0 | probs_grid == 1, na.rm = TRUE))) browser()
   # TODO ajout temporaire pour simplifier les probs vu qu'elles ne sont pas pondérées
