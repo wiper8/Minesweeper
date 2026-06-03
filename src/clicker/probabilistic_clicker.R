@@ -3,7 +3,6 @@ source("src/clicker/compute_mine_probability.R")
 probabilistic_clicker <- function(grid, ...) {
   # temporairement, mettre des probs à 0.1, d'autres à 0.9
   probs_grid <- compute_grid_probabilities(grid, ...)
-  browser()
   # temporairement, sélectionner une boîte aléatoirement au lieu de directement le plus bas
   next_i <- sample(which(probs_grid == min(probs_grid, na.rm = TRUE)), 1)
   list(list(i_to_position(next_i, dim(grid)), TRUE, "probabilistic"))
@@ -21,17 +20,19 @@ compute_grid_probabilities <- function(grid, mines_left, solved_around, hypothes
   
   # recalculer les bornes précies des mines clusters
   clusters <- precise_clusters_bounds_all(grid, solved_around, mines_left, clusters)
-  
+
+  # TODO vérifier si donne les bons résultats (bon nb mines)
+  clusters_all_combins_cache <- lapply(clusters$clusters, function(lst) {
+    generate_all_combins(lst$grid, (lst$bornes_mines[1]:lst$bornes_mines[2])[lst$possible], lst$solved_around, lst$in_cluster)
+  })
+  browser()
+  clusters_dependancies(clusters, clusters_all_combins_cache, mines_left)
+
   # void probs
   # TODO approximatif pour l'instant
   void_prob <- mean(clusters$void$bornes_mines) / sum(clusters$void$in_cluster)
   probs_grid[clusters$void$in_cluster] <- void_prob
 
-  # TODO vérifier si très lent
-  clusters_all_combins_cache <- lapply(clusters$clusters, function(lst) {
-    generate_all_combins(lst$grid, (lst$bornes_mines[1]:lst$bornes_mines[2])[lst$possible], lst$solved_around)
-  })
-  
   # je prend une cellule avec un chiffre qui a au moins un inconnu autour
   for (i in i_to_investigate) {
     mines_left <- mines_left_init
@@ -103,9 +104,6 @@ precise_clusters_bounds_all <- function(grid, solved_around, mines_left, cluster
     clusters$clusters[[i]]$bornes_mines <- tmp$bornes
     clusters$clusters[[i]]$possible <- tmp$possible
   }
-  tmp <- precise_bounds_one_cluster(clusters$void, grid, mines_left)
-  clusters$void$bornes_mines <- tmp$bornes
-  clusters$void$possible <- tmp$possible
   clusters
 }
 
@@ -136,3 +134,57 @@ precise_bounds_one_cluster <- function(lst, grid, mines_left) {
   }
   list(bornes = c(min_possible, max_possible), possible = possible[seq(head(which(possible), 1), tail(which(possible), 1))])
 }
+
+clusters_dependancies <- function(clusters, clusters_all_combins_cache, mines_total) {
+  # liste de vecteurs entiers de possibilitées. chaque vecteur est associé au cluster i
+  nb_mines_possible_per_cluster <- lapply(
+    clusters_all_combins_cache,
+    function(clust_combins) {
+      sapply(clust_combins, function(x) x$mines_left)
+    }
+  )
+  tuples_possible <- do.call(expand.grid, nb_mines_possible_per_cluster)
+
+  # retirer les cas où tuple + void != mines_total
+  void <- mines_total - apply(tuples_possible, 1, sum)
+  flush <- void > min(mines_total, sum(clusters$void$in_cluster)) | void < 0
+  tuples_possible <- tuples_possible[!flush, , drop = FALSE]
+  void <- void[!flush]
+  n_box_void <- sum(clusters$void$in_cluster)
+  # ajouter le void
+  mapply(
+    function(tuple, void_i) {
+      # TODO vérifier la logique de pondération et de x != unkwnown_box
+      numerator <- mapply(
+        function(clust, tuple_i) {
+          keep <- which(sapply(clust, function(x) x$mines_left) == tuple_i)
+          if (length(keep) != 1) browser()
+          
+          Reduce(
+            `+`,
+            lapply(clust[[keep]][[2]], function(x) x %in% hp_flags)
+          ) * choose(n_box_void, void_i)
+        },
+        clusters_all_combins_cache,
+        tuple
+      )
+      denominator <- mapply(
+        function(clust, tuple_i) {
+          keep <- which(sapply(clust, function(x) x$mines_left) == tuple_i)
+          if (length(keep) != 1) browser()
+          
+          # TODO compléter et vérifier, calculer soit length() pour nb de combins, pondérer probablement par
+          Reduce(
+            `+`,
+            lapply(clust[[keep]][[2]], function(x) x != unknown_box)
+          ) * choose(n_box_void, void_i)
+        },
+        clusters_all_combins_cache,
+        tuple
+      )
+    },
+    split(tuples_possible, seq_len(nrow(tuples_possible))),
+    void
+  )
+}
+

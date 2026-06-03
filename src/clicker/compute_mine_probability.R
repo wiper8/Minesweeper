@@ -8,7 +8,7 @@ compute_mine_probability <- function(grid, mine_i, all_combins) {
   })) / length(all_combins)
 }
 
-generate_all_combins <- function(grid, mines, solved_around, ...) {
+generate_all_combins <- function(grid, mines, solved_around, in_cluster, ...) {
   grid_tmp_propagate <- convert_grid_solution_to_human_grid(grid, solved_around, ...)
   
   lapply(mines, function(mines_left_init) {
@@ -21,22 +21,23 @@ generate_all_combins <- function(grid, mines, solved_around, ...) {
       return(list(mines_left = mines_left_init, list(grid_tmp_propagate)))
     }
     # vérifier ici que je sample vraiment une mine possible dans le cluster
-    next_i <- which(grid_tmp_propagate == -10 & solved_around == 0)
+    next_i <- which(grid_tmp_propagate == -10 & solved_around == 0 & in_cluster)
     if (length(next_i) == 0) {
-      next_i <- which(grid_tmp_propagate == -10 & solved_around == -1)
+      return(NULL)
     }
     if (length(next_i) == 0) {
-      browser() # pas supposé déclencher
+      if (mines_left != mines_left_init) browser()
+      return(list(mines_left = mines_left, list(grid_tmp_propagate)))
     }
     next_i <- next_i[1] # TODO mieux choisir le prochain next_i, soit avec probabilitées, le prioritise, ou le click_order
 
-    no_mine_combins <- get_situational_combins(grid_tmp_propagate, i_to_position(next_i, dim(grid)), action = FALSE,
-                                               mines_left_init, solved_around, hypothesis = 1, ...)
+    mine_combins <- get_situational_combins(grid_tmp_propagate, i_to_position(next_i, dim(grid)), action = FALSE,
+                                            mines_left_init, solved_around, hypothesis = 1, in_cluster = in_cluster, ...)
     
-    mine_combins <- get_situational_combins(grid_tmp_propagate, i_to_position(next_i, dim(grid)), action = TRUE,
-                                            mines_left_init, solved_around, hypothesis = 1, ...)
+    no_mine_combins <- get_situational_combins(grid_tmp_propagate, i_to_position(next_i, dim(grid)), action = TRUE,
+                                               mines_left_init, solved_around, hypothesis = 1, in_cluster = in_cluster, ...)
     
-    list(mines_left = mines_left_init, append(no_mine_combins, mine_combins))
+    list(mines_left = mines_left_init, append(mine_combins, no_mine_combins))
   })
 }
 
