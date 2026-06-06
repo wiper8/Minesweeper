@@ -12,7 +12,7 @@ test_that("la propagation de create_cluster_from_i se fait comme prévue sur tou
     byrow = TRUE
   )
   cluster <- grid * 0
-  cluster[2] <- 1
+  cluster[7] <- 1
   expect_equal(
     create_cluster_from_i(grid, 7, cluster),
     matrix(
@@ -40,7 +40,7 @@ test_that("des clusters très rapprochés restent indépendants par cause de fla
     byrow = TRUE
   )
   expect_equal(
-    create_cluster_from_i(grid, 2),
+    create_cluster_from_i(grid, 7),
     matrix(
       c(
         0, 0, 0, 0, 0,
@@ -61,6 +61,36 @@ test_that("des clusters très rapprochés restent indépendants par cause de fla
         0, 0, 0, 1, 1,
         0, 0, 0, 1, 1,
         0, 0, 0, 0, 0
+      ),
+      ncol = 5,
+      byrow = TRUE
+    )
+  )
+  
+  grid <- matrix(
+    c(
+      -1, -1, -1, -2, 2,
+      -5, -2, -1, -1, -2,
+      -1, -1, -2, -1, -5,
+      -1, -2, 2, -1, -2,
+      2, 2, 1, 3, -5,
+      -2, 1, 0, 2, -2,
+      -1, 1, 0, 1, -1
+    ),
+    ncol = 5,
+    byrow = TRUE
+  )
+  expect_equal(
+    create_cluster_from_i(grid, 4),
+    matrix(
+      c(
+        0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0,
+        0, 1, 1, 1, 0,
+        1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1
       ),
       ncol = 5,
       byrow = TRUE

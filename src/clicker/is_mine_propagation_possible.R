@@ -186,10 +186,13 @@ independant_clusters <- function(grid, solved_around, mines_left) {
 }
 
 create_cluster_from_i <- function(grid, i, cluster = NULL) {
+  first_level <- is.null(cluster)
   if (is.null(cluster)) cluster <- grid * 0
   tmp <- square_pos_and_get_around_square(i_to_position(i, dim(grid)), grid)
   positions <- tmp[[1]]
-  if (all(tmp[[2]] %in% hp_brings_no_info_to_center_unknown)) {
+  if (first_level &&
+      grid[i] %in% hp_brings_no_info_to_center_unknown &&
+      sum(tmp[[2]] %in% hp_brings_no_info_to_center_unknown) == 1) {
     if (grid[i] == unknown_box) {
       return(cluster)
     }
@@ -197,24 +200,27 @@ create_cluster_from_i <- function(grid, i, cluster = NULL) {
     return(cluster) # va dans la catégorie de cluster "known_but_does_nothing"
   }
   if (any(tmp[[2]] %in% known_but_no_flag)) {
-    cluster[i] <- 1
-    potential_neighboords <- position_to_i_mat(positions, dim(grid))
-
-    # exclure les cases déjà dans le cluster
-    potential_neighboords <- potential_neighboords[cluster[potential_neighboords] != 1]
-
-    # exclure les voisins inconnus ou qui n'apporte pas d'information possible
-    if (grid[i] %in% hp_brings_no_info_to_center_unknown) {
-      potential_neighboords <- potential_neighboords[!grid[potential_neighboords] %in% hp_brings_no_info_to_center_unknown]
-    }
-    # voie rapide pour les voisins dévoilés : automatiquements ajoutés au cluster
-    cluster[potential_neighboords][grid[potential_neighboords] > 0] <- 1
-    for (j in potential_neighboords) {
-      cluster <- create_cluster_from_i(
-        grid,
-        j,
-        cluster
-      )
+    tmp2 <- square_pos_and_get_around_square(i_to_position(i, dim(grid)), cluster)
+    if (first_level ||  (any(tmp[[2]] %in% known_but_no_flag & tmp2[[2]] == 1))) {
+      cluster[i] <- 1
+      potential_neighboords <- position_to_i_mat(positions, dim(grid))
+  
+      # exclure les cases déjà dans le cluster
+      potential_neighboords <- potential_neighboords[cluster[potential_neighboords] != 1]
+  
+      # exclure les voisins inconnus ou qui n'apporte pas d'information possible
+      if (grid[i] %in% hp_brings_no_info_to_center_unknown) {
+        potential_neighboords <- potential_neighboords[!grid[potential_neighboords] %in% hp_brings_no_info_to_center_unknown]
+      }
+      # voie rapide pour les voisins dévoilés : automatiquements ajoutés au cluster
+      cluster[potential_neighboords][grid[potential_neighboords] > 0] <- 1
+      for (j in potential_neighboords) {
+        cluster <- create_cluster_from_i(
+          grid,
+          j,
+          cluster
+        )
+      }
     }
   }
   cluster
