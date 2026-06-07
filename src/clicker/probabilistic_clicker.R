@@ -1,10 +1,6 @@
 source("src/clicker/compute_mine_probability.R")
-
 probabilistic_clicker <- function(grid, ...) {
-  # temporairement, mettre des probs à 0.1, d'autres à 0.9
-  browser()
   probs_grid <- compute_grid_probabilities(grid, ...)
-  # temporairement, sélectionner une boîte aléatoirement au lieu de directement le plus bas
   next_i <- sample(which(probs_grid == min(probs_grid, na.rm = TRUE)), 1)
   list(list(i_to_position(next_i, dim(grid)), TRUE, "probabilistic"))
 }
@@ -92,7 +88,7 @@ clusters_dependancies <- function(clusters, clusters_all_combins_cache, mines_to
   void <- void[!flush]
   n_box_void <- sum(clusters$void$in_cluster)
   # TODO vérifier pk des fois ca me sort une matrice 153xn, n > 1
-  numerator <- mapply(
+  numerator_mine_prob <- mapply(
     function(tuple, void_i) {
       # TODO vérifier la logique de pondération et de x != unkwnown_box
       mapply(
@@ -103,53 +99,46 @@ clusters_dependancies <- function(clusters, clusters_all_combins_cache, mines_to
           Reduce(
             `+`,
             lapply(clust[[keep]][[2]], function(x) x %in% hp_flags)
-          ) * choose(n_box_void, void_i)
+          ) / length(clust[[keep]][[2]]) # / nb de combins de ce cluster
         },
         clusters_all_combins_cache,
         tuple
-      )
+      ) |>
+        rowSums()
     },
     split(tuples_possible, seq_len(nrow(tuples_possible))),
     void,
     SIMPLIFY = FALSE
   )
-  numerator <- Reduce(`+`, numerator)
-  
-  denominator <- mapply(
+  numerator_weights <- mapply(
     function(tuple, void_i) {
       # TODO vérifier la logique de pondération et de x != unkwnown_box
-      mapply(
-        function(clust, tuple_i) {
-          keep <- which(sapply(clust, function(x) x$mines_left) == tuple_i)
-          if (length(keep) != 1) browser()
-          
-          # TODO compléter et vérifier, calculer soit length() pour nb de combins, pondérer probablement par
-          Reduce(
-            `+`,
-            lapply(clust[[keep]][[2]], function(x) x != unknown_box | TRUE)
-          ) * choose(n_box_void, void_i)
-        },
-        clusters_all_combins_cache,
-        tuple
-      )
+      c(
+        mapply(
+          function(clust, tuple_i) {
+            keep <- which(sapply(clust, function(x) x$mines_left) == tuple_i)
+            if (length(keep) != 1) browser()
+            
+            length(clust[[keep]][[2]]) # / nb de combins de ce cluster
+          },
+          clusters_all_combins_cache,
+          tuple
+        ),
+        choose(n_box_void, void_i)
+      ) |>
+        prod()
     },
     split(tuples_possible, seq_len(nrow(tuples_possible))),
-    void,
-    SIMPLIFY = FALSE
+    void
   )
-  # ajouter le void avant de Reduce
-  void_combins <- sapply(denominator, function(mat) {
-    prod(mat[1, ]) # [1, ] car chq colonne est sensée être identique
-  })
-  void_prob <- sum(void_combins * void / n_box_void) / sum(void_combins)
-  
-  # Reduce le déno
-  denominator <- Reduce(`+`, denominator)
 
-  probs <- numerator / denominator
+  probs <- mapply(function(x, w) x * w, numerator_mine_prob, numerator_weights) |>
+    rowSums() / sum(numerator_weights)
+
+  void_prob <- sum(numerator_weights * void / n_box_void) / sum(numerator_weights)
 
   probs[clusters$void$in_cluster] <- void_prob
-  
+
   matrix(probs, nrow = nrow(clusters$void$grid), ncol = ncol(clusters$void$grid))
 }
 

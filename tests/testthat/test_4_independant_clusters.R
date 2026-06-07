@@ -14,6 +14,7 @@ test_that("independant_clusters fonctionne pour des hypothesis != 2", {
     byrow = TRUE
   )
   solved_around <- init_solved_around(grid)
+  debugonce(independant_clusters)
   expect_equal(
     independant_clusters(grid, solved_around, mines_left = 5),
     list(

@@ -18,8 +18,19 @@ test_that("compute_grid_probabilities finds good probabilities sans void", {
   mines_left <- 7
   which_every_combins <- which(!grid %in% known)
   every_combins <- combn(length(which_every_combins), mines_left)
-  
-  # TODO accélérer le test
+
+  # filtrage pour accélérer le test
+  every_combins <- every_combins[, apply(
+    every_combins,
+    2,
+    function(x) sum(2:4 %in% x) == 1 &
+      sum(c(6, 8, 10) %in% x) == 1 &
+      sum(13:15 %in% x) == 2 &
+      sum(c(7, 9, 11) %in% x) == 2)
+    ,
+    drop = FALSE
+  ]
+
   possible_grid <- apply(
     every_combins,
     2,
@@ -74,7 +85,8 @@ test_that("compute_grid_probabilities finds good probabilities avec void présen
     function(x) sum(3:5 %in% x) == 1 &
       sum(c(8, 11, 14) %in% x) == 1 &
       sum(18:20 %in% x) == 2 &
-      sum(c(9, 12, 15) %in% x) == 2)
+      sum(c(9, 12, 15) %in% x) == 2 &
+      sum(c(11, 14, 17:19) %in% x) == 3)
     ,
     drop = FALSE
   ]
@@ -108,7 +120,6 @@ test_that("compute_grid_probabilities finds good probabilities avec void présen
   )
 })
 
-# TODO refaire le même genre de test avec 2 clusters
 test_that("compute_grid_probabilities finds good probabilities avec void présent", {
   grid <- matrix(
     c(
@@ -131,7 +142,6 @@ test_that("compute_grid_probabilities finds good probabilities avec void présen
   which_every_combins <- which(!grid %in% known)
   every_combins <- combn(length(which_every_combins), mines_left)
   # filtrage pour accélérer le test
-  # TODO accélérer le test
   every_combins <- every_combins[, apply(
     every_combins,
     2,
@@ -142,7 +152,7 @@ test_that("compute_grid_probabilities finds good probabilities avec void présen
     ,
     drop = FALSE
   ]
-  
+
   possible_grid <- apply(
     every_combins,
     2,
@@ -158,15 +168,14 @@ test_that("compute_grid_probabilities finds good probabilities avec void présen
     simplify = FALSE
   )
   possible_grid <- possible_grid[!sapply(possible_grid, is.null)]
-  possible_grid2 <- lapply(possible_grid, function(grid) grid %in% known |> matrix(nrow = nrow(grid)))
-  true_probs <- Reduce(`+`, possible_grid2) / length(possible_grid2)
+  possible_grid <- lapply(possible_grid, function(grid) grid %in% known |> matrix(nrow = nrow(grid)))
+  true_probs <- Reduce(`+`, possible_grid) / length(possible_grid)
   true_probs[grid %in% known] <- NA
 
   expect_equal(
     sum(true_probs, na.rm = TRUE),
     mines_left
   )
-  debugonce(compute_grid_probabilities)
   expect_equal(
     compute_grid_probabilities(grid, mines_left = mines_left, solved_around),
     true_probs

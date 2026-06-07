@@ -10,7 +10,7 @@ compute_mine_probability <- function(grid, mine_i, all_combins) {
 
 generate_all_combins <- function(grid, mines, solved_around, in_cluster, ...) {
   grid_tmp_propagate <- convert_grid_solution_to_human_grid(grid, solved_around, ...)
-  browser()
+
   lapply(mines, function(mines_left_init) {
     # pour s'assurer de résoudre les cas certain car le fait de modifier mines_left peut en causer
     tmp <- main_game_loop(grid_tmp_propagate, mines_left_init, certain_core, solved_around, hypothesis = 1)
@@ -32,10 +32,10 @@ generate_all_combins <- function(grid, mines, solved_around, in_cluster, ...) {
     next_i <- next_i[1] # TODO mieux choisir le prochain next_i, soit avec probabilitées, le prioritise, ou le click_order
 
     mine_combins <- get_situational_combins(grid_tmp_propagate, i_to_position(next_i, dim(grid)), action = FALSE,
-                                            mines_left_init, solved_around, hypothesis = 1, in_cluster = in_cluster, ...)
+                                            mines_left, solved_around, hypothesis = 1, in_cluster = in_cluster, ...)
     
     no_mine_combins <- get_situational_combins(grid_tmp_propagate, i_to_position(next_i, dim(grid)), action = TRUE,
-                                               mines_left_init, solved_around, hypothesis = 1, in_cluster = in_cluster, ...)
+                                               mines_left, solved_around, hypothesis = 1, in_cluster = in_cluster, ...)
     
     list(mines_left = mines_left_init, append(mine_combins, no_mine_combins))
   })
