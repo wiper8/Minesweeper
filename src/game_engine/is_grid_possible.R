@@ -20,7 +20,7 @@ is_grid_possible <- function(grid) {
     # TODO peut-être valider plus tard, tester plus rigoureusement
     nb_mines_so_far <- sum(square %in% c(covered_mine, uncovered_mine, flag_on_mine, hypothetical_mine))
     if (grid[i] != nb_mines_so_far) {
-      if (isFALSE(nb_mines_so_far <= grid[i] && grid[i] <= nb_mines_so_far + sum(square %in% unknown_box))) {
+      if (isFALSE(nb_mines_so_far <= grid[i] && grid[i] <= nb_mines_so_far + sum(square %in% c(void_box, unknown_box)))) {
         return(FALSE)
       }
     }

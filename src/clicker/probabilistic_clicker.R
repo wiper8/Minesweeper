@@ -12,7 +12,7 @@ compute_grid_probabilities <- function(grid, mines_left, solved_around, hypothes
   grid_init <- grid
   solved_around_init <- solved_around
   probs_grid <- grid * NA
-  
+
   clusters <- independant_clusters(grid, solved_around, mines_left)
   
   # recalculer les bornes précies des mines clusters
@@ -20,6 +20,7 @@ compute_grid_probabilities <- function(grid, mines_left, solved_around, hypothes
 
   # TODO vérifier si donne les bons résultats (bon nb mines)
   clusters_all_combins_cache <- lapply(clusters$clusters, function(lst) {
+    browser()
     generate_all_combins(lst$grid, (lst$bornes_mines[1]:lst$bornes_mines[2])[lst$possible], lst$solved_around, lst$in_cluster)
   })
 
@@ -68,6 +69,7 @@ precise_bounds_one_cluster <- function(lst, grid, mines_left) {
     }
     left <- left + 1
   }
+  if (length(which(possible)) == 0) browser()
   list(bornes = c(min_possible, max_possible), possible = possible[seq(head(which(possible), 1), tail(which(possible), 1))])
 }
 

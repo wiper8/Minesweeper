@@ -50,7 +50,6 @@ main_game_loop <- function(grid, mines_left, clicker, solved_around, hypothesis 
     # choisir la prochaine action
     tmp <- clicker(grid, mines_left = mines_left, solved_around = solved_around, hypothesis = hypothesis,
                    click_order = click_order, ...)
-    if (hypothesis == 0 && all(tmp[[1]][[1]] == c(16, 4))) browser()
     b <- Sys.time()
     duration_for_click <- as.numeric(difftime(b, a, units = "secs"))
     if (hypothesis == 0 && duration_for_click > seuil_verbose_duration_click) {

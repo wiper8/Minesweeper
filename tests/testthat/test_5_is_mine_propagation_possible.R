@@ -127,7 +127,10 @@ test_that("is_mine_propagation_possible fonctionne pour un pattern possible de m
               is_mine_propagation_possible(grid, mines_left = 4, init_solved_around(grid))
             )
             expect_false(
-              is_mine_propagation_possible(grid, mines_left = 5, init_solved_around(grid))
+              is_mine_propagation_possible(grid, mines_left = 5, init_solved_around(grid), to_clusterise = FALSE)
+            )
+            expect_false(
+              is_mine_propagation_possible(grid, mines_left = 5, init_solved_around(grid), to_clusterise = TRUE)
             )
           }
 )
@@ -155,13 +158,13 @@ test_that("is_mine_propagation_possible avec des boîtes inconnues", {
   
   grid <- matrix(
     c(
-      -10, -10, -5, -10, -10,
+      -8, -8, -5, -10, -10,
       1, 3, 3, 4, -10,
-      -10, 3, -5, -10, -10,
-      -10, 4, -5, 3, 1,
+      -9, 3, -5, -10, -10,
+      -8, 4, -5, 3, 1,
       2, -5, 2, 1, 0,
-      -10, 2, 1, 0, 0,
-      -10, 1, 0, 0, 0,
+      -9, 2, 1, 0, 0,
+      -8, 1, 0, 0, 0,
       1, 2, 1, 2, 1,
       -9, 3, -5, 3, -5,
       -9, -8, -8, -10, -10
@@ -171,10 +174,10 @@ test_that("is_mine_propagation_possible avec des boîtes inconnues", {
   )
   solved <- init_solved_around(grid)
   expect_true(
-    is_mine_propagation_possible(grid, mines_left = 5, solved)
+    is_mine_propagation_possible(grid, mines_left = 3, solved)
   )
   expect_false(
-    is_mine_propagation_possible(grid, mines_left = 6, solved)
+    is_mine_propagation_possible(grid, mines_left = 4, solved)
   )
 })
 

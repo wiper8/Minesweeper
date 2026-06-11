@@ -54,6 +54,7 @@ test_that("compute_grid_probabilities finds good probabilities sans void", {
     sum(true_probs, na.rm = TRUE),
     mines_left
   )
+  debugonce(compute_grid_probabilities)
   expect_equal(
     compute_grid_probabilities(grid, mines_left = mines_left, solved_around),
     true_probs

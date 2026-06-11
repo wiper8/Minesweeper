@@ -14,7 +14,7 @@ certain_core <- function(grid, mines_left, solved_around, hypothesis, ...) {
   NULL # retourner NULL si on ne sait pas quelle action certain prendre.
 }
 
-can_flag_all_around <- function(grid, mines_left, solved_around) {
+can_flag_all_around <- function(grid, mines_left, solved_around, ...) {
   for (i in which(grid > 0 & solved_around == 0)) {
     tmp <- count_core(grid, i)
     values <- tmp$values
@@ -89,7 +89,7 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
     # dans les situations où on propage un flag, ça peut arriver
     if (mines_left_around < 0 || n_unknown < mines_left_around || isTRUE(mines_left < mines_left_around)) return("impossible")
 
-    if (!is.null(clusters)) {
+    if (!is.null(clusters) && hypothesis != 2) {
       cluster_concerned <- sapply(clusters$clusters, function(clust) clust$in_cluster[i] == 1)
       if (!is.logical(cluster_concerned) || length(cluster_concerned) == 0) browser()
       tmp <- clusters$clusters[[which(cluster_concerned)]]
@@ -416,7 +416,7 @@ which_combins_possible <- function(grid, combins, pos_unknown, solved_around, mi
   possible
 }
 
-convert_grid_solution_to_human_grid <- function(grid, solved_around, ...) {
+convert_grid_solution_to_human_grid <- function(grid, solved_around = init_solved_around(grid), ...) {
   human_grid <- grid
   human_grid[solved_around == -1 & !grid %in% known] <- unknown_box
   human_grid[human_grid %in% hp_to_hypo_no_mine] <- unknown_box
