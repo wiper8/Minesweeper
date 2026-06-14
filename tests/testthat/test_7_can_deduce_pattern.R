@@ -124,7 +124,7 @@ test_that("can_deduce_pattern peut déduire un pattern simple", {
     byrow = TRUE
   )
   expect_equal(
-    can_deduce_pattern(grid, NA, grid * 0, FALSE),
+    can_deduce_pattern(grid, NA, grid * 0, FALSE)$clicks,
     list(list(c(1, 1), TRUE))
   )
 })
@@ -140,7 +140,7 @@ test_that("can_deduce_pattern ne donne pas d'action s'il ne sait pas quoi faire"
     byrow = TRUE
   )
   expect_equal(
-    can_deduce_pattern(grid, NA, grid * 0, FALSE),
+    can_deduce_pattern(grid, NA, grid * 0, FALSE)$clicks,
     NULL
   )
 })
@@ -155,7 +155,7 @@ test_that("can_deduce_pattern ajoute les flags qui sont certains autour des case
     byrow = TRUE
   )
   expect_equal(
-    can_deduce_pattern(grid, NA, grid * 0, FALSE),
+    can_deduce_pattern(grid, NA, grid * 0, hypothesis = 0)$clicks,
     list(list(c(1, 1), FALSE))
   )
 })
@@ -163,7 +163,7 @@ test_that("can_deduce_pattern ajoute les flags qui sont certains autour des case
 test_that("can_deduce_pattern works for well known minesweeper patterns", {
   res <- mapply(can_deduce_pattern, patterns, NA, sapply(patterns, init_solved_around), FALSE, SIMPLIFY = FALSE)
   expect_true(
-    all(!sapply(res, is.null))
+    all(!sapply(res, function(x) is.null(x$clicks)))
   )
 })
 
@@ -187,7 +187,7 @@ test_that(
       byrow = TRUE
     )
     expect_equal(
-      can_deduce_pattern(grid, mines_left = 2, grid * 0, hypothesis = 2),
+      can_deduce_pattern(grid, mines_left = 2, grid * 0, hypothesis = 2)$clicks,
       "impossible"
     )
   }
@@ -214,7 +214,7 @@ test_that("can_deduce_pattern peut déduire un pattern si le nombre total de min
   solved_around <- grid * 0
   solved_around[c(26:28, 35:38, 45:48)] <- 1
   
-  tmp <- can_deduce_pattern(grid, mines_left = 6, solved_around, FALSE)
+  tmp <- can_deduce_pattern(grid, mines_left = 6, solved_around, FALSE)$clicks
   
   expect_true(
     grid[tmp[[1]][[1]][1], tmp[[1]][[1]][2]] == ifelse(tmp[[1]][[2]], -1, -2)
@@ -223,7 +223,7 @@ test_that("can_deduce_pattern peut déduire un pattern si le nombre total de min
     !(all(tmp[[1]][[1]] == c(1, 1)) & tmp[[1]][[2]] == FALSE) # ne pas flagguer le premier carré
   )
   expect_false(
-    is.list(can_deduce_pattern(grid, mines_left = NA, grid * 0, FALSE))
+    is.list(can_deduce_pattern(grid, mines_left = NA, grid * 0, FALSE)$clicks)
   )
 })
 
@@ -240,7 +240,7 @@ test_that("can_deduce_pattern peut déduire un pattern si le nombre total de min
     nrow = 6,
     byrow = TRUE
   )
-  tmp <- can_deduce_pattern(grid, 5, grid * 0, FALSE)
+  tmp <- can_deduce_pattern(grid, 5, grid * 0, FALSE)$clicks
   expect_true(
     grid[tmp[[1]][[1]][1], tmp[[1]][[1]][2]] == ifelse(tmp[[1]][[2]], -1, -2)
   )
@@ -256,12 +256,12 @@ test_that("can_deduce_pattern peut déduire un pattern si le nombre total de min
     nrow = 6,
     byrow = TRUE
   )
-  tmp <- can_deduce_pattern(grid, 6, grid * 0, FALSE)
+  tmp <- can_deduce_pattern(grid, 6, grid * 0, FALSE)$clicks
   expect_true(
     grid[tmp[[1]][[1]][1], tmp[[1]][[1]][2]] == ifelse(tmp[[1]][[2]], -1, -2)
   )
   expect_equal(
-    can_deduce_pattern(grid, NA, grid * 0, FALSE),
+    can_deduce_pattern(grid, NA, grid * 0, FALSE)$clicks,
     NULL
   )
 })
@@ -291,7 +291,8 @@ test_that("can_deduce_pattern n'a pas de bug de récursion quasi-infinie", {
     byrow = TRUE
   )
   solved_around <- init_solved_around(grid)
-  tmp <- can_deduce_pattern(grid, mines_left = 32, solved_around, FALSE, click_order = matrix(c(7, 5), nrow = 1), ori = TRUE)
+  tmp <- can_deduce_pattern(grid, mines_left = 32, solved_around, FALSE, click_order = matrix(c(7, 5), nrow = 1),
+                            hypothesis = 0)$clicks
   expect_true(
     is.list(tmp) && length(tmp) == 1 && is.logical(tmp[[1]][[2]])
   )
@@ -323,7 +324,7 @@ test_that("can_deduce_pattern n'a pas de bug de récursion quasi-infinie avec cl
   )
   solved_around <- init_solved_around(grid)
   set.seed(1L)
-  tmp <- can_deduce_pattern(grid, mines_left = sum(grid == covered_mine), solved_around, hypothesis = 0)
+  tmp <- can_deduce_pattern(grid, mines_left = sum(grid == covered_mine), solved_around, hypothesis = 0)$clicks
   expect_true(
     is.list(tmp) && length(tmp) == 1 && is.logical(tmp[[1]][[2]])
   )
@@ -355,7 +356,7 @@ test_that("can_deduce_pattern est rapide dans des clusters simples indépendants
   )
   a <- Sys.time()
   can_deduce_pattern(grid, 40, init_solved_around(grid), hypothesis = 0,
-                     click_order = matrix(c(1, 5, 15, 2, 4, 4), ncol = 2, byrow = TRUE))
+                     click_order = matrix(c(1, 5, 15, 2, 4, 4), ncol = 2, byrow = TRUE))$clicks
   b <- Sys.time()
   expect_true(as.numeric(difftime(b, a, units = "secs")) < 2) # secondes
 })
@@ -397,7 +398,7 @@ test_that("can_deduce_pattern est rapide avec des grilles avancées en résoluti
   solved_around <- init_solved_around(grid)
   solved_around[1:2, 9] <- 0
   a <- Sys.time()
-  can_deduce_pattern(grid, 19, solved_around, hypothesis = 0, click_order = click_order)
+  can_deduce_pattern(grid, 19, solved_around, hypothesis = 0, click_order = click_order)$clicks
   b <- Sys.time()
   expect_true(as.numeric(difftime(b, a, units = "secs")) < 5) # secondes
 })
@@ -430,7 +431,7 @@ test_that("can_deduce_pattern fonctionne dans de rares edge cases", {
         ncol = 2,
         byrow = TRUE
       )
-    ),
+    )$clicks,
     NULL
   )
 })
@@ -448,7 +449,7 @@ test_that("can_deduce_pattern sait résoudre des combinaisons complexes", {
     byrow = TRUE
   )
   expect_true(
-    !is.null(can_deduce_pattern(grid, 3, init_solved_around(grid), hypothesis = 1))
+    !is.null(can_deduce_pattern(grid, 3, init_solved_around(grid), hypothesis = 1)$clicks)
   )
 })
 
@@ -475,6 +476,25 @@ test_that("can_deduce_pattern sait résoudre les sections vides mais inconnues",
     byrow = TRUE
   )
   expect_true(
-    is.list(can_deduce_pattern(grid, mines_left = 3, init_solved_around(grid), hypothesis = 1))
+    is.list(can_deduce_pattern(grid, mines_left = 3, init_solved_around(grid), hypothesis = 1)$clicks)
+  )
+})
+
+test_that("can_deduce_pattern trouve des edges cases", {
+  grid <- matrix(
+    c(
+      1, 1, 1, 0,
+      2, -5, 2, 0,
+      3, -5, 3, 1,
+      -5, 4, -1, -2,
+      -5, 5, -2, -1,
+      -5, 5, -2, 3,
+      -5, -1, -1, -2
+    ),
+    ncol = 4,
+    byrow = TRUE
+  )
+  expect_true(
+    !is.null(can_deduce_pattern(grid, 4, init_solved_around(grid), hypothesis = 0)$clicks)
   )
 })

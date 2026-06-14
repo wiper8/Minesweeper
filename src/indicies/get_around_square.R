@@ -8,9 +8,7 @@
 #'
 #' @examples
 #' get_around_square(c(1, 2), matrix(1:12, nrow = 3))
-get_around_square <- function(pos, grid) {
-  dims <- dim(grid)
-  
+get_around_square <- function(pos, grid, dims = dim(grid)) {
   x <- pos[1] + -1:1
   y <- pos[2] + -1:1
   x <- x[x > 0 & x <= dims[1]]
@@ -18,10 +16,9 @@ get_around_square <- function(pos, grid) {
   grid[x, y]
 }
 
-get_around_cross <- function(pos, grid) {
+get_around_cross <- function(pos, grid, dims = dim(grid)) {
   corners <- matrix(c(NA, 1, NA, 1, 1, 1, NA, 1, NA), nrow = 3)
-  dims <- dim(grid)
-  
+
   x <- pos[1] + -1:1
   y <- pos[2] + -1:1
   x <- x[x > 0 & x <= dims[1]]

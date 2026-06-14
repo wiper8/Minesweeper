@@ -19,10 +19,11 @@ source("src/game_engine/compute_box_number.R")
 #' @examples
 #' update_grid(matrix(c(-1, -1, -1, -2, -1, -1, -1, -1, -3), nrow = 3, ncol = 3), NA)
 update_grid <- function(grid, mines_left, solved_around = grid * 0 - 1, hypothesis = 0, backlog = NULL, ...) {
+  dims <- dim(grid)
   for (i in which(grid == uncovered_no_mine)) {
     if (hypothesis != 0 && grid[i] == uncovered_no_mine) grid[i] <- hypothetical_no_mine
-    pos <- i_to_position(i, dim(grid))
-    square <- get_around_square(pos, grid)
+    pos <- i_to_position(i, dims)
+    square <- get_around_square(pos, grid, dims)
     if (hypothesis == 0) grid[i] <- compute_box_number(square, ...) # calculer le chiffre à mettre
     
     if (grid[i] == 0) {
@@ -33,7 +34,7 @@ update_grid <- function(grid, mines_left, solved_around = grid * 0 - 1, hypothes
       }
       
       # cliquer à nouveau automatiquement tout autour
-      positions <- square_pos(pos, grid)
+      positions <- square_pos(pos, grid, dims)
       update_solved_backlog <- rbind(update_solved_backlog, positions)
       update_solved_backlog <- unique(update_solved_backlog)
       reveal <- unlist(square) == covered_no_mine
@@ -50,7 +51,7 @@ update_grid <- function(grid, mines_left, solved_around = grid * 0 - 1, hypothes
       k <- if (is.null(backlog)) {
         i
       } else {
-        unique(c(i, position_to_i_mat(backlog, dim(grid))))
+        unique(c(i, position_to_i_mat(backlog, dims)))
       }
 
       for (j in k) {
@@ -58,8 +59,8 @@ update_grid <- function(grid, mines_left, solved_around = grid * 0 - 1, hypothes
       }
 
       # où on aurait pas cliqué, mais potentiellement 0 -> 1
-      around_pos <- square_pos(pos, grid)
-      k2 <- position_to_i_mat(around_pos, dim(grid))
+      around_pos <- square_pos(pos, grid, dims)
+      k2 <- position_to_i_mat(around_pos, dims)
       for (j in fast_setdiff_no_unique(k2, k)) {
         solved_around <- update_solved_around(grid, solved_around, j, around_too = FALSE)
       }

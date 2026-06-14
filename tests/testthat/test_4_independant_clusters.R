@@ -45,8 +45,8 @@ test_that("independant_clusters fonctionne pour des hypothesis != 2", {
         grid = grid * 0 - 11,
         solved_around = grid * 0 - 1,
         in_cluster = matrix(FALSE, nrow = nrow(grid), ncol = ncol(grid)),
-        bornes_mines = c(0, 5),
-        possible = rep("NA", 6),
+        bornes_mines = c(0, 0),
+        possible = rep("NA", 1),
         last_success_mines = NA
       ),
       known_but_does_nothing = list(

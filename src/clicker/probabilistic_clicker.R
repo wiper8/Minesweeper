@@ -2,7 +2,10 @@ source("src/clicker/compute_mine_probability.R")
 probabilistic_clicker <- function(grid, ...) {
   probs_grid <- compute_grid_probabilities(grid, ...)
   next_i <- sample(which(probs_grid == min(probs_grid, na.rm = TRUE)), 1)
-  list(list(i_to_position(next_i, dim(grid)), TRUE, "probabilistic"))
+  list(
+    clicks = list(list(i_to_position(next_i, dim(grid)), TRUE, "probabilistic")),
+    global_cache = NULL
+  )
 }
 
 compute_grid_probabilities <- function(grid, mines_left, solved_around, hypothesis, click_order = NULL, ...) {
@@ -18,9 +21,7 @@ compute_grid_probabilities <- function(grid, mines_left, solved_around, hypothes
   # recalculer les bornes précies des mines clusters
   clusters <- precise_clusters_bounds_all(grid, solved_around, mines_left, clusters)
 
-  # TODO vérifier si donne les bons résultats (bon nb mines)
   clusters_all_combins_cache <- lapply(clusters$clusters, function(lst) {
-    browser()
     generate_all_combins(lst$grid, (lst$bornes_mines[1]:lst$bornes_mines[2])[lst$possible], lst$solved_around, lst$in_cluster)
   })
 

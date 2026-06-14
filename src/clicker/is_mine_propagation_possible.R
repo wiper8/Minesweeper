@@ -68,7 +68,9 @@ try_solve_a_cluster <- function(clusters, clust_i, mines_left, grid, void, ...) 
     return(try_solve_a_cluster(clusters, clust_i + 1, mines_left - trials_order[1], grid, void, ...))
   } else if (propagated_game_end[[2]] == "partie impossible") {
     clusters[[clust_i]]$possible[trials_order[1] - clusters[[clust_i]]$bornes_mines[1] + 1] <- "maybe next time"
-    if (all(clusters[[clust_i]]$possible == "non")) return(FALSE) # pas possible
+    if (all(clusters[[clust_i]]$possible == "non") || all(clusters[[clust_i]]$possible == "maybe next time")) {
+      return(FALSE) # pas possible
+    }
     return(try_solve_a_cluster(clusters, clust_i, mines_left, grid, void, ...))
   } else if (propagated_game_end[[2]] == "lost") {
     # rares situations (voir tests unitaires) où un mines_trial force un clicker certain de commettre une erreur
@@ -125,7 +127,7 @@ independant_clusters <- function(grid, solved_around, mines_left) {
             solved_around = new_solved_around,
             in_cluster = in_next_cluster,
             bornes_mines = bornes_mines1,
-            possible = if (is.na(mines_left)) NA else rep("NA", diff(bornes_mines1) + 1),
+            possible = rep("NA", diff(bornes_mines1) + 1),
             last_success_mines = NA
           )
         }
@@ -141,6 +143,7 @@ independant_clusters <- function(grid, solved_around, mines_left) {
 
   # le dernier cluster est le "void" inconnu
   # cacher les boxes non dans le cluster en cours
+  in_void <- !in_any_cluster
   tmp_grid <- grid * 0 + void_box
   new_solved_around <- grid * 0 - 1
   if (length(groups) == 0) {
@@ -154,10 +157,9 @@ independant_clusters <- function(grid, solved_around, mines_left) {
         clust$bornes_mines[1]
       }))
     )
-    bornes_mines1[1] <- max(0, bornes_mines1[1])
-    bornes_mines1[2] <- min(mines_left, bornes_mines1[2])
+    bornes_mines1[1] <- max(0, bornes_mines1[1], na.rm = TRUE)
+    bornes_mines1[2] <- min(mines_left, bornes_mines1[2], sum(in_void), na.rm = TRUE)
   }
-  in_void <- !in_any_cluster
 
   # vérifier que chaque case est dans un et un seul cluster, sauf les known qui peuvent être réutilisés
   if (any(Reduce(
@@ -176,7 +178,7 @@ independant_clusters <- function(grid, solved_around, mines_left) {
       solved_around = new_solved_around,
       in_cluster = in_void,
       bornes_mines = bornes_mines1,
-      possible = if (is.na(mines_left)) NA else rep("NA", diff(bornes_mines1) + 1),
+      possible = rep("NA", diff(bornes_mines1) + 1),
       last_success_mines = NA
     ),
     known_but_does_nothing = list(in_cluster = known_but_does_nothing),
@@ -192,11 +194,12 @@ create_cluster_from_i <- function(grid, i, solved_around, cluster = NULL) {
   if (solved_around[i] == -1 && !grid[i] %in% known) {
     return(cluster)
   }
-  tmp <- square_pos_and_get_around_square(i_to_position(i, dim(grid)), grid)
+  dims <- dim(grid)
+  tmp <- square_pos_and_get_around_square(i_to_position(i, dims), grid, dims)
   positions <- tmp[[1]]
 
   # va dans la catégorie de cluster "known_but_does_nothing"
-  tmp2 <- get_around_square(i_to_position(i, dim(grid)), solved_around)
+  tmp2 <- get_around_square(i_to_position(i, dims), solved_around, dims)
   if (first_level &&
       grid[i] %in% hp_brings_no_info_to_center_unknown &&
       sum(tmp[[2]] %in% known) == 1 &&
@@ -213,7 +216,7 @@ create_cluster_from_i <- function(grid, i, solved_around, cluster = NULL) {
   if (grid[i] %in% hp_known_but_cannot_expand) return(cluster)
 
   if (!grid[i] %in% known) {
-    potential_neighboords <- position_to_i_mat(positions, dim(grid))
+    potential_neighboords <- position_to_i_mat(positions, dims)
     # exclure les cases déjà dans le cluster
     potential_neighboords <- potential_neighboords[cluster[potential_neighboords] != 1]
     # conserver les cases connues et unsolved
@@ -232,7 +235,7 @@ create_cluster_from_i <- function(grid, i, solved_around, cluster = NULL) {
     return(cluster)
   }
 
-  potential_neighboords <- position_to_i_mat(positions, dim(grid))
+  potential_neighboords <- position_to_i_mat(positions, dims)
   # exclure les cases déjà dans le cluster
   potential_neighboords <- potential_neighboords[cluster[potential_neighboords] != 1]
 
