@@ -127,7 +127,10 @@ test_that("is_mine_propagation_possible fonctionne pour un pattern possible de m
               is_mine_propagation_possible(grid, mines_left = 4, init_solved_around(grid))
             )
             expect_false(
-              is_mine_propagation_possible(grid, mines_left = 5, init_solved_around(grid))
+              is_mine_propagation_possible(grid, mines_left = 5, init_solved_around(grid), to_clusterise = FALSE)
+            )
+            expect_false(
+              is_mine_propagation_possible(grid, mines_left = 5, init_solved_around(grid), to_clusterise = TRUE)
             )
           }
 )
@@ -155,13 +158,13 @@ test_that("is_mine_propagation_possible avec des boîtes inconnues", {
   
   grid <- matrix(
     c(
-      -10, -10, -5, -10, -10,
+      -8, -8, -5, -10, -10,
       1, 3, 3, 4, -10,
-      -10, 3, -5, -10, -10,
-      -10, 4, -5, 3, 1,
+      -9, 3, -5, -10, -10,
+      -8, 4, -5, 3, 1,
       2, -5, 2, 1, 0,
-      -10, 2, 1, 0, 0,
-      -10, 1, 0, 0, 0,
+      -9, 2, 1, 0, 0,
+      -8, 1, 0, 0, 0,
       1, 2, 1, 2, 1,
       -9, 3, -5, 3, -5,
       -9, -8, -8, -10, -10
@@ -171,10 +174,10 @@ test_that("is_mine_propagation_possible avec des boîtes inconnues", {
   )
   solved <- init_solved_around(grid)
   expect_true(
-    is_mine_propagation_possible(grid, mines_left = 5, solved)
+    is_mine_propagation_possible(grid, mines_left = 3, solved)
   )
   expect_false(
-    is_mine_propagation_possible(grid, mines_left = 6, solved)
+    is_mine_propagation_possible(grid, mines_left = 4, solved)
   )
 })
 
@@ -227,27 +230,27 @@ test_that("is_mine_propagation dans des parties avancées", {
   )
 })
 
-test_that("is_mine_propagation dans des parties avancées", {
+test_that("is_mine_propagation ne se trompe pas dans des parties avancées", {
   grid <- matrix(
     c(
-      0, 1, -5, 1, 0, 1, -10, -10, -10,
+      0, 1, -5, 1, 0, 1, -10, -8, -8,
       0, 1, 1, 1, 1, 2, -10, -10, -10,
       0 ,0, 0, 0, 1, -5, 2, 3, -10,
       0, 0, 1, 2, 4, 3, 2, 2, -10,
       0, 0, 2, -5, -5, -5, 2, 1, -10,
       0, 0, 3, -5, -8, -9, -10, -10, -10,
-      1, 1, 3, -5, 3, 2, -10, -10, -10,
-      2, -5, 2, 1, 1, 1, -10, -10, -10,
-      -5, 4, 3, 1, 1, 1, -10, -10, -10,
-      -10, -5, -10, -10, 2, -10, -10, -10, -10,
-      rep(-10, 7 * 9)
+      1, 1, 3, -5, 3, 2, -10, -8, -8,
+      2, -5, 2, 1, 1, 1, -10, -8, -8,
+      -5, 4, 3, 1, 1, 1, -10, -8, -8,
+      -10, -5, -10, -10, 2, -10, -8, -8, -8,
+      rep(-8, 7 * 9)
     ),
     nrow = 17,
     byrow = TRUE
   )
   solved_around <- init_solved_around(grid)
-  expect_true(
-    is_mine_propagation_possible(grid, mines_left = 31, solved_around, click_order = matrix(c(7, 6, 5, 6), nrow = 2))
+  expect_false(
+    is_mine_propagation_possible(grid, mines_left = 10, solved_around, click_order = matrix(c(7, 6, 5, 6), nrow = 2))
   )
 })
 
@@ -342,7 +345,7 @@ test_that("is_mine_propagation_possible fonctionne sans perdre la partie", {
 test_that("is_mine_propagation_possible ne retourne pas de faux vrais", {
   grid <- matrix(
     c(
-      0, 1, -5, 1, 0, -10, 0, 1, 1,
+      0, 1, -5, 1, 0, 0, 0, 1, 1,
       1, 2, 1, 1, 0, 0, 0, 2, -5,
       -5, 1, 0, 0, 1, 2, 2, 3, -5,
       2, 2, 1, 2, 3, -5, -5, 2, 1,
@@ -350,13 +353,13 @@ test_that("is_mine_propagation_possible ne retourne pas de faux vrais", {
       1, 1, 2, 3, 4, 3, 2, 2, -5,
       1, 2, 2, -5, 2, -5, -5, 4, 2,
       -5, 2, -5, 2, 3, 5, -5, -10, -10,
-      1, 3, 3, 3, 2, -5, -5, -5, -5,
-      0, 2, -5, -5, 3, 4, -10, -5, -5,
-      1, 3, -5, 4, -9, -8, -10, -5, -5,
-      -5, 2, 1, 2, -8, -10, -5, -5, -5,
-      2, 3, 2, 2, 2, -10, -5, -5, -5,
-      -9, -8, -5, -9, -8, -10, -5, -5, -5,
-      rep(-5, 3 * 9)
+      1, 3, 3, 3, 2, -5, -5, -10, -10,
+      0, 2, -5, -5, 3, 4, -10, -10, -10,
+      1, 3, -5, 4, -9, -8, -10, -10, -10,
+      -5, 2, 1, 2, -8, -10, -10, -10, -10,
+      2, 3, 2, 2, 2, -10, -10, -10, -10,
+      -9, -8, -5, -9, -8, -10, -10, -10, -10,
+      rep(-10, 3 * 9)
     ),
     nrow = 17,
     byrow = TRUE
@@ -364,5 +367,70 @@ test_that("is_mine_propagation_possible ne retourne pas de faux vrais", {
   expect_false(
     is_mine_propagation_possible(grid, mines_left = 2, init_solved_around(grid), to_clusterise = FALSE)
   )
+  
+  # TODO test à gérer : c'est normal que is_mine_propagation_possible retourne vrai car il peut
+  # mettre les mines en trop dans le void. Mais mon but est de forcer que le void n'est pas de mines mises
+  # dedans vu que 13 est le nombre pour le cluster en cours
+  grid <- matrix(
+    c(
+      0, 1, -5, 1, 0, 0, 0, 1, 1,
+      1, 2, 1, 1, 0, 0, 0, 2, -5,
+      -5, 1, 0, 0, 1, 2, 2, 3, -5,
+      2, 2, 1, 2, 3, -5, -5, 2, 1,
+      -5, 1, 1, -5, -5, 3, 2, 2, 1,
+      1, 1, 2, 3, 4, 3, 2, 2, -5,
+      1, 2, 2, -5, 2, -5, -5, 4, 2,
+      -5, 2, -5, 2, 3, 5, -5, -10, -10,
+      1, 3, 3, 3, 2, -5, -5, -10, -10,
+      0, 2, -5, -5, 3, 4, -10, -10, -10,
+      1, 3, -5, 4, -10, -10, -10, -10, -10,
+      -5, 2, 1, 2, -10, -10, -10, -10, -10,
+      2, 3, 2, 2, 2, -10, -10, -10, -10,
+      -10, -10, -5, -10, -10, -10, -10, -10, -10,
+      rep(-10, 3 * 9)
+    ),
+    nrow = 17,
+    byrow = TRUE
+  )
+  clust <- matrix(
+    c(
+      rep(T, 9),
+      rep(T, 9),
+      rep(T, 9),
+      rep(T, 9),
+      rep(T, 9),
+      rep(T, 9),
+      rep(T, 9),
+      rep(T, 9),
+      c(T, T, T, T, T, T, T, F, F),
+      c(T, T, T, T, T, T, T, F, F),
+      c(T, T, T, T, T, T, T, F, F),
+      c(T, T, T, T, T, T, F, F, F),
+      c(T, T, T, T, T, T, F, F, F),
+      c(T, T, T, T, T, T, F, F, F),
+      rep(F, 9),
+      rep(F, 9),
+      rep(F, 9)
+    ),
+    nrow = 17,
+    byrow = TRUE
+  )
+  expect_false(
+    is_mine_propagation_possible(
+      grid,
+      12,
+      init_solved_around(grid),
+      to_clusterise = FALSE,
+      cluster = clust
+    )
+  )
+  expect_true(
+    is_mine_propagation_possible(
+      grid,
+      6,
+      init_solved_around(grid),
+      to_clusterise = FALSE,
+      cluster = clust
+    )
+  )
 })
-

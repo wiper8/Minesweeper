@@ -8,9 +8,7 @@
 #'
 #' @examples
 #' square_pos(c(1, 2), matrix(1:12, nrow = 3))
-square_pos <- function(pos, grid) {
-  dims <- dim(grid)
-  
+square_pos <- function(pos, grid, dims = dim(grid)) {
   x <- pos[1] + -1:1
   y <- pos[2] + -1:1
   x <- x[x > 0 & x <= dims[1]]

@@ -9,7 +9,7 @@ show_first_click_probs <- function(n, total_mines, dims) {
     function(k) {
       first_click <- first_click_to_try[k, ]
       print(paste0(k, " / ", nrow(first_click_to_try)))
-      all_simuls <- replicate(n, simulate_game(total_mines, dims, certain_else_random_clicker, first_click = first_click), simplify = FALSE)
+      all_simuls <- replicate(n, simulate_game(total_mines, dims, smart_clicker, first_click = first_click), simplify = FALSE)
       wins <- mean(sapply(all_simuls, function(lst) lst[[2]] == "win"))
     }
   ) |>
@@ -56,9 +56,9 @@ compare_clickers <- function(n, dims, ...) {
   df_random <- cbind(compute_mines_probs_df(n, dims, clicker = random_clicker, ...), clicker = "random")
   print("certain")
   df_certain <- cbind(compute_mines_probs_df(n, dims, clicker = certain_else_random_clicker, ...), clicker = "certain")
-  # print("smart")
-  # df_smart <- cbind(compute_mines_probs_df(n, dims, clicker = smart_clicker), clicker = "smart")
-  rbind(df_random, df_certain)
+  print("smart")
+  df_smart <- cbind(compute_mines_probs_df(n, dims, clicker = smart_clicker), clicker = "smart")
+  rbind(df_random, df_certain, df_smart)
 }
 
 show_mines_difficulty <- function(df) {

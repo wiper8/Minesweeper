@@ -15,11 +15,14 @@ uncovered_unknown <- -7L
 hypothetical_mine <- -9L
 hypothetical_no_mine <- -8L
 unknown_box <- -10L
+void_box <- -11L # pas le droit de prendre d'actions sur ces boîtes là
 
 # pour accélérer les calculs, pas besoin de réinstancier à chaque fois
-known <- c(0:9, flag_on_mine, flag_on_no_mine, hypothetical_mine, hypothetical_no_mine)
+known <- c(0:9, flag_on_mine, flag_on_no_mine, hypothetical_mine, hypothetical_no_mine, void_box)
 known_but_no_flag <- setdiff(known, c(flag_on_mine, flag_on_no_mine, hypothetical_mine))
 
 hp_flags <- c(flag_on_mine, flag_on_no_mine, hypothetical_mine)
 hp_to_hypo_no_mine <- c(covered_mine, covered_no_mine, uncovered_mine, uncovered_no_mine)
-hp_brings_no_info_to_center_unknown <- c(unknown_box, flag_on_mine, flag_on_no_mine, hypothetical_mine, hypothetical_no_mine)
+hp_brings_no_info_to_center_unknown <- c(unknown_box, flag_on_mine, flag_on_no_mine, hypothetical_mine,
+                                         hypothetical_no_mine, void_box)
+hp_known_but_cannot_expand <- c(flag_on_mine, hypothetical_mine, hypothetical_no_mine, void_box)

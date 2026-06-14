@@ -41,29 +41,38 @@ init_grid_after_first_click <- function(grid, pos, total_mines) {
   grid
 }
 
-main_game_loop <- function(grid, mines_left, clicker, solved_around, hypothesis = 0, click_order = NULL, ...) {
+main_game_loop <- function(grid, mines_left, clicker, solved_around, hypothesis = 0, click_order = NULL,
+                           global_cache = list(), ...) {
   seuil_verbose_duration_click <- 5
   repeat {
+    # if (hypothesis == 0) print(mean(grid %in% known))
     a <- Sys.time()
     # choisir la prochaine action
     tmp <- clicker(grid, mines_left = mines_left, solved_around = solved_around, hypothesis = hypothesis,
-                   click_order = click_order, ...)
+                   click_order = click_order, global_cache = global_cache, ...)
     b <- Sys.time()
     duration_for_click <- as.numeric(difftime(b, a, units = "secs"))
-    if (duration_for_click > seuil_verbose_duration_click) {
+    if (hypothesis == 0 && duration_for_click > seuil_verbose_duration_click) {
       print(paste0("slow selection after ", nrow(click_order), " clicked. ", round(duration_for_click), " secs"))
-      if (duration_for_click > 60) browser()
+      # if (duration_for_click > 10) browser()
     }
     # "partie impossible"
     # ne devrait pas être possible car
     # quand on calcule les probabilitées, c'est que tous les clics étaient possibles
-    if (hypothesis == 1 && isTRUE(all.equal(tmp, "impossible"))) browser()
-    if (hypothesis == 2 && isTRUE(all.equal(tmp, "impossible"))) return(list(grid, "partie impossible", solved_around, mines_left))
-    if (isTRUE(all.equal(tmp, "impossible"))) browser()
-    if (hypothesis != 0 && is.null(tmp)) return(list(grid, "le clicker ne sait pu quoi faire", solved_around, mines_left))
-    if (is.null(tmp)) browser()
+    if (hypothesis == 1 && isTRUE(all.equal(tmp$clicks, "impossible"))) browser()
+    if (hypothesis == 2 && isTRUE(all.equal(tmp$clicks, "impossible"))) return(list(grid, "partie impossible", solved_around, mines_left))
+    if (isTRUE(all.equal(tmp$clicks, "impossible"))) browser()
+    if (hypothesis != 0 && is.null(tmp$clicks)) return(list(grid, "le clicker ne sait pu quoi faire", solved_around, mines_left))
+
+    # mettre à jour la cache
+    if (!is.null(tmp$global_cache)) {
+      global_cache <- tmp$global_cache
+      keep <- !sapply(global_cache, `[[`, 2)
+      global_cache <- global_cache[keep]
+    }
+    if (is.null(tmp$clicks)) browser()
     
-    for (new_action in tmp) {
+    for (new_action in tmp$clicks) {
       if (new_action[[2]]) click_order <- rbind(click_order, new_action[[1]])
       if (any(is.na(new_action[[1]]))) browser()
       tmp2 <- apply_action(grid, new_action[[1]], new_action[[2]], mines_left, solved_around = solved_around, hypothesis = hypothesis, ...)

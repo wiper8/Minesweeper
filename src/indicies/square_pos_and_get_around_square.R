@@ -1,9 +1,7 @@
 source("src/indicies/square_pos.R")
 source("src/indicies/get_around_square.R")
 
-square_pos_and_get_around_square <- function(pos, grid) {
-  dims <- dim(grid)
-  
+square_pos_and_get_around_square <- function(pos, grid, dims = dim(grid)) {
   x <- pos[1] + -1:1
   y <- pos[2] + -1:1
   x <- x[x > 0 & x <= dims[1]]
