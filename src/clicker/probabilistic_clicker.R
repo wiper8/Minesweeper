@@ -90,10 +90,8 @@ clusters_dependancies <- function(clusters, clusters_all_combins_cache, mines_to
   tuples_possible <- tuples_possible[!flush, , drop = FALSE]
   void <- void[!flush]
   n_box_void <- sum(clusters$void$in_cluster)
-  # TODO vérifier pk des fois ca me sort une matrice 153xn, n > 1
   numerator_mine_prob <- mapply(
     function(tuple, void_i) {
-      # TODO vérifier la logique de pondération et de x != unkwnown_box
       mapply(
         function(clust, tuple_i) {
           keep <- which(sapply(clust, function(x) x$mines_left) == tuple_i)
@@ -115,14 +113,13 @@ clusters_dependancies <- function(clusters, clusters_all_combins_cache, mines_to
   )
   numerator_weights <- mapply(
     function(tuple, void_i) {
-      # TODO vérifier la logique de pondération et de x != unkwnown_box
       c(
         mapply(
           function(clust, tuple_i) {
             keep <- which(sapply(clust, function(x) x$mines_left) == tuple_i)
             if (length(keep) != 1) browser()
             
-            length(clust[[keep]][[2]]) # / nb de combins de ce cluster
+            length(clust[[keep]][[2]]) # nb de combins de ce cluster
           },
           clusters_all_combins_cache,
           tuple
@@ -134,6 +131,8 @@ clusters_dependancies <- function(clusters, clusters_all_combins_cache, mines_to
     split(tuples_possible, seq_len(nrow(tuples_possible))),
     void
   )
+  # pour éviter overflow
+  numerator_weights <- numerator_weights / sum(numerator_weights)
 
   probs <- mapply(function(x, w) x * w, numerator_mine_prob, numerator_weights) |>
     rowSums() / sum(numerator_weights)

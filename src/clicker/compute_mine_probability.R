@@ -14,15 +14,15 @@ generate_all_combins <- function(grid, mines, solved_around, in_cluster, ...) {
   # if pour accélérer
   if (length(mines) == 1) {
     return(
-      list(generate_knowing_mines(grid_tmp_propagate, mines, mines_left, solved_around, in_cluster, ...))
+      list(generate_knowing_mines(grid_tmp_propagate, mines, solved_around, in_cluster, ...))
     )
   }
   lapply(mines, function(mines_left_init) {
-    generate_knowing_mines(grid_tmp_propagate, mines_left_init, mines_left, solved_around, in_cluster, ...)
+    generate_knowing_mines(grid_tmp_propagate, mines_left_init, solved_around, in_cluster, ...)
   })
 }
 
-generate_knowing_mines <- function(grid_tmp_propagate, mines_left_init, mines_left, solved_around, in_cluster, ...) {
+generate_knowing_mines <- function(grid_tmp_propagate, mines_left_init, solved_around, in_cluster, ...) {
   # pour s'assurer de résoudre les cas certain car le fait de modifier mines_left peut en causer
   tmp <- main_game_loop(grid_tmp_propagate, mines_left_init, certain_core, solved_around, hypothesis = 1)
   grid_tmp_propagate <- tmp[[1]]
