@@ -25,7 +25,7 @@ compute_grid_probabilities <- function(grid, mines_left, solved_around, hypothes
     generate_all_combins(lst$grid, (lst$bornes_mines[1]:lst$bornes_mines[2])[lst$possible], lst$solved_around, lst$in_cluster)
   })
 
-  probs_grid <- clusters_dependancies(clusters, clusters_all_combins_cache, mines_left)
+  probs_grid <- clusters_combins_to_probs(clusters, clusters_all_combins_cache, mines_left)
 
   probs_grid[grid %in% known] <- NA # remplacer les cases connues par des NA pour ne pas les sélectionner
 
@@ -74,7 +74,7 @@ precise_bounds_one_cluster <- function(lst, grid, mines_left) {
   list(bornes = c(min_possible, max_possible), possible = possible[seq(head(which(possible), 1), tail(which(possible), 1))])
 }
 
-clusters_dependancies <- function(clusters, clusters_all_combins_cache, mines_total) {
+clusters_combins_to_probs <- function(clusters, clusters_all_combins_cache, mines_total) {
   # liste de vecteurs entiers de possibilitées. chaque vecteur est associé au cluster i
   nb_mines_possible_per_cluster <- lapply(
     clusters_all_combins_cache,
