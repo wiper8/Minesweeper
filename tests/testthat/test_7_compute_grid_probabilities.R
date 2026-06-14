@@ -181,3 +181,21 @@ test_that("compute_grid_probabilities finds good probabilities avec void présen
     true_probs
   )
 })
+
+test_that("compute_grid_probabilities fait des clusters indépendants pendant la propagation des mines pour accélérer", {
+  # grille avec 3 clusters, dont 1 qui se sépare facilement en 3 clusters aussi
+  grid <- matrix(
+    c(
+      1, 1, 0, 1, -1, -1, -1, -1, -1, -1,
+      -5, 1, 0, 1, -2, -1, 2, -2, -1, -2,
+      2, 3, 2, 2, 2, -1, -2, -1, -1, -2,
+      -1, -2, -5, -1, -2, -1, -2, -1, -2, -1,
+      -1, -1, 3, -2, -2, -1, -1, -5, -2, 3,
+      -1, -1, -1, -1, -1, 2, -2, -1, -1, -2
+    ),
+    ncol = 10,
+    byrow = TRUE
+  )
+  compute_grid_probabilities(grid, sum(grid == -2), init_solved_around(grid), hypothesis = 0, clicker_order = NULL)
+  # TODO ajouter un expect_
+})

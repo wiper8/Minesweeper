@@ -22,6 +22,41 @@ generate_all_combins <- function(grid, mines, solved_around, in_cluster, ...) {
   })
 }
 
+generate_all_probs <- function(grid, mines, solved_around, in_cluster, ...) {
+  grid_tmp_propagate <- convert_grid_solution_to_human_grid(grid, solved_around, ...)
+  
+  # if pour accélérer
+  if (length(mines) == 1) {
+    combins <- generate_knowing_mines(grid_tmp_propagate, mines, solved_around, in_cluster, ...)
+    return(
+      list(list(
+        mines_left = combins$mines_left,
+        combins_to_probs(combins[[2]]) |>
+          matrix(nrow = nrow(grid)) # TODO retirer le matrix car ralenti
+      ))
+    )
+  }
+  lapply(mines, function(mines_left_init) {
+    combins <- generate_knowing_mines(grid_tmp_propagate, mines_left_init, solved_around, in_cluster, ...)
+    list(
+      mines_left = combins$mines_left,
+      # [[2]] pour extraire les combins et filtrer le nombre de mines
+      combins_to_probs(combins[[2]]) |>
+        matrix(nrow = nrow(grid)) # TODO retirer le matrix car ralenti
+    )
+  })
+}
+
+combins_to_probs <- function(combins) {
+  Reduce(
+    `+`,
+    lapply(
+      combins,
+      function(x) x %in% hp_flags
+    )
+  ) / length(combins) # / nb de combins de ce cluster
+}
+
 generate_knowing_mines <- function(grid_tmp_propagate, mines_left_init, solved_around, in_cluster, ...) {
   # pour s'assurer de résoudre les cas certain car le fait de modifier mines_left peut en causer
   tmp <- main_game_loop(grid_tmp_propagate, mines_left_init, certain_core, solved_around, hypothesis = 1)
@@ -34,11 +69,8 @@ generate_knowing_mines <- function(grid_tmp_propagate, mines_left_init, solved_a
   # vérifier ici que je sample vraiment une mine possible dans le cluster
   next_i <- which(grid_tmp_propagate == -10 & solved_around == 0 & in_cluster)
   if (length(next_i) == 0) {
+    browser() # pas sensé se rendre ici
     return(NULL)
-  }
-  if (length(next_i) == 0) {
-    if (mines_left != mines_left_init) browser()
-    return(list(mines_left = mines_left_init, list(grid_tmp_propagate)))
   }
   next_i <- next_i[1] # TODO mieux choisir le prochain next_i, soit avec probabilitées, le prioritise, ou le click_order
 

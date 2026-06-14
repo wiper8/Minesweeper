@@ -9,6 +9,7 @@ probabilistic_clicker <- function(grid, ...) {
 }
 
 compute_grid_probabilities <- function(grid, mines_left, solved_around, hypothesis, click_order = NULL, ...) {
+  dims <- dim(grid)
   i_to_investigate <- find_best_i_to_investigate(grid, solved_around, click_order)
   
   mines_left_init <- mines_left
@@ -21,11 +22,75 @@ compute_grid_probabilities <- function(grid, mines_left, solved_around, hypothes
   # recalculer les bornes précies des mines clusters
   clusters <- precise_clusters_bounds_all(grid, solved_around, mines_left, clusters)
 
+  # liste de vecteurs entiers de possibilitées. chaque vecteur est associé au cluster i
+  nb_mines_possible_per_cluster <- lapply(
+    clusters$clusters,
+    function(clust_combins) {
+      (clust_combins$bornes_mines[1]:clust_combins$bornes_mines[2])[clust_combins$possible]
+    }
+  )
+  tuples_possible <- do.call(expand.grid, nb_mines_possible_per_cluster)
+  # retirer les cas où tuple + void != mines_left
+  void <- mines_left - apply(tuples_possible, 1, sum)
+  flush <- void > min(mines_left, sum(clusters$void$in_cluster)) | void < 0
+  tuples_possible <- tuples_possible[!flush, , drop = FALSE]
+  void <- void[!flush]
+  n_box_void <- sum(clusters$void$in_cluster)
+  
   clusters_all_combins_cache <- lapply(clusters$clusters, function(lst) {
-    generate_all_combins(lst$grid, (lst$bornes_mines[1]:lst$bornes_mines[2])[lst$possible], lst$solved_around, lst$in_cluster)
+    generate_all_probs(lst$grid, (lst$bornes_mines[1]:lst$bornes_mines[2])[lst$possible], lst$solved_around, lst$in_cluster)
   })
+  # browser()
 
-  probs_grid <- clusters_combins_to_probs(clusters, clusters_all_combins_cache, mines_left)
+  numerator_mine_prob <- mapply(
+    function(tuple, void_i) {
+      mapply(
+        function(clust, tuple_i) {
+          keep <- which(sapply(clust, function(x) x$mines_left) == tuple_i)
+          if (length(keep) != 1) browser()
+          clust[[keep]][[2]]
+        },
+        clusters_all_combins_cache,
+        tuple
+      ) |>
+        rowSums() |>
+        matrix(nrow = dims[1]) # TODO retirer car ralenti, mais augmente interpretabilité
+    },
+    split(tuples_possible, seq_len(nrow(tuples_possible))),
+    void,
+    SIMPLIFY = FALSE
+  )
+  numerator_weights <- mapply(
+    function(tuple, void_i) {
+      c(
+        mapply(
+          function(clust, tuple_i) {
+            keep <- which(sapply(clust, function(x) x$mines_left) == tuple_i)
+            if (length(keep) != 1) browser()
+            
+            length(clust[[keep]][[2]]) # nb de combins de ce cluster
+          },
+          clusters_all_combins_cache,
+          tuple
+        ),
+        choose(n_box_void, void_i)
+      ) |>
+        prod()
+    },
+    split(tuples_possible, seq_len(nrow(tuples_possible))),
+    void
+  )
+  # pour éviter overflow
+  numerator_weights <- numerator_weights / sum(numerator_weights)
+  
+  probs <- mapply(function(x, w) x * w, numerator_mine_prob, numerator_weights) |>
+    rowSums() / sum(numerator_weights)
+  
+  void_prob <- sum(numerator_weights * void / n_box_void) / sum(numerator_weights)
+  
+  probs[clusters$void$in_cluster] <- void_prob
+  
+  probs_grid <- matrix(probs, nrow = nrow(clusters$void$grid), ncol = ncol(clusters$void$grid))
 
   probs_grid[grid %in% known] <- NA # remplacer les cases connues par des NA pour ne pas les sélectionner
 
@@ -75,72 +140,7 @@ precise_bounds_one_cluster <- function(lst, grid, mines_left) {
 }
 
 clusters_combins_to_probs <- function(clusters, clusters_all_combins_cache, mines_total) {
-  # liste de vecteurs entiers de possibilitées. chaque vecteur est associé au cluster i
-  nb_mines_possible_per_cluster <- lapply(
-    clusters_all_combins_cache,
-    function(clust_combins) {
-      sapply(clust_combins, function(x) x$mines_left)
-    }
-  )
-  tuples_possible <- do.call(expand.grid, nb_mines_possible_per_cluster)
-
-  # retirer les cas où tuple + void != mines_total
-  void <- mines_total - apply(tuples_possible, 1, sum)
-  flush <- void > min(mines_total, sum(clusters$void$in_cluster)) | void < 0
-  tuples_possible <- tuples_possible[!flush, , drop = FALSE]
-  void <- void[!flush]
-  n_box_void <- sum(clusters$void$in_cluster)
-  numerator_mine_prob <- mapply(
-    function(tuple, void_i) {
-      mapply(
-        function(clust, tuple_i) {
-          keep <- which(sapply(clust, function(x) x$mines_left) == tuple_i)
-          if (length(keep) != 1) browser()
-          
-          Reduce(
-            `+`,
-            lapply(clust[[keep]][[2]], function(x) x %in% hp_flags)
-          ) / length(clust[[keep]][[2]]) # / nb de combins de ce cluster
-        },
-        clusters_all_combins_cache,
-        tuple
-      ) |>
-        rowSums()
-    },
-    split(tuples_possible, seq_len(nrow(tuples_possible))),
-    void,
-    SIMPLIFY = FALSE
-  )
-  numerator_weights <- mapply(
-    function(tuple, void_i) {
-      c(
-        mapply(
-          function(clust, tuple_i) {
-            keep <- which(sapply(clust, function(x) x$mines_left) == tuple_i)
-            if (length(keep) != 1) browser()
-            
-            length(clust[[keep]][[2]]) # nb de combins de ce cluster
-          },
-          clusters_all_combins_cache,
-          tuple
-        ),
-        choose(n_box_void, void_i)
-      ) |>
-        prod()
-    },
-    split(tuples_possible, seq_len(nrow(tuples_possible))),
-    void
-  )
-  # pour éviter overflow
-  numerator_weights <- numerator_weights / sum(numerator_weights)
-
-  probs <- mapply(function(x, w) x * w, numerator_mine_prob, numerator_weights) |>
-    rowSums() / sum(numerator_weights)
-
-  void_prob <- sum(numerator_weights * void / n_box_void) / sum(numerator_weights)
-
-  probs[clusters$void$in_cluster] <- void_prob
-
-  matrix(probs, nrow = nrow(clusters$void$grid), ncol = ncol(clusters$void$grid))
+  
+  
 }
 
