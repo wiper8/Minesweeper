@@ -63,7 +63,7 @@ main_game_loop <- function(grid, mines_left, clicker, solved_around, hypothesis 
     if (hypothesis == 2 && isTRUE(all.equal(tmp$clicks, "impossible"))) return(list(grid, "partie impossible", solved_around, mines_left))
     if (isTRUE(all.equal(tmp$clicks, "impossible"))) browser()
     if (hypothesis != 0 && is.null(tmp$clicks)) return(list(grid, "le clicker ne sait pu quoi faire", solved_around, mines_left))
-
+    
     # mettre à jour la cache
     if (!is.null(tmp$global_cache)) {
       global_cache <- tmp$global_cache
