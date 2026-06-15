@@ -54,7 +54,7 @@ main_game_loop <- function(grid, mines_left, clicker, solved_around, hypothesis 
     duration_for_click <- as.numeric(difftime(b, a, units = "secs"))
     if (hypothesis == 0 && duration_for_click > seuil_verbose_duration_click) {
       print(paste0("slow selection after ", nrow(click_order), " clicked. ", round(duration_for_click), " secs"))
-      if (duration_for_click > 10) browser()
+      # if (duration_for_click > 10) browser()
     }
     # "partie impossible"
     # ne devrait pas être possible car
@@ -63,7 +63,7 @@ main_game_loop <- function(grid, mines_left, clicker, solved_around, hypothesis 
     if (hypothesis == 2 && isTRUE(all.equal(tmp$clicks, "impossible"))) return(list(grid, "partie impossible", solved_around, mines_left))
     if (isTRUE(all.equal(tmp$clicks, "impossible"))) browser()
     if (hypothesis != 0 && is.null(tmp$clicks)) return(list(grid, "le clicker ne sait pu quoi faire", solved_around, mines_left))
-
+    
     # mettre à jour la cache
     if (!is.null(tmp$global_cache)) {
       global_cache <- tmp$global_cache
