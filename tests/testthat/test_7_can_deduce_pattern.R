@@ -497,4 +497,20 @@ test_that("can_deduce_pattern trouve des edges cases", {
   expect_true(
     !is.null(can_deduce_pattern(grid, 4, init_solved_around(grid), hypothesis = 0)$clicks)
   )
+  
+  grid <- matrix(
+    c(
+      -2, -1, -1, -1,
+      -1, -1, -1, -1,
+      -1, -1, -1, -1,
+      -1, -2, 1, -1,
+      1, -1, 1, -1,
+      -1, -1, -1, -1
+    ),
+    ncol = 4,
+    byrow = TRUE
+  )
+  expect_true(
+    !is.null(can_deduce_pattern(grid, 2, init_solved_around(grid), hypothesis = 0)$clicks)
+  )
 })

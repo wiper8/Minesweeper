@@ -52,13 +52,15 @@ show_box_probs <- function(grid, mines_left) {
 }
 
 compare_clickers <- function(n, dims, ...) {
-  print("random")
-  df_random <- cbind(compute_mines_probs_df(n, dims, clicker = random_clicker, ...), clicker = "random")
-  print("certain")
-  df_certain <- cbind(compute_mines_probs_df(n, dims, clicker = certain_else_random_clicker, ...), clicker = "certain")
+  #print("random")
+  #df_random <- cbind(compute_mines_probs_df(n, dims, clicker = random_clicker, ...), clicker = "random")
+  #print("certain")
+  #df_certain <- cbind(compute_mines_probs_df(n, dims, clicker = certain_else_random_clicker, ...), clicker = "certain")
   print("smart")
   df_smart <- cbind(compute_mines_probs_df(n, dims, clicker = smart_clicker), clicker = "smart")
-  rbind(df_random, df_certain, df_smart)
+  print("smart2")
+  df_smart2 <- cbind(compute_mines_probs_df(n, dims, clicker = smart_clicker2), clicker = "smart")
+  rbind(df_smart, df_smart2) # rbind(df_random, df_certain, df_smart, df_smart2)
 }
 
 show_mines_difficulty <- function(df) {
@@ -76,7 +78,7 @@ compute_mines_probs_df <- function(n, dims, ...) {
   probs_low <- rep(NA, length(mines))
   probs_high <- rep(NA, length(mines))
   avg_pct_done <- rep(NA, length(mines))
-
+  
   stop_threshold <- 1 / 100
   for (i in seq_along(probs)) {
     print(paste0(i, " mines"))
