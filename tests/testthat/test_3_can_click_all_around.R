@@ -10,10 +10,10 @@ test_that("can_click_all_around clique sur les cases autour qui sont certaines",
     nrow = 3,
     byrow = TRUE
   )
-  res <- can_click_all_around(grid, grid * 0)$clicks
+  res <- can_click_all_around(grid, NA, grid * 0)$clicks
   expect_true(
-    isTRUE(all.equal(res, list(list(c(1, 3), TRUE), list(c(2, 3), TRUE), list(c(3, 3), TRUE)))) || 
-    isTRUE(all.equal(res, list(list(c(1, 3), TRUE), list(c(2, 3), TRUE))))
+    isTRUE(all.equal(res, list(list(c(1, 3), TRUE, "certain"), list(c(2, 3), TRUE, "certain"), list(c(3, 3), TRUE, "certain")))) || 
+    isTRUE(all.equal(res, list(list(c(1, 3), TRUE, "certain"), list(c(2, 3), TRUE, "certain"))))
   )
   
   grid <- matrix(
@@ -26,8 +26,8 @@ test_that("can_click_all_around clique sur les cases autour qui sont certaines",
     byrow = TRUE
   )
   expect_equal(
-    can_click_all_around(grid, grid * 0)$clicks,
-    list(list(c(3, 1), TRUE), list(c(3, 2), TRUE))
+    can_click_all_around(grid, NA, grid * 0)$clicks,
+    list(list(c(3, 1), TRUE, "certain"), list(c(3, 2), TRUE, "certain"))
   )
   
   grid <- matrix(
@@ -40,7 +40,7 @@ test_that("can_click_all_around clique sur les cases autour qui sont certaines",
     byrow = TRUE
   )
   expect_equal(
-    can_click_all_around(grid, grid * 0)$clicks,
+    can_click_all_around(grid, NA, grid * 0)$clicks,
     NULL
   )
 })

@@ -1,16 +1,18 @@
-source("src/clicker/compute_mine_probability.R")
+source("src/clicker/helper/compute_mine_probability.R")
 source("src/clicker/random_clicker.R")
 
-probabilistic_clicker <- function(grid, ...) {
-  probs_grid <- compute_grid_probabilities(grid, ...)
+probabilistic_clicker <- function(grid, try_risky = FALSE, ...) {
+  probs_grid_lst <- compute_grid_probabilities(grid, ...)
   # try early difficult clusters that have all known information, but stays risky
-  risky_lst <- risky_cluster(grid, ...)
-  if (length(risky_lst) > 0) {
-    riskiest <- which.max(sapply(risky_lst, function(in_cluster) min(probs_grid[in_cluster], na.rm = TRUE)))
-    risky_lst[[riskiest]][!risky_lst[[riskiest]]] <- NA
-    probs_grid <- probs_grid * risky_lst[[riskiest]]
+  if (try_risky) {
+    risky_lst <- risky_cluster(grid, clusters = probs_grid_lst$clusters, ...)
+    if (length(risky_lst) > 0) {
+      riskiest <- which.max(sapply(risky_lst, function(in_cluster) min(probs_grid_lst$probs[in_cluster], na.rm = TRUE)))
+      risky_lst[[riskiest]][!risky_lst[[riskiest]]] <- NA
+      probs_grid_lst$probs <- probs_grid_lst$probs * risky_lst[[riskiest]]
+    }
   }
-  next_i <- sample2(which(probs_grid == min(probs_grid, na.rm = TRUE)), 1)
+  next_i <- sample2(which(probs_grid_lst$probs == min(probs_grid_lst$probs, na.rm = TRUE)), 1)
   list(
     clicks = list(list(i_to_position(next_i, dim(grid)), TRUE, "probabilistic")),
     global_cache = NULL
@@ -25,12 +27,42 @@ compute_grid_probabilities <- function(grid, mines_left, solved_around, hypothes
   mines_left_init <- mines_left
   grid_init <- grid
   solved_around_init <- solved_around
-
+  
   clusters <- independant_clusters(grid, solved_around, mines_left)
   
   # recalculer les bornes précies des mines clusters
   clusters <- precise_clusters_bounds_all(grid, solved_around, mines_left, clusters, ...)
-
+  
+  if (length(clusters$clusters) == 0) {
+    void <- mines_left
+    n_box_void <- sum(clusters$void$in_cluster)
+    
+    clusters_all_probs_cache <- lapply(clusters$clusters, function(lst) {
+      generate_all_probs(lst$grid, (lst$bornes_mines[1]:lst$bornes_mines[2])[lst$possible == "TRUE"], lst$solved_around, lst$in_cluster)
+    })
+    
+    total_combins <- choose(n_box_void, void)
+    
+    probs <- grid * 0
+    
+    void_prob <- sum(void / n_box_void)
+    
+    probs[clusters$void$in_cluster] <- void_prob
+    probs[grid_init %in% hp_flags] <- 1
+    probs_grid <- matrix(probs, nrow = nrow(clusters$void$grid), ncol = ncol(clusters$void$grid))
+    
+    if (return_n_combins) {
+      return(list(n_combins = total_combins, probs = probs_grid, clusters = clusters))
+    }
+    
+    probs_grid[grid %in% known] <- NA # remplacer les cases connues par des NA pour ne pas les sélectionner
+    
+    if (any(is.na(probs_grid) & !grid_init %in% known)) browser()
+    # pas sensé déclancher car certain_core devrait trouver tous les cas certains
+    if (any(sum(probs_grid == 0 | probs_grid == 1, na.rm = TRUE))) browser()
+    return(list(probs = probs_grid, clusters = clusters))
+  }
+  
   # liste de vecteurs entiers de possibilitées. chaque vecteur est associé au cluster i
   nb_mines_possible_per_cluster <- lapply(
     clusters$clusters,
@@ -49,7 +81,7 @@ compute_grid_probabilities <- function(grid, mines_left, solved_around, hypothes
   clusters_all_probs_cache <- lapply(clusters$clusters, function(lst) {
     generate_all_probs(lst$grid, (lst$bornes_mines[1]:lst$bornes_mines[2])[lst$possible == "TRUE"], lst$solved_around, lst$in_cluster)
   })
-
+  
   numerator_mine_prob <- mapply(
     function(tuple, void_i) {
       mapply(
@@ -100,7 +132,7 @@ compute_grid_probabilities <- function(grid, mines_left, solved_around, hypothes
   probs_grid <- matrix(probs, nrow = nrow(clusters$void$grid), ncol = ncol(clusters$void$grid))
   
   if (return_n_combins) {
-    return(list(n_combins = total_combins, probs = probs_grid))
+    return(list(n_combins = total_combins, probs = probs_grid, clusters = clusters))
   }
   
   probs_grid[grid %in% known] <- NA # remplacer les cases connues par des NA pour ne pas les sélectionner
@@ -109,15 +141,18 @@ compute_grid_probabilities <- function(grid, mines_left, solved_around, hypothes
   # pas sensé déclancher car certain_core devrait trouver tous les cas certains
   if (any(sum(probs_grid == 0 | probs_grid == 1, na.rm = TRUE))) browser()
   
-  probs_grid
+  list(probs = probs_grid, clusters = clusters)
 }
 
-risky_cluster <- function(grid, mines_left, solved_around, click_order = NULL, ...) {
-  clusters <- independant_clusters(grid, solved_around, mines_left)
+risky_cluster <- function(grid, mines_left, solved_around, clusters = NULL, ...) {
+  if (is.null(clusters)) {
+    clusters <- independant_clusters(grid, solved_around, mines_left)
+    # recalculer les bornes précies des mines clusters
+    clusters <- precise_clusters_bounds_all(grid, solved_around, mines_left, clusters, ...)
+  }
   
-  # recalculer les bornes précies des mines clusters
-  clusters <- precise_clusters_bounds_all(grid, solved_around, mines_left, clusters, ...)
   risky_clusters <- sapply(clusters$clusters, function(lst) length(unique(lst$bornes_mines)) == 1)
+  if (length(risky_clusters) == 0) return(risky_clusters)
   lapply(clusters$clusters[risky_clusters], function(lst) lst$in_cluster)
 }
 

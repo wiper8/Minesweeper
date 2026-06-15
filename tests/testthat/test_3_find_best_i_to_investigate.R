@@ -1,4 +1,4 @@
-source(here("src/clicker/find_best_i_to_investigate.R"))
+source(here("src/clicker/helper/find_best_i_to_investigate.R"))
 
 test_that("find_best_i_to_investigate peut retourner un vecteur de longueur 0 dans des edge cases", {
   grid <- matrix(

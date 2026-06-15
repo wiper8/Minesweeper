@@ -1,4 +1,4 @@
-source(here("src/clicker/is_mine_propagation_possible.R"))
+source(here("src/clicker/helper/is_mine_propagation_possible.R"))
 
 test_that("la propagation de create_cluster_from_i se fait comme prévue sur tout le contour", {
   grid <- matrix(

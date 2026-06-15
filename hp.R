@@ -26,3 +26,5 @@ hp_to_hypo_no_mine <- c(covered_mine, covered_no_mine, uncovered_mine, uncovered
 hp_brings_no_info_to_center_unknown <- c(unknown_box, flag_on_mine, flag_on_no_mine, hypothetical_mine,
                                          hypothetical_no_mine, void_box)
 hp_known_but_cannot_expand <- c(flag_on_mine, hypothetical_mine, hypothetical_no_mine, void_box)
+
+hp_mistakes <- c(uncovered_mine, flag_on_no_mine)

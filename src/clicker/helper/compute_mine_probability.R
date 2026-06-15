@@ -64,7 +64,8 @@ generate_probs_knowing_mines <- function(grid_tmp_propagate, mines_left_init, so
     list(
       n_combins = mine_probs$n_combins + no_mine_probs$n_combins,
       probs = (mine_probs$n_combins * mine_probs$probs +
-                 no_mine_probs$n_combins * no_mine_probs$probs) / (mine_probs$n_combins + no_mine_probs$n_combins)
+                 no_mine_probs$n_combins * no_mine_probs$probs) / (mine_probs$n_combins + no_mine_probs$n_combins),
+      clusters = clusters
     )
   } else {
     compute_grid_probabilities(

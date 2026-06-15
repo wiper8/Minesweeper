@@ -3,7 +3,7 @@ source("src/game_engine/update_grid.R")
 source("src/game_engine/apply_action.R")
 source("src/game_engine/is_game_over.R")
 source("src/indicies/i_and_positions.R")
-source("src/clicker/random_first_click.R")
+source("src/clicker/helper/random_first_click.R")
 
 #' Simuler une partie de Minsweeper
 #'
@@ -76,6 +76,9 @@ main_game_loop <- function(grid, mines_left, clicker, solved_around, hypothesis 
       if (new_action[[2]]) click_order <- rbind(click_order, new_action[[1]])
       if (any(is.na(new_action[[1]]))) browser()
       tmp2 <- apply_action(grid, new_action[[1]], new_action[[2]], mines_left, solved_around = solved_around, hypothesis = hypothesis, ...)
+      if (hypothesis == 0 && new_action[[3]] == "certain" && any(tmp2[[1]] %in% hp_mistakes)) {
+        browser() # le clicker a commis une erreur, ne devrait pas être possible
+      }
       grid <- tmp2[[1]]
       mines_left <- tmp2[[3]]
       solved_around <- tmp2[[4]]
