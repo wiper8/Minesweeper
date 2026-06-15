@@ -3,6 +3,13 @@ source("src/clicker/random_clicker.R")
 
 probabilistic_clicker <- function(grid, ...) {
   probs_grid <- compute_grid_probabilities(grid, ...)
+  # try early difficult clusters that have all known information, but stays risky
+  risky_lst <- risky_cluster(grid, ...)
+  if (length(risky_lst) > 0) {
+    riskiest <- which.max(sapply(risky_lst, function(in_cluster) min(probs_grid[in_cluster], na.rm = TRUE)))
+    risky_lst[[riskiest]][!risky_lst[[riskiest]]] <- NA
+    probs_grid <- probs_grid * risky_lst[[riskiest]]
+  }
   next_i <- sample2(which(probs_grid == min(probs_grid, na.rm = TRUE)), 1)
   list(
     clicks = list(list(i_to_position(next_i, dim(grid)), TRUE, "probabilistic")),
@@ -103,6 +110,15 @@ compute_grid_probabilities <- function(grid, mines_left, solved_around, hypothes
   if (any(sum(probs_grid == 0 | probs_grid == 1, na.rm = TRUE))) browser()
   
   probs_grid
+}
+
+risky_cluster <- function(grid, mines_left, solved_around, click_order = NULL, ...) {
+  clusters <- independant_clusters(grid, solved_around, mines_left)
+  
+  # recalculer les bornes précies des mines clusters
+  clusters <- precise_clusters_bounds_all(grid, solved_around, mines_left, clusters, ...)
+  risky_clusters <- sapply(clusters$clusters, function(lst) length(unique(lst$bornes_mines)) == 1)
+  lapply(clusters$clusters[risky_clusters], function(lst) lst$in_cluster)
 }
 
 precise_clusters_bounds_all <- function(grid, solved_around, mines_left, clusters, know_possible = FALSE, ...) {
