@@ -3,7 +3,9 @@ source("src/game_engine/update_grid.R")
 source("src/game_engine/apply_action.R")
 source("src/game_engine/is_game_over.R")
 source("src/indicies/i_and_positions.R")
+source("src/clicker/helper/update_cache.R")
 source("src/clicker/helper/random_first_click.R")
+
 
 #' Simuler une partie de Minsweeper
 #'
@@ -29,7 +31,9 @@ simulate_game <- function(total_mines, dims = c(17, 9), clicker, first_click = N
   mines_left <- tmp[[3]]
   solved_around <- tmp[[4]]
   if (tmp[[2]] == 1) return(list(grid, "win", solved_around))
-  main_game_loop(grid, total_mines, clicker, solved_around = solved_around)
+  clusters_cache <- independant_clusters(grid, solved_around = solved_around, total_mines)
+  clusters_cache <- precise_clusters_bounds_all(grid, solved_around, total_mines, clusters_cache)
+  main_game_loop(grid, total_mines, clicker, solved_around = solved_around, clusters_cache = clusters_cache)
 }
 
 init_grid_after_first_click <- function(grid, pos, total_mines) {
@@ -42,19 +46,20 @@ init_grid_after_first_click <- function(grid, pos, total_mines) {
 }
 
 main_game_loop <- function(grid, mines_left, clicker, solved_around, hypothesis = 0, click_order = NULL,
-                           global_cache = list(), ...) {
+                           global_cache = list(), clusters_cache = NULL, ...) {
+  mines_left_init <- mines_left
   seuil_verbose_duration_click <- 5
   repeat {
-    # if (hypothesis == 0) print(mean(grid %in% known))
+    if (hypothesis == 0) print(mean(grid %in% known))
     a <- Sys.time()
     # choisir la prochaine action
     tmp <- clicker(grid, mines_left = mines_left, solved_around = solved_around, hypothesis = hypothesis,
-                   click_order = click_order, global_cache = global_cache, ...)
+                   click_order = click_order, global_cache = global_cache, clusters_cache = clusters_cache, ...)
     b <- Sys.time()
     duration_for_click <- as.numeric(difftime(b, a, units = "secs"))
     if (hypothesis == 0 && duration_for_click > seuil_verbose_duration_click) {
       print(paste0("slow selection after ", nrow(click_order), " clicked. ", round(duration_for_click), " secs"))
-      # if (duration_for_click > 10) browser()
+      if (duration_for_click > 10) browser()
     }
     # "partie impossible"
     # ne devrait pas être possible car
@@ -64,29 +69,33 @@ main_game_loop <- function(grid, mines_left, clicker, solved_around, hypothesis 
     if (isTRUE(all.equal(tmp$clicks, "impossible"))) browser()
     if (hypothesis != 0 && is.null(tmp$clicks)) return(list(grid, "le clicker ne sait pu quoi faire", solved_around, mines_left))
     
-    # mettre à jour la cache
-    if (!is.null(tmp$global_cache)) {
-      global_cache <- tmp$global_cache
-      keep <- !sapply(global_cache, `[[`, 2)
-      global_cache <- global_cache[keep]
-    }
     if (is.null(tmp$clicks)) browser()
-    
+
+    new_grid <- grid # instancier l'objet pour possiblement plusieurs itérations
     for (new_action in tmp$clicks) {
       if (new_action[[2]]) click_order <- rbind(click_order, new_action[[1]])
       if (any(is.na(new_action[[1]]))) browser()
-      tmp2 <- apply_action(grid, new_action[[1]], new_action[[2]], mines_left, solved_around = solved_around, hypothesis = hypothesis, ...)
+      tmp2 <- apply_action(new_grid, new_action[[1]], new_action[[2]], mines_left, solved_around = solved_around, hypothesis = hypothesis, ...)
       if (hypothesis == 0 && new_action[[3]] == "certain" && any(tmp2[[1]] %in% hp_mistakes)) {
         browser() # le clicker a commis une erreur, ne devrait pas être possible
       }
-      grid <- tmp2[[1]]
+      new_grid <- tmp2[[1]]
       mines_left <- tmp2[[3]]
       solved_around <- tmp2[[4]]
       if (tmp2[[2]] == 1) {
-        if (hypothesis == 2 && !is_grid_possible(grid)) return(list(grid, "partie impossible", solved_around, mines_left))
-        return(list(grid, "win", solved_around, mines_left))
+        if (hypothesis == 2 && !is_grid_possible(new_grid)) return(list(new_grid, "partie impossible", solved_around, mines_left))
+        return(list(new_grid, "win", solved_around, mines_left))
       }
-      if (tmp2[[2]] == -1) return(list(grid, "lost", solved_around, mines_left))
+      if (tmp2[[2]] == -1) return(list(new_grid, "lost", solved_around, mines_left))
     }
+
+    # mettre à jour la cache
+    global_cache <- update_global_cache(tmp$global_cache, grid, new_grid)
+
+    clusters_cache <- update_clusters_cache(tmp$clusters_cache, grid, new_grid,
+                                            solved_around = solved_around,
+                                            mines_left = mines_left,
+                                            n_flagged_since = mines_left_init - mines_left)
+    grid <- new_grid
   }
 }

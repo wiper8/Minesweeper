@@ -33,8 +33,11 @@ combins_to_probs <- function(combins) {
   )
 }
 
-generate_probs_knowing_mines <- function(grid_tmp_propagate, mines_left_init, solved_around, in_cluster, ...) {
+generate_probs_knowing_mines <- function(grid_tmp_propagate, mines_left_init, solved_around, in_cluster, clusters_cache = NULL, ...) {
+  grid_tmp_propagate_init <- grid_tmp_propagate
+
   # pour s'assurer de résoudre les cas certain car le fait de modifier mines_left peut en causer
+  if (mines_left_init == 0) browser()
   tmp <- main_game_loop(grid_tmp_propagate, mines_left_init, certain_core, solved_around, ...)
   grid_tmp_propagate <- tmp[[1]]
   solved_around <- tmp[[3]]
@@ -49,7 +52,11 @@ generate_probs_knowing_mines <- function(grid_tmp_propagate, mines_left_init, so
   next_i <- which(grid_tmp_propagate == -10 & solved_around == 0 & in_cluster)
   if (length(next_i) == 0) browser() # pas sensé se rendre ici
   
-  clusters <- independant_clusters(grid_tmp_propagate, solved_around, mines_left)
+  clusters <- clusters_cache %||% independant_clusters(grid_tmp_propagate, solved_around, mines_left)
+  if ("void" %in% names(clusters_cache$clusters)) browser()
+  clusters <- update_clusters_cache(clusters, grid_tmp_propagate_init, grid_tmp_propagate, mines_left_init - mines_left,
+                                    solved_around = solved_around,
+                                    mines_left = mines_left)
   # si un seul cluster
   if (length(clusters$clusters) == 1) {
     next_i <- next_i[1] # TODO mieux choisir le prochain next_i, soit avec probabilitées, le prioritise, ou le click_order
@@ -93,6 +100,9 @@ get_situational_probs <- function(grid_tmp_propagate, pos, action = FALSE,
       probs = tmp[[1]] %in% hp_flags
     ))
   }
+  
+  # TODO utiliser la cache de clusters?
+  
   if (tmp[[2]] == "le clicker ne sait pu quoi faire") {
     clusters <- independant_clusters(tmp[[1]], tmp[[3]], tmp[[4]])
     if (length(clusters$clusters) == 1) {
