@@ -206,7 +206,6 @@ precise_bounds_one_cluster <- function(lst, grid, mines_left) {
   trials <- lst$bornes_mines[1]:lst$bornes_mines[2]
   # commencer au milieu ou au premier TRUE
   if (any(lst$possible == "TRUE")) {
-    browser() # TODO simplement vérifier
     left <- head(which(lst$possible == "TRUE"), 1)
   } else {
     left <- ceiling(length(trials) / 2)
