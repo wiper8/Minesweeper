@@ -30,7 +30,7 @@ test_that("which_combins_possible peut retourner TRUE sur un cas incertain", {
       ),
       solved_around = matrix(0, 3, 3),
       mines_left = NA
-    )
+    )$possible
   )
   
   grid <- matrix(
@@ -62,7 +62,7 @@ test_that("which_combins_possible peut retourner TRUE sur un cas incertain", {
       ),
       solved_around = matrix(0, 3, 3),
       mines_left = NA
-    ),
+    )$possible,
     c(TRUE, rep(NA, 6))
   )
   
@@ -81,7 +81,7 @@ test_that("which_combins_possible peut retourner TRUE sur un cas incertain", {
       matrix(c(1, 1, 1, 2), nrow = 2),
       solved_around = matrix(0, nrow = 2, ncol = 4),
       mines_left = NA
-    )
+    )$possible
   )
 })
 
@@ -102,7 +102,7 @@ test_that("which_combins_possible doit retourner FALSE sur un cas impossible", {
       matrix(c(1:3, 1, 1:3, 1, 1, 1, 2, 3, 3, 3), ncol = 2),
       solved_around = grid * 0,
       mines_left = NA
-    )
+    )$possible
   )
 })
 
@@ -133,7 +133,7 @@ test_that("which_combins_possible pour des cas complexes", {
       matrix(c(10, 10, 10, 3:5), ncol = 2),
       solved_around = solved_around,
       mines_left = NA
-    )[1]
+    )$possible[1]
   )
   
   expect_equal(
@@ -143,7 +143,7 @@ test_that("which_combins_possible pour des cas complexes", {
       pos_unknown = matrix(c(9, 10, 10, 10, 1, 1, 2, 3), ncol = 2),
       solved_around = solved_around,
       mines_left = 12
-    ),
+    )$possible,
     c(FALSE, FALSE, FALSE)
   )
 })
@@ -174,7 +174,7 @@ test_that("which_combins_possible pour des cas complexes", {
       matrix(c(10, 10, 10, 1:3), ncol = 2),
       solved_around = solved_around,
       mines_left = 3
-    )[1]
+    )$possible[1]
   )
   expect_false(
     which_combins_possible(
@@ -183,7 +183,7 @@ test_that("which_combins_possible pour des cas complexes", {
       matrix(c(10, 10, 10, 1:3), ncol = 2),
       solved_around = solved_around,
       mines_left = 3
-    )[1]
+    )$possible[1]
   )
   expect_true(
     which_combins_possible(
@@ -192,6 +192,6 @@ test_that("which_combins_possible pour des cas complexes", {
       matrix(c(10, 10, 10, 1:3), ncol = 2),
       solved_around = solved_around,
       mines_left = 3
-    )[1]
+    )$possible[1]
   )
 })
