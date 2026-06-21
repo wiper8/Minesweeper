@@ -51,11 +51,9 @@ generate_probs_knowing_mines <- function(grid_tmp_propagate, mines_left_init, so
   # vérifier ici que je sample vraiment une mine possible dans le cluster
   next_i <- which(grid_tmp_propagate == -10 & solved_around == 0 & in_cluster)
   if (length(next_i) == 0) browser() # pas sensé se rendre ici
-  
+
   clusters <- clusters_cache %||% independant_clusters(grid_tmp_propagate, solved_around, mines_left)
-  clusters <- update_clusters_cache(clusters, grid_tmp_propagate_init, grid_tmp_propagate, mines_left_init - mines_left,
-                                    solved_around = solved_around,
-                                    mines_left = mines_left)
+
   # si un seul cluster
   if (length(clusters$clusters) == 1) {
     next_i <- next_i[1] # TODO mieux choisir le prochain next_i, soit avec probabilitées, le prioritise, ou le click_order

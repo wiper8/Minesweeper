@@ -56,37 +56,6 @@ compute_grid_probabilities <- function(grid, mines_left, solved_around, hypothes
     return(list(probs = probs_grid, clusters = clusters))
   }
 
-  if (length(clusters$clusters) == 0) {
-    void <- mines_left
-    n_box_void <- sum(clusters$void$in_cluster)
-    
-    clusters_all_probs_cache <- lapply(clusters$clusters, function(lst) {
-      generate_all_probs(lst$grid, (lst$bornes_mines[1]:lst$bornes_mines[2])[lst$possible == "TRUE"], lst$solved_around,
-                         lst$in_cluster, clusters_cache = clusters)
-    })
-    
-    total_combins <- choose(n_box_void, void)
-    
-    probs <- grid * 0
-    
-    void_prob <- sum(void / n_box_void)
-    
-    probs[clusters$void$in_cluster] <- void_prob
-    probs[grid_init %in% hp_flags] <- 1
-    probs_grid <- matrix(probs, nrow = nrow(clusters$void$grid), ncol = ncol(clusters$void$grid))
-    
-    if (return_n_combins) {
-      return(list(n_combins = total_combins, probs = probs_grid, clusters = clusters))
-    }
-    
-    probs_grid[grid %in% known] <- NA # remplacer les cases connues par des NA pour ne pas les sélectionner
-    
-    if (any(is.na(probs_grid) & !grid_init %in% known)) browser()
-    # pas sensé déclancher car certain_core devrait trouver tous les cas certains
-    if (any(sum(probs_grid == 0 | probs_grid == 1, na.rm = TRUE))) browser()
-    return(list(probs = probs_grid, clusters = clusters))
-  }
-
   # liste de vecteurs entiers de possibilitées. chaque vecteur est associé au cluster i
   nb_mines_possible_per_cluster <- lapply(
     clusters$clusters,

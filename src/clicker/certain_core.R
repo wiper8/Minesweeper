@@ -577,15 +577,9 @@ which_combins_possible <- function(grid, combins, pos_unknown, solved_around, mi
     
     # mettre à jour la cache
     global_cache <- update_global_cache(global_cache, grid, grid_tmp_propagate)
-    args_clusters_cache <- list(
-      clusters_cache = clusters_cache, grid = grid, new_grid = grid_tmp_propagate,
-      solved_around = solved_around, mines_left = mines_left
-    )
-
     possible[i] <- is_mine_propagation_possible(grid_tmp_propagate, mines_left = mines_left,
                                                 solved_around = solved_around, click_order = click_order, 
-                                                global_cache = global_cache,
-                                                args_clusters_cache = args_clusters_cache, ...)
+                                                global_cache = global_cache, ...)
     if (possible[i]) break # early exist cause the calling function (which_combins_possible) checks for all FALSE
   }
   possible

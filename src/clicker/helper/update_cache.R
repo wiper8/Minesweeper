@@ -12,6 +12,7 @@ update_clusters_cache <- function(clusters_cache, grid, new_grid, ...) {
   # identifier les clusters touchés par les changements
   i_changed <- which(grid != new_grid & new_grid != unknown_box & new_grid != void_box)
   if (length(i_changed) == 0) return(clusters_cache)
+  browser()
   new_clusters <- independant_clusters(new_grid, ...)
   # changement dans le void
   if (any(clusters_cache$void$in_cluster[i_changed])) {
