@@ -12,7 +12,7 @@ probabilistic_clicker <- function(grid, ...) {
 }
 
 compute_grid_probabilities <- function(grid, mines_left, solved_around, hypothesis, click_order = NULL,
-                                       return_n_combins = FALSE, ...) {
+                                       return_n_combins = FALSE, clusters_cache = NULL, ...) {
   dims <- dim(grid)
   i_to_investigate <- find_best_i_to_investigate(grid, solved_around, click_order)
 
@@ -20,12 +20,9 @@ compute_grid_probabilities <- function(grid, mines_left, solved_around, hypothes
   grid_init <- grid
   solved_around_init <- solved_around
 
-  clusters <- independant_clusters(grid, solved_around, mines_left)
+  clusters <- cluster_from_draft(grid, solved_around, mines_left, clusters_cache, ...)
 
-  # recalculer les bornes précies des mines clusters
-  clusters <- precise_clusters_bounds_all(grid, solved_around, mines_left, clusters, ...)
-  
-  if (length(clusters$clusters) == 0) {
+  if (length(clusters$clusters) == 0) { # raccourci
     void <- mines_left
     n_box_void <- sum(clusters$void$in_cluster)
 

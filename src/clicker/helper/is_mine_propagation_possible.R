@@ -251,6 +251,125 @@ create_cluster_from_i <- function(grid, i, solved_around, in_cluster = NULL) {
   in_cluster
 }
 
+cluster_from_draft <- function(grid, solved_around, mines_left, clusters_cache, ...) {
+  if (is.null(clusters_cache)) {
+    clusters <- independant_clusters(grid, solved_around, mines_left)
+    
+    # recalculer les bornes précies des mines clusters
+    return(precise_clusters_bounds_all(grid, solved_around, mines_left, clusters, ...))
+  }
+
+  if (all(solved_around == -1)) {
+    browser() # pas implémenté et pas sensé se rendre ici logiquement
+  }
+  groups <- list()
+  
+  potential_cluster <- grid >= 0 & grid != flag_on_mine & solved_around == 0
+  in_any_cluster <- matrix(FALSE, nrow = nrow(grid), ncol = ncol(grid))
+  known_but_does_nothing <- in_any_cluster
+  
+  for (i in which(potential_cluster)) {
+    if (!in_any_cluster[i]) {
+      clust <- create_cluster_from_i(grid, i, solved_around)
+      if (sum(clust) == 1) {
+        known_but_does_nothing[i] <- TRUE
+        in_any_cluster[i] <- TRUE
+        next
+      }
+      # pas supposé que des boîtes soient dans plusieurs clusters, sauf les known
+      if (any(in_any_cluster & clust & !grid %in% known)) browser()
+      in_next_cluster <- clust == 1
+      if (any(in_next_cluster)) {
+        in_any_cluster <- in_any_cluster | in_next_cluster
+        
+        # utilisation de la cache
+        i_clust_identical_in_cache <- which(sapply(
+          clusters_cache$clusters,
+          function(clust) all(clust$in_cluster == in_next_cluster) &&
+            all(clust$grid[in_next_cluster] == grid[in_next_cluster])
+        ))
+        if (length(i_clust_identical_in_cache) > 0) {
+          # réutiliser les infos du cluster
+          bornes_mines1 <- clusters_cache$clusters[[i_clust_identical_in_cache]]$bornes_mines
+          possible <- clusters_cache$clusters[[i_clust_identical_in_cache]]$possible
+        } else {
+          # compter les bornes de mines du cluster
+          bornes_mines1 <- c(0, min(mines_left, sum(!grid[in_next_cluster] %in% known), na.rm = TRUE))
+          possible <- rep("NA", diff(bornes_mines1) + 1)
+        }
+
+        tmp_grid <- grid
+        tmp_grid[clust == 0] <- void_box
+        # impossible de créer un cluster vide
+        if (!all(tmp_grid == void_box)) {
+          new_solved_around <- init_solved_around(tmp_grid, which(solved_around == -1))
+          
+          groups[[length(groups) + 1]] <- list(
+            grid = tmp_grid,
+            solved_around = new_solved_around,
+            in_cluster = in_next_cluster,
+            bornes_mines = bornes_mines1,
+            possible = possible,
+            last_success_mines = NA
+          )
+        }
+      }
+    }
+  }
+  
+  if (length(groups) > length(grid)) browser() # pas sensé déclencher
+  
+  # parmi les cases restantes, les non clusterisées et connues sont known_but_does_nothing
+  known_but_does_nothing <- known_but_does_nothing | (!in_any_cluster & grid %in% known)
+  in_any_cluster <- in_any_cluster | known_but_does_nothing
+  
+  # le dernier cluster est le "void" inconnu
+  # cacher les boxes non dans le cluster en cours
+  in_void <- !in_any_cluster
+  tmp_grid <- grid * 0 + void_box
+  new_solved_around <- grid * 0 - 1
+  if (length(groups) == 0) {
+    bornes_mines1 <- c(mines_left, mines_left)
+  } else {
+    bornes_mines1 <- mines_left - c(
+      sum(sapply(groups, function(clust) {
+        clust$bornes_mines[2]
+      })), 
+      sum(sapply(groups, function(clust) {
+        clust$bornes_mines[1]
+      }))
+    )
+    bornes_mines1[1] <- max(0, bornes_mines1[1], na.rm = TRUE)
+    bornes_mines1[2] <- min(mines_left, bornes_mines1[2], sum(in_void), na.rm = TRUE)
+    # TODO weird mais on va le permettre vu que parfois en hypothesis == 2 ca peut être impossible
+    if (bornes_mines1[2] < bornes_mines1[1]) browser() # TODO solve
+  }
+  
+  # vérifier que chaque case est dans un et un seul cluster, sauf les known qui peuvent être réutilisés
+  if (any(Reduce(
+    `+`,
+    append(
+      lapply(groups, function(lst) lst$in_cluster),
+      list(in_void)
+    ) |>
+    append(list(known_but_does_nothing))
+  ) != 1 & !grid %in% known)) browser()
+  
+  list(
+    # void est un groupe spécial de cases sans aucune information
+    void = list(
+      grid = tmp_grid,
+      solved_around = new_solved_around,
+      in_cluster = in_void,
+      bornes_mines = bornes_mines1,
+      possible = rep("NA", diff(bornes_mines1) + 1),
+      last_success_mines = NA
+    ),
+    known_but_does_nothing = list(in_cluster = known_but_does_nothing),
+    clusters = groups
+  )
+}
+
 test_trial <- function(grid, mines_left, in_cluster, trial) {
   # préciser les bornes
   tmp_grid <- grid
