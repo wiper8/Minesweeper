@@ -34,7 +34,6 @@ priority_investigate <- function(grid, solved_around) {
   mines_left_around_grid <- grid * NA
   n_unknown_grid <- grid * NA
   for (i in which(grid > 0 & solved_around < 1)) {
-    if (!(isTRUE(solved_around[i] < 1) | isFALSE(solved_around[i] < 1))) browser()
     if (solved_around[i] < 1) {
       pos <- i_to_position(i, dims)
       values <- get_around_square(pos, grid, dims)
