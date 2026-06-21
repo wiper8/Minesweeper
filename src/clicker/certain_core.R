@@ -579,8 +579,7 @@ which_combins_possible <- function(grid, combins, pos_unknown, solved_around, mi
     global_cache <- update_global_cache(global_cache, grid, grid_tmp_propagate)
     clusters_cache_args <- list(
       clusters_cache = clusters_cache, grid = grid, new_grid = grid_tmp_propagate,
-      solved_around = solved_around, mines_left = mines_left,
-      n_flagged_since = length(i_to_flag)
+      solved_around = solved_around, mines_left = mines_left
     )
 
     possible[i] <- is_mine_propagation_possible(grid_tmp_propagate, mines_left = mines_left,

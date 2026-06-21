@@ -6,7 +6,7 @@ update_global_cache <- function(global_cache, grid, new_grid) {
   global_cache <- global_cache[keep]
 }
 
-update_clusters_cache <- function(clusters_cache, grid, new_grid, n_flagged_since, ...) {
+update_clusters_cache <- function(clusters_cache, grid, new_grid, ...) {
   if (is.null(clusters_cache)) return(clusters_cache)
 
   # identifier les clusters touchés par les changements
@@ -15,7 +15,8 @@ update_clusters_cache <- function(clusters_cache, grid, new_grid, n_flagged_sinc
   new_clusters <- independant_clusters(new_grid, ...)
   # changement dans le void
   if (any(clusters_cache$void$in_cluster[i_changed])) {
-
+    browser() # TODO est-ce vraiment possible de tomber ici? si j'ai cliqué, ça crée un cluster, si j'ai flaggué, ça
+    # va dans known_but_useless
     if (length(new_clusters$clusters) == 0) return(new_clusters)
     if (length(clusters_cache$clusters) == length(new_clusters$clusters) && all(mapply(
       function(clust, new_clust) all(clust$in_cluster == clust$in_cluster),

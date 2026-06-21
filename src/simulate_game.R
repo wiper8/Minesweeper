@@ -30,9 +30,7 @@ simulate_game <- function(total_mines, dims = c(17, 9), clicker, first_click = N
   mines_left <- tmp[[3]]
   solved_around <- tmp[[4]]
   if (tmp[[2]] == 1) return(list(grid, "win", solved_around))
-  clusters_cache <- independant_clusters(grid, solved_around = solved_around, total_mines)
-  clusters_cache <- precise_clusters_bounds_all(grid, solved_around, total_mines, clusters_cache)
-  main_game_loop(grid, total_mines, clicker, solved_around = solved_around, clusters_cache = clusters_cache)
+  main_game_loop(grid, total_mines, clicker, solved_around = solved_around)
 }
 
 init_grid_after_first_click <- function(grid, pos, total_mines) {
@@ -90,11 +88,9 @@ main_game_loop <- function(grid, mines_left, clicker, solved_around, hypothesis 
 
     # mettre à jour la cache
     global_cache <- update_global_cache(tmp$global_cache, grid, new_grid)
-
     clusters_cache <- update_clusters_cache(tmp$clusters_cache, grid, new_grid,
                                             solved_around = solved_around,
-                                            mines_left = mines_left,
-                                            n_flagged_since = mines_left_init - mines_left)
+                                            mines_left = mines_left)
     grid <- new_grid
   }
 }
