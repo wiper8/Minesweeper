@@ -46,8 +46,7 @@ test_that("independant_clusters fonctionne pour des hypothesis != 2", {
         solved_around = grid * 0 - 1,
         in_cluster = matrix(FALSE, nrow = nrow(grid), ncol = ncol(grid)),
         bornes_mines = c(0, 0),
-        possible = rep("NA", 1),
-        last_success_mines = NA
+        possible = rep("NA", 1)
       ),
       known_but_does_nothing = list(
         in_cluster = matrix(FALSE, nrow = nrow(grid), ncol = ncol(grid))
@@ -58,16 +57,14 @@ test_that("independant_clusters fonctionne pour des hypothesis != 2", {
           solved_around = init_solved_around(solution_grid1),
           in_cluster = solution_grid1 != -11,
           bornes_mines = c(0, 5),
-          possible = rep("NA", 6),
-          last_success_mines = NA
+          possible = rep("NA", 6)
         ),
         list(
           grid = solution_grid2,
           solved_around = init_solved_around(solution_grid2),
           in_cluster = solution_grid2 != -11,
           bornes_mines = c(0, 1),
-          possible = rep("NA", 2),
-          last_success_mines = NA
+          possible = rep("NA", 2)
         )
       )
     )
@@ -223,8 +220,7 @@ test_that("independant_clusters works properly", {
         byrow = TRUE
       ),
       bornes_mines = c(0, 32),
-      possible = rep("NA", 33),
-      last_success_mines = NA
+      possible = rep("NA", 33)
     )
   )
   expect_equal(
@@ -256,7 +252,7 @@ test_that("independant_clusters works properly", {
     )
   )
   expect_equal(
-    tmp$clusters[[1]][c(1, 3:6)],
+    tmp$clusters[[1]][c(1, 3:5)],
     list(
       grid = matrix(
         c(
@@ -305,12 +301,11 @@ test_that("independant_clusters works properly", {
         byrow = TRUE
       ),
       bornes_mines = c(0, 6),
-      possible = rep("NA", 7),
-      last_success_mines = NA
+      possible = rep("NA", 7)
     )
   )
   expect_equal(
-    tmp$clusters[[2]][c(1, 3:6)],
+    tmp$clusters[[2]][c(1, 3:5)],
     list(
       grid = matrix(
         c(
@@ -359,12 +354,11 @@ test_that("independant_clusters works properly", {
         byrow = TRUE
       ),
       bornes_mines = c(0, 23),
-      possible = rep("NA", 24),
-      last_success_mines = NA
+      possible = rep("NA", 24)
     )
   )
   expect_equal(
-    tmp$clusters[[3]][c(1, 3:6)],
+    tmp$clusters[[3]][c(1, 3:5)],
     list(
       grid = matrix(
         c(
@@ -413,12 +407,11 @@ test_that("independant_clusters works properly", {
         byrow = TRUE
       ),
       bornes_mines = c(0, 8),
-      possible = rep("NA", 9),
-      last_success_mines = NA
+      possible = rep("NA", 9)
     )
   )
   expect_equal(
-    tmp$clusters[[4]][c(1, 3:6)],
+    tmp$clusters[[4]][c(1, 3:5)],
     list(
       grid = matrix(
         c(
@@ -467,8 +460,7 @@ test_that("independant_clusters works properly", {
         byrow = TRUE
       ),
       bornes_mines = c(0, 4),
-      possible = rep("NA", 5),
-      last_success_mines = NA
+      possible = rep("NA", 5)
     )
   )
 })

@@ -11,12 +11,12 @@ test_that("is_mine_propagation_possible fonctionne généralement", {
     byrow = TRUE
   )
   expect_false(
-    is_mine_propagation_possible(grid, mines_left = 1, init_solved_around(grid))
+    is_mine_propagation_possible(grid, mines_left = 1, init_solved_around(grid))$possible
   )
   grid[2, 2] <- -5
   grid[2, 3] <- -1
   expect_true(
-    is_mine_propagation_possible(grid, mines_left = 0, init_solved_around(grid))
+    is_mine_propagation_possible(grid, mines_left = 0, init_solved_around(grid))$possible
   )
 })
 
@@ -31,13 +31,13 @@ test_that("is_mine_propagation_possible fonctionne pour un pattern possible de m
               byrow = TRUE
             )
             expect_true(
-              is_mine_propagation_possible(grid, mines_left = NA, init_solved_around(grid))
+              is_mine_propagation_possible(grid, mines_left = NA, init_solved_around(grid))$possible
             )
             expect_true(
-              is_mine_propagation_possible(grid, mines_left = 1, init_solved_around(grid))
+              is_mine_propagation_possible(grid, mines_left = 1, init_solved_around(grid))$possible
             )
             expect_true(
-              is_mine_propagation_possible(grid, mines_left = 0, init_solved_around(grid))
+              is_mine_propagation_possible(grid, mines_left = 0, init_solved_around(grid))$possible
             )
             
             # situation complexe où il faut connaître le nombre de mines pour pouvoir avancer
@@ -59,7 +59,7 @@ test_that("is_mine_propagation_possible fonctionne pour un pattern possible de m
             )
 
             expect_true(
-              is_mine_propagation_possible(grid, mines_left = NA, init_solved_around(grid))
+              is_mine_propagation_possible(grid, mines_left = NA, init_solved_around(grid))$possible
             )
 
             grid <- matrix(
@@ -79,11 +79,11 @@ test_that("is_mine_propagation_possible fonctionne pour un pattern possible de m
               byrow = TRUE
             )
             expect_true(
-              is_mine_propagation_possible(grid, mines_left = 6, init_solved_around(grid))
+              is_mine_propagation_possible(grid, mines_left = 6, init_solved_around(grid))$possible
             )
             # oui c'est une solution sans le total de mines, c'est jusqu'on peut pu jouer, mais la partie est valide
             expect_true(
-              is_mine_propagation_possible(grid, mines_left = NA, init_solved_around(grid))
+              is_mine_propagation_possible(grid, mines_left = NA, init_solved_around(grid))$possible
             )
             
             # patterns complexe avec combinaisons et nombre de mines total important
@@ -100,13 +100,13 @@ test_that("is_mine_propagation_possible fonctionne pour un pattern possible de m
               byrow = TRUE
             )
             expect_true(
-              is_mine_propagation_possible(grid, mines_left = NA, init_solved_around(grid))
+              is_mine_propagation_possible(grid, mines_left = NA, init_solved_around(grid))$possible
             )
             expect_true(
-              is_mine_propagation_possible(grid, mines_left = 6, init_solved_around(grid))
+              is_mine_propagation_possible(grid, mines_left = 6, init_solved_around(grid))$possible
             )
             expect_true(
-              is_mine_propagation_possible(grid, mines_left = 5, init_solved_around(grid))
+              is_mine_propagation_possible(grid, mines_left = 5, init_solved_around(grid))$possible
             )
             grid <- matrix(
               c(
@@ -121,16 +121,16 @@ test_that("is_mine_propagation_possible fonctionne pour un pattern possible de m
               byrow = TRUE
             )
             expect_true(
-              is_mine_propagation_possible(grid, mines_left = NA, init_solved_around(grid))
+              is_mine_propagation_possible(grid, mines_left = NA, init_solved_around(grid))$possible
             )
             expect_true(
-              is_mine_propagation_possible(grid, mines_left = 4, init_solved_around(grid))
+              is_mine_propagation_possible(grid, mines_left = 4, init_solved_around(grid))$possible
             )
             expect_false(
-              is_mine_propagation_possible(grid, mines_left = 5, init_solved_around(grid), to_clusterise = FALSE)
+              is_mine_propagation_possible(grid, mines_left = 5, init_solved_around(grid), to_clusterise = FALSE)$possible
             )
             expect_false(
-              is_mine_propagation_possible(grid, mines_left = 5, init_solved_around(grid), to_clusterise = TRUE)
+              is_mine_propagation_possible(grid, mines_left = 5, init_solved_around(grid), to_clusterise = TRUE)$possible
             )
           }
 )
@@ -153,7 +153,7 @@ test_that("is_mine_propagation_possible avec des boîtes inconnues", {
     byrow = TRUE
   )
   expect_true(
-    is_mine_propagation_possible(grid, mines_left = NA, grid * 0)
+    is_mine_propagation_possible(grid, mines_left = NA, grid * 0)$possible
   )
   
   grid <- matrix(
@@ -174,10 +174,10 @@ test_that("is_mine_propagation_possible avec des boîtes inconnues", {
   )
   solved <- init_solved_around(grid)
   expect_true(
-    is_mine_propagation_possible(grid, mines_left = 3, solved)
+    is_mine_propagation_possible(grid, mines_left = 3, solved)$possible
   )
   expect_false(
-    is_mine_propagation_possible(grid, mines_left = 4, solved)
+    is_mine_propagation_possible(grid, mines_left = 4, solved)$possible
   )
 })
 
@@ -194,7 +194,7 @@ test_that("is_mine_propagation est faux avec une grille possible mais pas le bon
     nrow = 6,
     byrow = TRUE
   )
-  tmp <- is_mine_propagation_possible(grid, mines_left = 1, solved_around = grid * 0)
+  tmp <- is_mine_propagation_possible(grid, mines_left = 1, solved_around = grid * 0)$possible
   expect_false(
     tmp
   )
@@ -226,7 +226,7 @@ test_that("is_mine_propagation dans des parties avancées", {
   )
   solved_around <- init_solved_around(grid)
   expect_true(
-    is_mine_propagation_possible(grid, mines_left = 12, solved_around)
+    is_mine_propagation_possible(grid, mines_left = 12, solved_around)$possible
   )
 })
 
@@ -250,7 +250,7 @@ test_that("is_mine_propagation ne se trompe pas dans des parties avancées", {
   )
   solved_around <- init_solved_around(grid)
   expect_false(
-    is_mine_propagation_possible(grid, mines_left = 10, solved_around, click_order = matrix(c(7, 6, 5, 6), nrow = 2))
+    is_mine_propagation_possible(grid, mines_left = 10, solved_around, click_order = matrix(c(7, 6, 5, 6), nrow = 2))$possible
   )
 })
 
@@ -274,17 +274,17 @@ test_that("is_mine_propagation dans des parties avancées", {
   )
   solved_around <- init_solved_around(grid)
   expect_false(
-    is_mine_propagation_possible(grid, mines_left = 30, solved_around, click_order = matrix(c(7, 6, 5, 6), nrow = 2))
+    is_mine_propagation_possible(grid, mines_left = 30, solved_around, click_order = matrix(c(7, 6, 5, 6), nrow = 2))$possible
   )
   grid[10] <- -8
   solved_around <- init_solved_around(grid)
   expect_false(
-    is_mine_propagation_possible(grid, mines_left = 31, solved_around, click_order = matrix(c(7, 6, 5, 6), nrow = 2))
+    is_mine_propagation_possible(grid, mines_left = 31, solved_around, click_order = matrix(c(7, 6, 5, 6), nrow = 2))$possible
   )
   grid[10] <- -10
   solved_around <- init_solved_around(grid)
   expect_false(
-    is_mine_propagation_possible(grid, mines_left = 31, solved_around, click_order = matrix(c(7, 6, 5, 6), nrow = 2))
+    is_mine_propagation_possible(grid, mines_left = 31, solved_around, click_order = matrix(c(7, 6, 5, 6), nrow = 2))$possible
   )
 })
 
@@ -315,7 +315,7 @@ test_that("is_mine_propagation pour des cas clusters indépendants", {
   solved_around <- init_solved_around(grid)
 
   expect_true(
-    is_mine_propagation_possible(grid, mines_left = 31, solved_around, click_order = matrix(c(7, 5), ncol = 2))
+    is_mine_propagation_possible(grid, mines_left = 31, solved_around, click_order = matrix(c(7, 5), ncol = 2))$possible
   )
 })
 
@@ -365,7 +365,7 @@ test_that("is_mine_propagation_possible ne retourne pas de faux vrais", {
     byrow = TRUE
   )
   expect_false(
-    is_mine_propagation_possible(grid, mines_left = 2, init_solved_around(grid), to_clusterise = FALSE)
+    is_mine_propagation_possible(grid, mines_left = 2, init_solved_around(grid), to_clusterise = FALSE)$possible
   )
   
   # TODO test à gérer : c'est normal que is_mine_propagation_possible retourne vrai car il peut
@@ -422,7 +422,7 @@ test_that("is_mine_propagation_possible ne retourne pas de faux vrais", {
       init_solved_around(grid),
       to_clusterise = FALSE,
       in_cluster = clust
-    )
+    )$possible
   )
   expect_true(
     is_mine_propagation_possible(
@@ -431,6 +431,6 @@ test_that("is_mine_propagation_possible ne retourne pas de faux vrais", {
       init_solved_around(grid),
       to_clusterise = FALSE,
       in_cluster = clust
-    )
+    )$possible
   )
 })

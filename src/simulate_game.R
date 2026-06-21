@@ -48,6 +48,7 @@ main_game_loop <- function(grid, mines_left, clicker, solved_around, hypothesis 
   seuil_verbose_duration_click <- 5
   repeat {
     if (hypothesis == 0) print(mean(grid %in% known))
+
     a <- Sys.time()
     # choisir la prochaine action
     tmp <- clicker(grid, mines_left = mines_left, solved_around = solved_around, hypothesis = hypothesis,
@@ -88,6 +89,12 @@ main_game_loop <- function(grid, mines_left, clicker, solved_around, hypothesis 
 
     # mettre à jour la cache
     global_cache <- update_global_cache(tmp$global_cache, grid, new_grid)
+
+    # conserver la cache des clusters indépendants des actions appliquées
+    if (!is.null(tmp$clusters_cache)) {
+      clusters_cache <- cluster_from_draft(new_grid, solved_around, mines_left, tmp$clusters_cache, call_precise = FALSE)
+    }
+
     grid <- new_grid
   }
 }
