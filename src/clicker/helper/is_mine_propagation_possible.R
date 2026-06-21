@@ -156,9 +156,8 @@ independant_clusters <- function(grid, solved_around, mines_left) {
     )
     bornes_mines1[1] <- max(0, bornes_mines1[1], na.rm = TRUE)
     bornes_mines1[2] <- min(mines_left, bornes_mines1[2], sum(in_void), na.rm = TRUE)
-      # TODO weird mais on va le permettre vu que parfois en hypothesis == 2 ca peut être impossible
-    browser() # TODO solve
-    if (bornes_mines1[2] < bornes_mines1[1]) bornes_mines1 <- c(0, 0)
+    # TODO weird mais on va le permettre vu que parfois en hypothesis == 2 ca peut être impossible
+    if (bornes_mines1[2] < bornes_mines1[1]) browser() # TODO solve
   }
   
   # vérifier que chaque case est dans un et un seul cluster, sauf les known qui peuvent être réutilisés

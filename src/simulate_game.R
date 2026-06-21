@@ -88,9 +88,6 @@ main_game_loop <- function(grid, mines_left, clicker, solved_around, hypothesis 
 
     # mettre à jour la cache
     global_cache <- update_global_cache(tmp$global_cache, grid, new_grid)
-    clusters_cache <- update_clusters_cache(tmp$clusters_cache, grid, new_grid,
-                                            solved_around = solved_around,
-                                            mines_left = mines_left)
     grid <- new_grid
   }
 }
