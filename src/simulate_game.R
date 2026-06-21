@@ -6,7 +6,6 @@ source("src/indicies/i_and_positions.R")
 source("src/clicker/helper/update_cache.R")
 source("src/clicker/helper/random_first_click.R")
 
-
 #' Simuler une partie de Minsweeper
 #'
 #' @param total_mines nombre entier : nombre de total_mines total dans la grille

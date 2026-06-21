@@ -13,7 +13,7 @@ test_that("can_click_all_around clique sur les cases autour qui sont certaines",
   res <- can_click_all_around(grid, NA, grid * 0)$clicks
   expect_true(
     isTRUE(all.equal(res, list(list(c(1, 3), TRUE, "certain"), list(c(2, 3), TRUE, "certain"), list(c(3, 3), TRUE, "certain")))) || 
-    isTRUE(all.equal(res, list(list(c(1, 3), TRUE, "certain"), list(c(2, 3), TRUE, "certain"))))
+      isTRUE(all.equal(res, list(list(c(1, 3), TRUE, "certain"), list(c(2, 3), TRUE, "certain"))))
   )
   
   grid <- matrix(

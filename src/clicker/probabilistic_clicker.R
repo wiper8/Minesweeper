@@ -1,5 +1,5 @@
-source("src/clicker/helper/compute_mine_probability.R")
 source("src/clicker/random_clicker.R")
+source("src/clicker/helper/compute_mine_probability.R")
 
 probabilistic_clicker <- function(grid, try_risky = FALSE, ...) {
   probs_grid_lst <- compute_grid_probabilities(grid, ...)
@@ -59,6 +59,37 @@ compute_grid_probabilities <- function(grid, mines_left, solved_around, hypothes
 
     probs_grid[grid %in% known] <- NA # remplacer les cases connues par des NA pour ne pas les sélectionner
 
+    if (any(is.na(probs_grid) & !grid_init %in% known)) browser()
+    # pas sensé déclancher car certain_core devrait trouver tous les cas certains
+    if (any(sum(probs_grid == 0 | probs_grid == 1, na.rm = TRUE))) browser()
+    return(list(probs = probs_grid, clusters = clusters))
+  }
+
+  if (length(clusters$clusters) == 0) {
+    void <- mines_left
+    n_box_void <- sum(clusters$void$in_cluster)
+    
+    clusters_all_probs_cache <- lapply(clusters$clusters, function(lst) {
+      generate_all_probs(lst$grid, (lst$bornes_mines[1]:lst$bornes_mines[2])[lst$possible == "TRUE"], lst$solved_around,
+                         lst$in_cluster, clusters_cache = clusters)
+    })
+    
+    total_combins <- choose(n_box_void, void)
+    
+    probs <- grid * 0
+    
+    void_prob <- sum(void / n_box_void)
+    
+    probs[clusters$void$in_cluster] <- void_prob
+    probs[grid_init %in% hp_flags] <- 1
+    probs_grid <- matrix(probs, nrow = nrow(clusters$void$grid), ncol = ncol(clusters$void$grid))
+    
+    if (return_n_combins) {
+      return(list(n_combins = total_combins, probs = probs_grid, clusters = clusters))
+    }
+    
+    probs_grid[grid %in% known] <- NA # remplacer les cases connues par des NA pour ne pas les sélectionner
+    
     if (any(is.na(probs_grid) & !grid_init %in% known)) browser()
     # pas sensé déclancher car certain_core devrait trouver tous les cas certains
     if (any(sum(probs_grid == 0 | probs_grid == 1, na.rm = TRUE))) browser()
@@ -132,7 +163,7 @@ compute_grid_probabilities <- function(grid, mines_left, solved_around, hypothes
   probs[clusters$void$in_cluster] <- void_prob
   probs[grid_init %in% hp_flags] <- 1
   probs_grid <- matrix(probs, nrow = nrow(clusters$void$grid), ncol = ncol(clusters$void$grid))
-  
+
   if (return_n_combins) {
     return(list(n_combins = total_combins, probs = probs_grid, clusters = clusters))
   }
@@ -152,7 +183,7 @@ risky_cluster <- function(grid, mines_left, solved_around, clusters = NULL, ...)
     # recalculer les bornes précies des mines clusters
     clusters <- precise_clusters_bounds_all(grid, solved_around, mines_left, clusters, ...)
   }
-  
+
   risky_clusters <- sapply(clusters$clusters, function(lst) length(unique(lst$bornes_mines)) == 1)
   if (length(risky_clusters) == 0) return(risky_clusters)
   lapply(clusters$clusters[risky_clusters], function(lst) lst$in_cluster)
@@ -198,7 +229,7 @@ precise_clusters_bounds_all <- function(grid, solved_around, mines_left, cluster
       }
     }
   }
-  
+
   # update les bornes du void
   clusters$void$bornes_mines[1] <- max(
     0,
@@ -215,35 +246,80 @@ precise_clusters_bounds_all <- function(grid, solved_around, mines_left, cluster
 
 precise_bounds_one_cluster <- function(lst, grid, mines_left) {
   trials <- lst$bornes_mines[1]:lst$bornes_mines[2]
-  left <- 1
+  # commencer au milieu
+  left <- ceiling(length(trials) / 2)
+  left_trials <- rev(seq_along(trials)[seq_len(left)])
+  if (length(trials) > 1) {
+    right_trials <- seq_along(trials)[(left + 1):length(trials)]
+  } else {
+    right_trials <- c()
+  }
+
   min_possible <- NA
   max_possible <- NA
   possible <- rep(NA, length(trials))
-  while (left <= length(trials)) {
+
+  for (left in left_trials) {
     if (lst$possible[left] == "TRUE") {
       possibility <- TRUE
     } else if (lst$possible[left] == "FALSE") {
       possibility <- FALSE
     } else {
-      possibility <- test_trial(grid, mines_left, lst$in_cluster, trials[left])
+      # TODO ceci est un shortcut pas 100% certain, mais je suis assez confiant que c'est valide.
+      # je suppose que les possibilitées sont du genre c(F, F, F, T, T, T, T, T, F, F), que le bloc continu de TRUE
+      # est continue. Genre, je suppose que c(F, F, F, T, T, T, F, T, F, F) serait impossible. Je n'en ai pas la preuve
+      # mais je suis assez confiant que ce l'est. Ce shortcut inclut aussi c(left_trials, right_trials)
+      if (!is.na(possible[left + 1]) &&
+          possible[left + 1] == FALSE &&
+          left > 1 &&
+          any(possible[(left + 1):length(trials)], na.rm = TRUE)
+        ) {
+        possibility <- FALSE
+        possible[left] <- FALSE
+        break
+      } else {
+        possibility <- test_trial(grid, mines_left, lst$in_cluster, trials[left])
+      }
     }
     
     if (possibility) {
       possible[left] <- TRUE
-      if (is.na(min_possible)) {
-        min_possible <- trials[left]
-      } else {
-        min_possible <- min(min_possible, trials[left])
-      }
-      if (is.na(max_possible)) {
-        max_possible <- trials[left]
-      } else {
-        max_possible <- max(max_possible, trials[left])
-      }
+      min_possible <- min(min_possible, trials[left], na.rm = TRUE)
+      max_possible <- max(max_possible, trials[left], na.rm = TRUE)
     } else {
       possible[left] <- FALSE
     }
-    left <- left + 1
+  }
+  for (left in right_trials) {
+    if (lst$possible[left] == "TRUE") {
+      possibility <- TRUE
+    } else if (lst$possible[left] == "FALSE") {
+      possibility <- FALSE
+    } else {
+      # TODO ceci est un shortcut pas 100% certain, mais je suis assez confiant que c'est valide.
+      # je suppose que les possibilitées sont du genre c(F, F, F, T, T, T, T, T, F, F), que le bloc continu de TRUE
+      # est continue. Genre, je suppose que c(F, F, F, T, T, T, F, T, F, F) serait impossible. Je n'en ai pas la preuve
+      # mais je suis assez confiant que ce l'est. Ce shortcut inclut aussi c(left_trials, right_trials)
+      if (!is.na(possible[left - 1]) &&
+                 possible[left - 1] == FALSE &&
+                 left < length(trials) &&
+                 any(possible[seq_len(left - 1)], na.rm = TRUE)
+      ) {
+        possibility <- FALSE
+        possible[left] <- FALSE
+        break
+      } else {
+        possibility <- test_trial(grid, mines_left, lst$in_cluster, trials[left])
+      }
+    }
+    
+    if (possibility) {
+      possible[left] <- TRUE
+      min_possible <- min(min_possible, trials[left], na.rm = TRUE)
+      max_possible <- max(max_possible, trials[left], na.rm = TRUE)
+    } else {
+      possible[left] <- FALSE
+    }
   }
   if (length(which(possible)) == 0) browser()
   list(

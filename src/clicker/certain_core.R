@@ -1,6 +1,7 @@
 source("src/fast_apply.R")
 source("src/indicies/count.R")
 source("src/game_engine/is_grid_possible.R")
+source("src/clicker/helper/update_cache.R")
 source("src/clicker/helper/is_mine_propagation_possible.R")
 source("src/clicker/helper/find_best_i_to_investigate.R")
 
@@ -62,14 +63,14 @@ can_click_all_around <- function(grid, mines_left, solved_around, global_cache =
     grid <- grid_init
     mines_left <- mines_left_init
     solved_around <- solved_around_init
-    
+
     tmp <- count_core(grid, i)
     values <- tmp$values
     positions <- tmp$positions
     n_unknown <- count_unknown(grid, i, values)
     if (n_unknown > 0 && count_mines_left_around(grid, i, values) == 0) {
       unknown <- !values %in% known
-      
+
       # tenter de mettre les mines pour vérifier si possible
       proposal <- list(
         clicks = apply(positions[unknown, , drop = FALSE], 1, function(pos) list(pos, TRUE, "certain"), simplify = FALSE),
@@ -394,7 +395,6 @@ is_void_full_mines <- function(grid, solved_around, mines_left, clusters) {
   }
   FALSE
 }
-
 
 precise_clusters_bounds_min_shortcut <- function(grid, solved_around, mines_left, clusters) {
   # tester tout de suite avec mines_left
