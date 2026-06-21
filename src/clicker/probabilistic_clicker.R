@@ -204,8 +204,13 @@ precise_clusters_bounds_all <- function(grid, solved_around, mines_left, cluster
 precise_bounds_one_cluster <- function(lst, grid, mines_left) {
   if (mines_left == 0) browser() # pas sensé déclancher
   trials <- lst$bornes_mines[1]:lst$bornes_mines[2]
-  # commencer au milieu
-  left <- ceiling(length(trials) / 2)
+  # commencer au milieu ou au premier TRUE
+  if (any(lst$possible == "TRUE")) {
+    browser() # TODO simplement vérifier
+    left <- head(which(lst$possible == "TRUE"), 1)
+  } else {
+    left <- ceiling(length(trials) / 2)
+  }
   left_trials <- rev(seq_along(trials)[seq_len(left)])
   if (length(trials) > 1) {
     right_trials <- seq_along(trials)[(left + 1):length(trials)]
