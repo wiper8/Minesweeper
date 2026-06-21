@@ -15,7 +15,7 @@ certain_core <- function(grid, mines_left, solved_around, ...) {
   tmp # retourner NULL si on ne sait pas quelle action certain prendre.
 }
 
-can_flag_all_around <- function(grid, mines_left, solved_around, global_cache = list(), ...) {
+can_flag_all_around <- function(grid, mines_left, solved_around, global_cache = list(), clusters_cache = NULL, ...) {
   grid_init <- grid
   mines_left_init <- mines_left
   solved_around_init <- solved_around
@@ -30,12 +30,14 @@ can_flag_all_around <- function(grid, mines_left, solved_around, global_cache = 
     n_unknown <- count_unknown(grid, i, values)
     if (n_unknown > 0 && count_mines_left_around(grid, i, values) == n_unknown) {
       unknown <- !values %in% known
-      if (isTRUE(mines_left - sum(unknown) < 0)) return(list(clicks = "impossible", global_cache = global_cache))
-
+      if (isTRUE(mines_left - sum(unknown) < 0)) return(list(clicks = "impossible", global_cache = global_cache,
+                                                             clusters_cache = clusters_cache))
+      
       # tenter de mettre les mines pour vérifier si possible
       proposal <- list(
         clicks = apply(positions[unknown, , drop = FALSE], 1, function(pos) list(pos, FALSE, "certain"), simplify = FALSE),
-        global_cache = global_cache
+        global_cache = global_cache,
+        clusters_cache = clusters_cache
       )
       for (new_action in proposal$clicks) {
         tmp2 <- apply_action(grid, new_action[[1]], new_action[[2]], mines_left, solved_around = solved_around, ...)
@@ -44,15 +46,16 @@ can_flag_all_around <- function(grid, mines_left, solved_around, global_cache = 
         solved_around <- tmp2[[4]]
       }
       if (!is_grid_possible(grid)) return(list(clicks = "impossible",
-                                               global_cache = global_cache))
+                                               global_cache = global_cache,
+                                               clusters_cache = clusters_cache))
       
       return(proposal)
     }
   }
-  list(clicks = NULL, global_cache = global_cache)
+  list(clicks = NULL, global_cache = global_cache, clusters_cache = clusters_cache)
 }
 
-can_click_all_around <- function(grid, mines_left, solved_around, global_cache = list(), ...) {
+can_click_all_around <- function(grid, mines_left, solved_around, global_cache = list(), clusters_cache = NULL, ...) {
   grid_init <- grid
   mines_left_init <- mines_left
   solved_around_init <- solved_around
@@ -71,7 +74,8 @@ can_click_all_around <- function(grid, mines_left, solved_around, global_cache =
       # tenter de mettre les mines pour vérifier si possible
       proposal <- list(
         clicks = apply(positions[unknown, , drop = FALSE], 1, function(pos) list(pos, TRUE, "certain"), simplify = FALSE),
-        global_cache = global_cache
+        global_cache = global_cache,
+        clusters_cache = clusters_cache
       )
       for (new_action in proposal$clicks) {
         tmp2 <- apply_action(grid, new_action[[1]], new_action[[2]], mines_left, solved_around = solved_around, ...)
@@ -80,16 +84,17 @@ can_click_all_around <- function(grid, mines_left, solved_around, global_cache =
         solved_around <- tmp2[[4]]
       }
       if (!is_grid_possible(grid)) return(list(clicks = "impossible",
-                                               global_cache = global_cache))
-      
+                                               global_cache = global_cache,
+                                               clusters_cache = clusters_cache))
+
       return(proposal)
     }
   }
-  list(clicks = NULL, global_cache = global_cache)
+  list(clicks = NULL, global_cache = global_cache, clusters_cache = clusters_cache)
 }
 
 can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, click_order = NULL, to_clusterise = TRUE, 
-                               in_cluster = NULL, global_cache = list(), ...) {
+                               in_cluster = NULL, global_cache = list(), clusters_cache = NULL, ...) {
   dims <- dim(grid)
   impossible <- TRUE # pour hypothesis = 2
   reached_prop <- FALSE
@@ -127,7 +132,8 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
       return(
         list(
           clicks = "impossible",
-          global_cache = global_cache
+          global_cache = global_cache,
+          clusters_cache = clusters_cache
         )
       )
     }
@@ -148,6 +154,7 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
         mines_left = mines_left,
         cache = cache[!mines_has_mine_i],
         global_cache = global_cache,
+        clusters_cache = clusters_cache,
         click_order = click_order,
         to_clusterise = FALSE,
         in_cluster = in_cluster,
@@ -179,7 +186,8 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
       cache[which(!mines_has_mine_i)[seq_along(possible)]] <- possible
       if (hypothesis != 2 && all(!possible)) return(list(
         clicks = list(list(pos_unknown[mine_i, ], FALSE, "certain")),
-        global_cache = global_cache
+        global_cache = global_cache,
+        clusters_cache = clusters_cache
       ))
       if (any(possible)) {
         impossible <- FALSE
@@ -189,7 +197,7 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
         # fonctionne uniquement en mode hypothesis, et parce que certain_core va retourner NULL, et que dans
         # main_game_loop, va trouver une exception "le clicker ne sait pu quoi faire" et renvoyer ça à
         # is_mine_propagation_possible qui va dire TRUE
-        return(list(clicks = NULL, global_cache = global_cache))
+        return(list(clicks = NULL, global_cache = global_cache, clusters_cache = clusters_cache))
       }
       
       # si à l'inverse, je flag la cellule, et que toutes les situations sont impossibles, c'est qu'il n'y a pas de mine!
@@ -202,6 +210,7 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
         mines_left = mines_left,
         cache = cache[mines_has_mine_i],
         global_cache = global_cache,
+        clusters_cache = clusters_cache,
         click_order = click_order,
         to_clusterise = FALSE,
         in_cluster = in_cluster,
@@ -233,26 +242,29 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
       cache[which(mines_has_mine_i)[seq_along(possible)]] <- possible
       if (hypothesis != 2 && all(!possible)) return(list(
         clicks = list(list(pos_unknown[mine_i, ], TRUE, "certain")),
-        global_cache = global_cache
+        global_cache = global_cache,
+        clusters_cache = clusters_cache
       ))
       if (any(possible)) {
         impossible <- FALSE
       }
       if (hypothesis == 2 && !impossible) {
-        return(list(clicks = NULL, global_cache = global_cache)) # voir commentaire précédent
+        return(list(clicks = NULL, global_cache = global_cache, clusters_cache = clusters_cache)) # voir commentaire précédent
       }
       if (hypothesis == 2 && isTRUE(all(!cache))) return(list(
         clicks = "impossible",
-        global_cache = global_cache
+        global_cache = global_cache,
+        clusters_cache = clusters_cache
       ))
     }
   }
-  tmp <- deduce_unknown_boxes(grid_init, mines_left_init, in_cluster)
-  if (!is.null(tmp)) return(list(clicks = tmp, global_cache = global_cache))
-  if (isTRUE(all.equal(tmp, "impossible"))) return(list(clicks = "impossible", global_cache = global_cache))
+
+  tmp <- deduce_unknown_boxes(grid_init, mines_left_init, in_cluster, clusters_cache)
+  if (!is.null(tmp)) return(list(clicks = tmp, global_cache = global_cache, clusters_cache = clusters_cache))
+  if (isTRUE(all.equal(tmp, "impossible"))) return(list(clicks = "impossible", global_cache = global_cache, clusters_cache = clusters_cache))
   if (hypothesis != 2 && reached_prop && impossible) browser() # pas sensé etre impossible si on n'est pas en exploration
-  if (hypothesis == 2 && reached_prop) return(list(clicks = "impossible", global_cache = global_cache))
-  list(clicks = NULL, global_cache = global_cache) # ne sait pas quoi faire
+  if (hypothesis == 2 && reached_prop) return(list(clicks = "impossible", global_cache = global_cache, clusters_cache = clusters_cache))
+  list(clicks = NULL, global_cache = global_cache, clusters_cache = clusters_cache) # ne sait pas quoi faire
 }
 
 is_in_global_cache <- function(global_cache, idx) {
@@ -290,7 +302,7 @@ is_super_set_in_global_cache <- function(global_cache, idx) {
 }
 
 
-deduce_unknown_boxes <- function(grid, mines_left, in_cluster) {
+deduce_unknown_boxes <- function(grid, mines_left, in_cluster, clusters_cache) {
   if (is.na(mines_left)) return(NULL)
   known_boxes <- grid %in% known
 
@@ -315,7 +327,8 @@ deduce_unknown_boxes <- function(grid, mines_left, in_cluster) {
     return(NULL)
   }
   
-  res <- is_void_solvable(grid, solved_around, mines_left, independant_clusters(grid, solved_around, mines_left))
+  res <- is_void_solvable(grid, solved_around, mines_left,
+                          clusters = clusters_cache %||% independant_clusters(grid, solved_around, mines_left))
   if (!isFALSE(res)) {
     return(res)
   }
@@ -324,20 +337,18 @@ deduce_unknown_boxes <- function(grid, mines_left, in_cluster) {
 }
 
 is_void_solvable <- function(grid, solved_around, mines_left, clusters) {
-  res <- are_no_mine_in_void(grid, solved_around, mines_left)
+  res <- are_no_mine_in_void(grid, solved_around, mines_left, clusters)
   if (!isFALSE(res)) {
     return(res)
   }
   is_void_full_mines(grid, solved_around, mines_left, clusters)
 }
 
-are_no_mine_in_void <- function(grid, solved_around, mines_left) {
+are_no_mine_in_void <- function(grid, solved_around, mines_left, clusters) {
   known_boxes <- grid %in% known
   
   # petit raccourci : s'il y a moins de mines que le nombre de boîtes à découvrir
   if (mines_left <= sum(solved_around == 0 & !known_boxes)) {
-    clusters <- independant_clusters(grid, solved_around, mines_left)
-
     dims <- dim(grid)
     if (length(clusters$clusters) == 0 && mines_left == 0) {
       next_i <- which(clusters$void$in_cluster)[1]
@@ -349,9 +360,9 @@ are_no_mine_in_void <- function(grid, solved_around, mines_left) {
     if (all(!clusters$void$in_cluster)) {
       return(FALSE) # pas de void
     }
-    
+
     clusters_bornes_min_precises <- precise_clusters_bounds_min_shortcut(grid, solved_around, mines_left, clusters)
-    
+
     # SHORTCUT
     # si toutes les mines sont assurément dans les clusters, je peux cliquer dans le vide
     if (isTRUE(sum(clusters_bornes_min_precises) == mines_left)) {
@@ -373,7 +384,7 @@ is_void_full_mines <- function(grid, solved_around, mines_left, clusters) {
   
   clusters_bornes_max_precises <- precise_clusters_bounds_max_shortcut_full_void(grid, solved_around, mines_left, clusters)
   remaining_for_void <- mines_left - sum(clusters_bornes_max_precises)
-  
+
   dims <- dim(grid)
   if (isTRUE(n_box_in_void == remaining_for_void)) {
     return(
@@ -404,6 +415,7 @@ precise_clusters_bounds_min_shortcut <- function(grid, solved_around, mines_left
         } else {
           possibility <- test_trial(grid, mines_left, lst$in_cluster, trials[left])
         }
+
         if (possibility) {
           # volontairement retourner un nombre erroné pour pas que le SHORTCUT dans are_no_mine_in_void déclenche
           return(NA)
@@ -479,7 +491,7 @@ precise_clusters_bounds_max_shortcut_full_void <- function(grid, solved_around, 
         } else {
           possibility <- test_trial(grid, mines_left, lst$in_cluster, trials[right])
         }
-        
+
         if (possibility) {
           max_possible <- trials[right]
           break
@@ -502,21 +514,25 @@ precise_clusters_bounds_max_shortcut_full_void <- function(grid, solved_around, 
 #' Retourne si une proposition de mines est possible (génère une partie sans problèmes)
 which_combins_possible <- function(grid, combins, pos_unknown, solved_around, mines_left,
                                    cache = rep(NA, ncol(combins)), global_cache = list(),
+                                   clusters_cache = NULL,
                                    click_order = NULL, ...) {
   # mettre à jour la cache car on va cliquer
   if (length(global_cache) > 0) {
     keep <- !sapply(global_cache, `[[`, 2)
     global_cache <- global_cache[keep]
   }
+
   dims <- dim(grid)
   mines_left_init <- mines_left
   solved_around_init <- solved_around
   global_cache_init <- global_cache
+  clusters_cache_init <- clusters_cache
   possible <- rep(NA, ncol(combins))
   for (i in seq_len(ncol(combins))) {
     mines_left <- mines_left_init
     solved_around <- solved_around_init
     global_cache <- global_cache_init
+    clusters_cache <- clusters_cache_init
     if (!is.na(cache[i])) {
       possible[i] <- cache[i]
       next
@@ -561,7 +577,6 @@ which_combins_possible <- function(grid, combins, pos_unknown, solved_around, mi
     
     # mettre à jour la cache
     global_cache <- update_global_cache(global_cache, grid, grid_tmp_propagate)
-
     possible[i] <- is_mine_propagation_possible(grid_tmp_propagate, mines_left = mines_left,
                                                 solved_around = solved_around, click_order = click_order, 
                                                 global_cache = global_cache, ...)

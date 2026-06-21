@@ -33,7 +33,9 @@ combins_to_probs <- function(combins) {
   )
 }
 
-generate_probs_knowing_mines <- function(grid_tmp_propagate, mines_left_init, solved_around, in_cluster, ...) {
+generate_probs_knowing_mines <- function(grid_tmp_propagate, mines_left_init, solved_around, in_cluster, clusters_cache = NULL, ...) {
+  grid_tmp_propagate_init <- grid_tmp_propagate
+
   # pour s'assurer de résoudre les cas certain car le fait de modifier mines_left peut en causer
   if (mines_left_init == 0) browser()
   tmp <- main_game_loop(grid_tmp_propagate, mines_left_init, certain_core, solved_around, ...)
@@ -49,8 +51,9 @@ generate_probs_knowing_mines <- function(grid_tmp_propagate, mines_left_init, so
   # vérifier ici que je sample vraiment une mine possible dans le cluster
   next_i <- which(grid_tmp_propagate == -10 & solved_around == 0 & in_cluster)
   if (length(next_i) == 0) browser() # pas sensé se rendre ici
-  
-  clusters <- independant_clusters(grid_tmp_propagate, solved_around, mines_left)
+
+  clusters <- clusters_cache %||% independant_clusters(grid_tmp_propagate, solved_around, mines_left)
+
   # si un seul cluster
   if (length(clusters$clusters) == 1) {
     next_i <- next_i[1] # TODO mieux choisir le prochain next_i, soit avec probabilitées, le prioritise, ou le click_order
@@ -65,7 +68,8 @@ generate_probs_knowing_mines <- function(grid_tmp_propagate, mines_left_init, so
     list(
       n_combins = mine_probs$n_combins + no_mine_probs$n_combins,
       probs = (mine_probs$n_combins * mine_probs$probs +
-                 no_mine_probs$n_combins * no_mine_probs$probs) / (mine_probs$n_combins + no_mine_probs$n_combins)
+                 no_mine_probs$n_combins * no_mine_probs$probs) / (mine_probs$n_combins + no_mine_probs$n_combins),
+      clusters = clusters
     )
   } else {
     compute_grid_probabilities(
@@ -93,6 +97,9 @@ get_situational_probs <- function(grid_tmp_propagate, pos, action = FALSE,
       probs = tmp[[1]] %in% hp_flags
     ))
   }
+  
+  # TODO utiliser la cache de clusters?
+  
   if (tmp[[2]] == "le clicker ne sait pu quoi faire") {
     clusters <- independant_clusters(tmp[[1]], tmp[[3]], tmp[[4]])
     if (length(clusters$clusters) == 1) {

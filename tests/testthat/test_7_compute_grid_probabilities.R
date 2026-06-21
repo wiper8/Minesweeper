@@ -260,7 +260,7 @@ test_that("compute_grid_probabilities fait des clusters indépendants pendant la
     mines_left
   )
   expect_equal(
-    compute_grid_probabilities(grid, mines_left = mines_left, solved_around, hypothesis = 0, clicker_order = NULL)$probs,
+    compute_grid_probabilities(grid, mines_left = mines_left, solved_around, hypothesis = 0)$probs,
     true_probs
   )
 })

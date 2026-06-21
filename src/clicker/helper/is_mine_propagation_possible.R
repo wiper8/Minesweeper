@@ -7,11 +7,14 @@ source("src/game_engine/init_solved_around.R")
 is_mine_propagation_possible <- function(grid, mines_left = NA, solved_around, to_clusterise = TRUE, ...) {
   if (!is_grid_possible(grid)) return(FALSE)
   if (is_game_over(grid, mines_left) == 1) return(TRUE)
-  
-  if (!to_clusterise) {
+
+  if (to_clusterise) {
+    new_clusters <- independant_clusters(grid, solved_around, mines_left)
+  }
+
+  if (!to_clusterise || length(new_clusters$clusters) <= 1) {
     propagated_game_end <- main_game_loop(grid, mines_left, certain_core, solved_around = solved_around,
                                           hypothesis = 2, ...)
-    
     if (propagated_game_end[[2]] == "partie impossible") return(FALSE)
     if (propagated_game_end[[2]] == "le clicker ne sait pu quoi faire") return(TRUE)
     if (propagated_game_end[[2]] == "win") return(TRUE)
@@ -19,43 +22,37 @@ is_mine_propagation_possible <- function(grid, mines_left = NA, solved_around, t
     browser()
     stop("erreur")
   }
-  clusters <- independant_clusters(grid, solved_around, mines_left)
-  if (length(clusters$clusters) <= 1) {
-    propagated_game_end <- main_game_loop(grid, mines_left, certain_core, solved_around = solved_around,
-                                          hypothesis = 2, ...)
-    
-    if (propagated_game_end[[2]] == "partie impossible") return(FALSE)
-    if (propagated_game_end[[2]] == "le clicker ne sait pu quoi faire") return(TRUE)
-    if (propagated_game_end[[2]] == "win") return(TRUE)
-    if (propagated_game_end[[2]] == "lost") browser() # ne serait pas supposer perdre avec certain_core comme clicker
-    browser()
-    stop("erreur")
-  } else {
-    try_solve_a_cluster(clusters$clusters, 1, mines_left, grid, clusters$void$in_cluster, ...)
-  }
+
+  clusters_cache <- new_clusters
+  try_solve_a_cluster(clusters_cache$clusters, 1, mines_left, grid, clusters_cache$void$in_cluster, ...)
 }
 
 try_solve_a_cluster <- function(clusters, clust_i, mines_left, grid, void, ...) {
   mines_target_ratio <- if (is.na(mines_left)) 0.5 else mines_left / sum(!grid %in% known)
   trials_order <- seq(clusters[[clust_i]]$bornes_mines[1], clusters[[clust_i]]$bornes_mines[2])
   # filtrer
-  trials_order <- trials_order[clusters[[clust_i]]$possible %in% c("TRUE", "NA")]
+  trials_order <- trials_order[clusters[[clust_i]]$possible == "NA"]
+  if (length(trials_order) == 0) {
+    # vérifier qu'il y a au moins un TRUE
+    if (any(clusters[[clust_i]]$possible == "TRUE")) return(TRUE)
+    browser()
+  }
   ratios <- trials_order / sum(!clusters[[clust_i]]$grid[clusters[[clust_i]]$solved_around != -1] %in% known)
   trials_order <- trials_order[order(abs(ratios - mines_target_ratio))]
-  
+
   # essayer de résoudre le cluster avec `mines_trial`
   # simuler une nouvelle partie avec un clicker certain
   propagated_game_end <- main_game_loop(
     clusters[[clust_i]]$grid, trials_order[1], certain_core,
-    solved_around = clusters[[clust_i]]$solved_around, hypothesis = 2, cluster = clusters[[clust_i]]$in_cluster,
+    solved_around = clusters[[clust_i]]$solved_around, hypothesis = 2, in_cluster = clusters[[clust_i]]$in_cluster,
     ...
   )
-  
+
   # si ça fonctionne, tenter de résoudre les autres clusters en ajustant récursivement les mines restantes
   if (propagated_game_end[[2]] %in% c("win", "le clicker ne sait pu quoi faire")) {
     clusters[[clust_i]]$last_success_mines <- trials_order[1]
     clusters[[clust_i]]$possible[trials_order[1] - clusters[[clust_i]]$bornes_mines[1] + 1] <- "TRUE"
-    
+
     if (clust_i == length(clusters)) { # on a atteint le dernier cluster à tester
       # dernière vérification que le total de mines utilisé est plausible
       nb_in_void_cluster <- sum(void)
@@ -159,6 +156,8 @@ independant_clusters <- function(grid, solved_around, mines_left) {
     )
     bornes_mines1[1] <- max(0, bornes_mines1[1], na.rm = TRUE)
     bornes_mines1[2] <- min(mines_left, bornes_mines1[2], sum(in_void), na.rm = TRUE)
+    # TODO weird mais on va le permettre vu que parfois en hypothesis == 2 ca peut être impossible
+    if (bornes_mines1[2] < bornes_mines1[1]) browser() # TODO solve
   }
   
   # vérifier que chaque case est dans un et un seul cluster, sauf les known qui peuvent être réutilisés
@@ -170,7 +169,7 @@ independant_clusters <- function(grid, solved_around, mines_left) {
     ) |>
     append(list(known_but_does_nothing))
   ) != 1 & !grid %in% known)) browser()
-  
+
   list(
     # void est un groupe spécial de cases sans aucune information
     void = list(
@@ -250,6 +249,127 @@ create_cluster_from_i <- function(grid, i, solved_around, in_cluster = NULL) {
   }
   
   in_cluster
+}
+
+cluster_from_draft <- function(grid, solved_around, mines_left, clusters_cache, ...) {
+  if (is.null(clusters_cache)) {
+    clusters <- independant_clusters(grid, solved_around, mines_left)
+    
+    # recalculer les bornes précies des mines clusters
+    return(precise_clusters_bounds_all(grid, solved_around, mines_left, clusters, ...))
+  }
+
+  if (all(solved_around == -1)) {
+    browser() # pas implémenté et pas sensé se rendre ici logiquement
+  }
+  groups <- list()
+  
+  potential_cluster <- grid >= 0 & grid != flag_on_mine & solved_around == 0
+  in_any_cluster <- matrix(FALSE, nrow = nrow(grid), ncol = ncol(grid))
+  known_but_does_nothing <- in_any_cluster
+  
+  for (i in which(potential_cluster)) {
+    if (!in_any_cluster[i]) {
+      clust <- create_cluster_from_i(grid, i, solved_around)
+      if (sum(clust) == 1) {
+        known_but_does_nothing[i] <- TRUE
+        in_any_cluster[i] <- TRUE
+        next
+      }
+      # pas supposé que des boîtes soient dans plusieurs clusters, sauf les known
+      if (any(in_any_cluster & clust & !grid %in% known)) browser()
+      in_next_cluster <- clust == 1
+      if (any(in_next_cluster)) {
+        in_any_cluster <- in_any_cluster | in_next_cluster
+        
+        # utilisation de la cache
+        i_clust_identical_in_cache <- which(sapply(
+          clusters_cache$clusters,
+          function(clust) all(clust$in_cluster == in_next_cluster) &&
+            all(clust$grid[in_next_cluster] == grid[in_next_cluster])
+        ))
+        if (length(i_clust_identical_in_cache) > 0) {
+          # réutiliser les infos du cluster
+          bornes_mines1 <- clusters_cache$clusters[[i_clust_identical_in_cache]]$bornes_mines
+          possible <- clusters_cache$clusters[[i_clust_identical_in_cache]]$possible
+        } else {
+          # compter les bornes de mines du cluster
+          bornes_mines1 <- c(0, min(mines_left, sum(!grid[in_next_cluster] %in% known), na.rm = TRUE))
+          possible <- rep("NA", diff(bornes_mines1) + 1)
+        }
+
+        tmp_grid <- grid
+        tmp_grid[clust == 0] <- void_box
+        # impossible de créer un cluster vide
+        if (!all(tmp_grid == void_box)) {
+          new_solved_around <- init_solved_around(tmp_grid, which(solved_around == -1))
+          
+          groups[[length(groups) + 1]] <- list(
+            grid = tmp_grid,
+            solved_around = new_solved_around,
+            in_cluster = in_next_cluster,
+            bornes_mines = bornes_mines1,
+            possible = possible,
+            last_success_mines = NA
+          )
+        }
+      }
+    }
+  }
+  
+  if (length(groups) > length(grid)) browser() # pas sensé déclencher
+  
+  # parmi les cases restantes, les non clusterisées et connues sont known_but_does_nothing
+  known_but_does_nothing <- known_but_does_nothing | (!in_any_cluster & grid %in% known)
+  in_any_cluster <- in_any_cluster | known_but_does_nothing
+  
+  # le dernier cluster est le "void" inconnu
+  # cacher les boxes non dans le cluster en cours
+  in_void <- !in_any_cluster
+  tmp_grid <- grid * 0 + void_box
+  new_solved_around <- grid * 0 - 1
+  if (length(groups) == 0) {
+    bornes_mines1 <- c(mines_left, mines_left)
+  } else {
+    bornes_mines1 <- mines_left - c(
+      sum(sapply(groups, function(clust) {
+        clust$bornes_mines[2]
+      })), 
+      sum(sapply(groups, function(clust) {
+        clust$bornes_mines[1]
+      }))
+    )
+    bornes_mines1[1] <- max(0, bornes_mines1[1], na.rm = TRUE)
+    bornes_mines1[2] <- min(mines_left, bornes_mines1[2], sum(in_void), na.rm = TRUE)
+    # TODO weird mais on va le permettre vu que parfois en hypothesis == 2 ca peut être impossible
+    if (bornes_mines1[2] < bornes_mines1[1]) browser() # TODO solve
+  }
+  
+  # vérifier que chaque case est dans un et un seul cluster, sauf les known qui peuvent être réutilisés
+  if (any(Reduce(
+    `+`,
+    append(
+      lapply(groups, function(lst) lst$in_cluster),
+      list(in_void)
+    ) |>
+    append(list(known_but_does_nothing))
+  ) != 1 & !grid %in% known)) browser()
+  
+  clusters <- list(
+    # void est un groupe spécial de cases sans aucune information
+    void = list(
+      grid = tmp_grid,
+      solved_around = new_solved_around,
+      in_cluster = in_void,
+      bornes_mines = bornes_mines1,
+      possible = rep("NA", diff(bornes_mines1) + 1),
+      last_success_mines = NA
+    ),
+    known_but_does_nothing = list(in_cluster = known_but_does_nothing),
+    clusters = groups
+  )
+
+  precise_clusters_bounds_all(grid, solved_around, mines_left, clusters, ...)
 }
 
 test_trial <- function(grid, mines_left, in_cluster, trial) {
