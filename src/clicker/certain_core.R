@@ -360,9 +360,9 @@ are_no_mine_in_void <- function(grid, solved_around, mines_left, clusters) {
     if (all(!clusters$void$in_cluster)) {
       return(FALSE) # pas de void
     }
-    
+
     clusters_bornes_min_precises <- precise_clusters_bounds_min_shortcut(grid, solved_around, mines_left, clusters)
-    
+
     # SHORTCUT
     # si toutes les mines sont assurément dans les clusters, je peux cliquer dans le vide
     if (isTRUE(sum(clusters_bornes_min_precises) == mines_left)) {
