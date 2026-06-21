@@ -186,77 +186,77 @@ independant_clusters <- function(grid, solved_around, mines_left) {
   )
 }
 
-create_cluster_from_i <- function(grid, i, solved_around, cluster = NULL) {
-  first_level <- is.null(cluster)
-  if (is.null(cluster)) cluster <- grid * 0
+create_cluster_from_i <- function(grid, i, solved_around, in_cluster = NULL) {
+  first_level <- is.null(in_cluster)
+  if (is.null(in_cluster)) in_cluster <- grid * 0
   
-  # est dans void : ne pas mettre de 1 dans cluster[i]
+  # est dans void : ne pas mettre de 1 dans in_cluster[i]
   if (solved_around[i] == -1 && !grid[i] %in% known) {
-    return(cluster)
+    return(in_cluster)
   }
   dims <- dim(grid)
   tmp <- square_pos_and_get_around_square(i_to_position(i, dims), grid, dims)
   positions <- tmp[[1]]
   
-  # va dans la catégorie de cluster "known_but_does_nothing"
+  # va dans la catégorie de in_cluster "known_but_does_nothing"
   tmp2 <- get_around_square(i_to_position(i, dims), solved_around, dims)
   if (first_level &&
       grid[i] %in% hp_brings_no_info_to_center_unknown &&
       sum(tmp[[2]] %in% known) == 1 &&
       all(tmp2 == -1)) {
-    cluster[i] <- 1
-    return(cluster)
+    in_cluster[i] <- 1
+    return(in_cluster)
   }
   
-  cluster[i] <- 1
+  in_cluster[i] <- 1
   
   if (grid[i] %in% known &&
-      sum(!tmp[[2]] %in% known) == 0) return(cluster)
+      sum(!tmp[[2]] %in% known) == 0) return(in_cluster)
   
-  if (grid[i] %in% hp_known_but_cannot_expand) return(cluster)
+  if (grid[i] %in% hp_known_but_cannot_expand) return(in_cluster)
   
   if (!grid[i] %in% known) {
     potential_neighboords <- position_to_i_mat(positions, dims)
-    # exclure les cases déjà dans le cluster
-    potential_neighboords <- potential_neighboords[cluster[potential_neighboords] != 1]
+    # exclure les cases déjà dans le in_cluster
+    potential_neighboords <- potential_neighboords[in_cluster[potential_neighboords] != 1]
     # conserver les cases connues et unsolved
     potential_neighboords <- potential_neighboords[solved_around[potential_neighboords] == 0 &
                                                      grid[potential_neighboords] %in% known &
                                                      !grid[potential_neighboords] %in% hp_brings_no_info_to_center_unknown]
-    # ajouter les voisins qui apportent de l'info au reste du cluster
+    # ajouter les voisins qui apportent de l'info au reste du in_cluster
     for (j in potential_neighboords) {
-      cluster <- create_cluster_from_i(
+      in_cluster <- create_cluster_from_i(
         grid,
         j,
         solved_around,
-        cluster
+        in_cluster
       )
     }
-    return(cluster)
+    return(in_cluster)
   }
   
   potential_neighboords <- position_to_i_mat(positions, dims)
-  # exclure les cases déjà dans le cluster
-  potential_neighboords <- potential_neighboords[cluster[potential_neighboords] != 1]
+  # exclure les cases déjà dans le in_cluster
+  potential_neighboords <- potential_neighboords[in_cluster[potential_neighboords] != 1]
   
-  # ajouter les voisins qui apportent de l'info au reste du cluster
+  # ajouter les voisins qui apportent de l'info au reste du in_cluster
   for (j in potential_neighboords) {
-    cluster <- create_cluster_from_i(
+    in_cluster <- create_cluster_from_i(
       grid,
       j,
       solved_around,
-      cluster
+      in_cluster
     )
   }
   
-  cluster
+  in_cluster
 }
 
-test_trial <- function(grid, mines_left, clust, trial) {
+test_trial <- function(grid, mines_left, in_cluster, trial) {
   # préciser les bornes
   tmp_grid <- grid
   # pour simplifier, on met des no-mines partout ailleurs
-  tmp_grid[clust == 0] <- void_box
+  tmp_grid[in_cluster == 0] <- void_box
   new_solved_around <- init_solved_around(tmp_grid)
   
   # résoudre le cluster avec `trial` mines
@@ -265,14 +265,14 @@ test_trial <- function(grid, mines_left, clust, trial) {
     trial,
     new_solved_around,
     to_clusterise = FALSE,
-    cluster = clust
+    in_cluster = in_cluster
   )
   res <- as.logical(res)
   if (isFALSE(res)) return(FALSE)
 
   # résoudre le reste sans le cluster avec mines_left - trial mines
   tmp_grid <- grid
-  tmp_grid[clust == 1 & !grid %in% known] <- void_box # & !grid %in% known car sinon on pourrait masquer des cellules
+  tmp_grid[in_cluster == 1 & !grid %in% known] <- void_box # & !grid %in% known car sinon on pourrait masquer des cellules
   # essentielles aux autres clusters
   new_solved_around <- init_solved_around(tmp_grid)
   

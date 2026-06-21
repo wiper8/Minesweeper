@@ -35,6 +35,7 @@ combins_to_probs <- function(combins) {
 
 generate_probs_knowing_mines <- function(grid_tmp_propagate, mines_left_init, solved_around, in_cluster, ...) {
   # pour s'assurer de résoudre les cas certain car le fait de modifier mines_left peut en causer
+  if (mines_left_init == 0) browser()
   tmp <- main_game_loop(grid_tmp_propagate, mines_left_init, certain_core, solved_around, ...)
   grid_tmp_propagate <- tmp[[1]]
   solved_around <- tmp[[3]]

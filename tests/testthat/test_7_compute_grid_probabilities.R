@@ -55,7 +55,7 @@ test_that("compute_grid_probabilities finds good probabilities sans void", {
     mines_left
   )
   expect_equal(
-    compute_grid_probabilities(grid, mines_left = mines_left, solved_around),
+    compute_grid_probabilities(grid, mines_left = mines_left, solved_around)$probs,
     true_probs
   )
 })
@@ -115,7 +115,7 @@ test_that("compute_grid_probabilities finds good probabilities avec void présen
     mines_left
   )
   expect_equal(
-    compute_grid_probabilities(grid, mines_left = mines_left, solved_around),
+    compute_grid_probabilities(grid, mines_left = mines_left, solved_around)$probs,
     true_probs
   )
 })
@@ -177,7 +177,7 @@ test_that("compute_grid_probabilities finds good probabilities avec void présen
     mines_left
   )
   expect_equal(
-    compute_grid_probabilities(grid, mines_left = mines_left, solved_around),
+    compute_grid_probabilities(grid, mines_left = mines_left, solved_around)$probs,
     true_probs
   )
 })
@@ -260,7 +260,7 @@ test_that("compute_grid_probabilities fait des clusters indépendants pendant la
     mines_left
   )
   expect_equal(
-    compute_grid_probabilities(grid, mines_left = mines_left, solved_around, hypothesis = 0, clicker_order = NULL),
+    compute_grid_probabilities(grid, mines_left = mines_left, solved_around, hypothesis = 0, clicker_order = NULL)$probs,
     true_probs
   )
 })
