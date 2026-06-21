@@ -15,6 +15,7 @@ update_clusters_cache <- function(clusters_cache, grid, new_grid, ...) {
   new_clusters <- independant_clusters(new_grid, ...)
   # changement dans le void
   if (any(clusters_cache$void$in_cluster[i_changed])) {
+    # TODO peut-être mieux gérer pour éviter les mapply. bien réfléchirs aux cas possible si clic/flag dans le void
     browser() # TODO est-ce vraiment possible de tomber ici? si j'ai cliqué, ça crée un cluster, si j'ai flaggué, ça
     # va dans known_but_useless
     if (length(new_clusters$clusters) == 0) return(new_clusters)
@@ -53,7 +54,7 @@ update_clusters_cache <- function(clusters_cache, grid, new_grid, ...) {
     function(id, new_clust) {
       if (length(id) == 0) return(new_clust)
       old_clust <- clusters_cache$clusters[[id]]
-
+      browser()
       new_clust <- old_clust
       # quand même reset ça pour éviter des bogues. ça va quand même accélérer
       # de savoir que les possibilités restantes sont bornées entre les bornes min et max

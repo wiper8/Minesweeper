@@ -11,7 +11,7 @@ is_mine_propagation_possible <- function(grid, mines_left = NA, solved_around, t
   
   if (!to_clusterise) {
     propagated_game_end <- main_game_loop(grid, mines_left, certain_core, solved_around = solved_around,
-                                          hypothesis = 2, clusters_cache_args = NULL,
+                                          hypothesis = 2, args_clusters_cache = NULL,
                                           ...)
     if (propagated_game_end[[2]] == "partie impossible") return(FALSE)
     if (propagated_game_end[[2]] == "le clicker ne sait pu quoi faire") return(TRUE)

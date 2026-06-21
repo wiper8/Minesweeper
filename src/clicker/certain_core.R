@@ -585,7 +585,7 @@ which_combins_possible <- function(grid, combins, pos_unknown, solved_around, mi
     possible[i] <- is_mine_propagation_possible(grid_tmp_propagate, mines_left = mines_left,
                                                 solved_around = solved_around, click_order = click_order, 
                                                 global_cache = global_cache,
-                                                clusters_cache_args = clusters_cache_args, ...)
+                                                args_clusters_cache = clusters_cache_args, ...)
     if (possible[i]) break # early exist cause the calling function (which_combins_possible) checks for all FALSE
   }
   possible
