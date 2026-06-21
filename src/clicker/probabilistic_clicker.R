@@ -1,17 +1,8 @@
 source("src/clicker/random_clicker.R")
 source("src/clicker/helper/compute_mine_probability.R")
 
-probabilistic_clicker <- function(grid, try_risky = FALSE, ...) {
+probabilistic_clicker <- function(grid, ...) {
   probs_grid_lst <- compute_grid_probabilities(grid, ...)
-  # try early difficult clusters that have all known information, but stays risky
-  if (try_risky) {
-    risky_lst <- risky_cluster(grid, clusters = probs_grid_lst$clusters, ...)
-    if (length(risky_lst) > 0) {
-      riskiest <- which.max(sapply(risky_lst, function(in_cluster) min(probs_grid_lst$probs[in_cluster], na.rm = TRUE)))
-      risky_lst[[riskiest]][!risky_lst[[riskiest]]] <- NA
-      probs_grid_lst$probs <- probs_grid_lst$probs * risky_lst[[riskiest]]
-    }
-  }
   next_i <- sample2(which(probs_grid_lst$probs == min(probs_grid_lst$probs, na.rm = TRUE)), 1)
   list(
     clicks = list(list(i_to_position(next_i, dim(grid)), TRUE, "probabilistic")),
