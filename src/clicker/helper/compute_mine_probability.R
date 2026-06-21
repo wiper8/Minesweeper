@@ -53,7 +53,6 @@ generate_probs_knowing_mines <- function(grid_tmp_propagate, mines_left_init, so
   if (length(next_i) == 0) browser() # pas sensé se rendre ici
   
   clusters <- clusters_cache %||% independant_clusters(grid_tmp_propagate, solved_around, mines_left)
-  if ("void" %in% names(clusters_cache$clusters)) browser()
   clusters <- update_clusters_cache(clusters, grid_tmp_propagate_init, grid_tmp_propagate, mines_left_init - mines_left,
                                     solved_around = solved_around,
                                     mines_left = mines_left)
