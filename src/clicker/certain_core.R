@@ -546,17 +546,25 @@ which_combins_possible <- function(grid, combins, pos_unknown, solved_around, mi
     global_cache <- update_global_cache(global_cache, grid, grid_tmp_propagate)
     tmp_possible <- is_mine_propagation_possible(grid_tmp_propagate, mines_left = mines_left,
                                                  solved_around = solved_around, click_order = click_order, 
-                                                 global_cache = global_cache, ...)
+                                                 global_cache = global_cache, clusters_cache = clusters_cache_init, ...)
     possible[i] <- tmp_possible$possible
 
     # conserver la cache des clusters indépendants qui n'étaient pas affectés par les mines temporaires posées
-    cache_kept <- mapply(
-      function(clust_a, clust_b) all(clust_a$grid == clust_b$grid), # aucun changement n'était survenu dans ces clusts
-      clusters_cache_init$clusters,
-      tmp_possible$clusters_cache$clusters
-    )
-    clusters_cache$clusters[cache_kept] <- tmp_possible$clusters_cache$clusters[cache_kept]
-  
+    if (is.null(tmp_possible$clusters_cache)) {
+      clusters_cache <- NULL
+    } else {
+      if (is.null(clusters_cache_init)) {
+        clusters_cache_init <- independant_clusters(grid, solved_around_init, mines_left_init)
+      } 
+      cache_kept <- mapply(
+        function(clust_a, clust_b) all(clust_a$grid == clust_b$grid), # aucun changement n'était survenu dans ces clusts
+        clusters_cache_init$clusters,
+        tmp_possible$clusters_cache$clusters
+      )
+      if (is.list(cache_kept)) browser()
+      clusters_cache$clusters[cache_kept] <- tmp_possible$clusters_cache$clusters[cache_kept]
+    }
+
     if (possible[i]) break # early exist cause the calling function (which_combins_possible) checks for all FALSE
   }
 
