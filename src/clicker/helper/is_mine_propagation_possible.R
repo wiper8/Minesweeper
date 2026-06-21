@@ -355,7 +355,7 @@ cluster_from_draft <- function(grid, solved_around, mines_left, clusters_cache, 
     append(list(known_but_does_nothing))
   ) != 1 & !grid %in% known)) browser()
   
-  list(
+  clusters <- list(
     # void est un groupe spécial de cases sans aucune information
     void = list(
       grid = tmp_grid,
@@ -368,6 +368,8 @@ cluster_from_draft <- function(grid, solved_around, mines_left, clusters_cache, 
     known_but_does_nothing = list(in_cluster = known_but_does_nothing),
     clusters = groups
   )
+
+  precise_clusters_bounds_all(grid, solved_around, mines_left, clusters, ...)
 }
 
 test_trial <- function(grid, mines_left, in_cluster, trial) {
