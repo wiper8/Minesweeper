@@ -5,11 +5,15 @@ source("src/game_engine/init_solved_around.R")
 #' À partir d'une hypothèse de mines, continuer la partie et évaluer s'il y aura une incohérence ou non
 #'
 is_mine_propagation_possible <- function(grid, mines_left = NA, solved_around, to_clusterise = TRUE, 
-                                         clusters_cache_args = NULL, ...) {
+                                         args_clusters_cache = NULL, ...) {
   if (!is_grid_possible(grid)) return(FALSE)
   if (is_game_over(grid, mines_left) == 1) return(TRUE)
-  
-  if (!to_clusterise) {
+
+  if (to_clusterise) {
+    new_clusters <- independant_clusters(grid, solved_around, mines_left)
+  }
+
+  if (!to_clusterise || length(new_clusters$clusters) <= 1) {
     propagated_game_end <- main_game_loop(grid, mines_left, certain_core, solved_around = solved_around,
                                           hypothesis = 2, args_clusters_cache = NULL,
                                           ...)
@@ -20,26 +24,14 @@ is_mine_propagation_possible <- function(grid, mines_left = NA, solved_around, t
     browser()
     stop("erreur")
   }
-  new_clusters <- independant_clusters(grid, solved_around, mines_left)
-  if (length(new_clusters$clusters) <= 1) {
-    propagated_game_end <- main_game_loop(grid, mines_left, certain_core, solved_around = solved_around,
-                                          hypothesis = 2, ...)
-    
-    if (propagated_game_end[[2]] == "partie impossible") return(FALSE)
-    if (propagated_game_end[[2]] == "le clicker ne sait pu quoi faire") return(TRUE)
-    if (propagated_game_end[[2]] == "win") return(TRUE)
-    if (propagated_game_end[[2]] == "lost") browser() # ne serait pas supposer perdre avec certain_core comme clicker
-    browser()
-    stop("erreur")
+
+  browser()
+  if (is.null(args_clusters_cache)) {
+    clusters_cache <- new_clusters
   } else {
-    browser()
-    if (is.null(clusters_cache_args)) {
-      clusters_cache <- new_clusters
-    } else {
-      clusters_cache <- do.call(update_clusters_cache, clusters_cache_args)
-    }
-    try_solve_a_cluster(clusters_cache$clusters, 1, mines_left, grid, clusters_cache$void$in_cluster, ...)
+    clusters_cache <- do.call(update_clusters_cache, args_clusters_cache)
   }
+  try_solve_a_cluster(clusters_cache$clusters, 1, mines_left, grid, clusters_cache$void$in_cluster, ...)
 }
 
 try_solve_a_cluster <- function(clusters, clust_i, mines_left, grid, void, ...) {
