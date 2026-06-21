@@ -14,13 +14,6 @@ simulate_game(40, c(17, 9), certain_else_random_clicker)
 set.seed(2026L)
 simulate_game(40, c(17, 9), smart_clicker)
 
-# comparer la vitesse de 2 sortes de clickers
-set.seed(2026L)
-compare_clickers_times(100, c(6, 4), total_mines = 6)
-profvis(
-  compute_probs_success(5, c(17, 9), total_mines = 35, smart_clicker2)
-)
-
 # calculer probabilités de succès
 set.seed(2026L)
 compute_probs_success(n = 200, total_mines = 40, c(17, 9), smart_clicker)
@@ -28,11 +21,10 @@ compute_probs_success(n = 200, total_mines = 56, c(17, 9), smart_clicker)
 
 # graphique de la probabilité de succès selon le nombre de mines
 set.seed(2026L)
-show_mines_difficulty(compare_clickers(n = 10, c(6, 4)))
+show_mines_difficulty(compare_clickers(n = 200, c(6, 4)))
 show_mines_difficulty(compare_clickers(n = 200, c(17, 9)))
 
 # vérification statistique qu'un clicker est meilleur qu'un autre
-hypothesis_test(10, total_mines = 25, dims = c(17, 9), smart_clicker, smart_clicker2)
 hypothesis_test(20, total_mines = 20, dims = c(17, 9), random_clicker, certain_else_random_clicker)
 hypothesis_test(50, total_mines = 56, dims = c(17, 9), certain_else_random_clicker, smart_clicker)
 

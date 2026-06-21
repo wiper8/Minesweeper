@@ -14,7 +14,7 @@ show_first_click_probs <- function(n, total_mines, dims) {
     }
   ) |>
     matrix(nrow = ceiling(dims[1] / 2))
-  
+
   # Limiter les symétries en ne faisant pas le expand.grid au complet et en propagant les résultats
   # en miroitant les symétries
   left <- upper_left
@@ -26,7 +26,7 @@ show_first_click_probs <- function(n, total_mines, dims) {
   bottom <- full_row_block[seq_len(dims[1] - nrow(upper_left)), , drop = FALSE]
   bottom <- bottom[rev(seq_len(nrow(bottom))), , drop = FALSE]
   res <- rbind(top, bottom)
-  
+
   # plot
   df <- data.frame(
     row = rep(seq_len(dims[1]), times = dims[2]),
@@ -42,7 +42,7 @@ show_first_click_probs <- function(n, total_mines, dims) {
       theme_minimal() +
       labs(x = "Column", y = "Row", fill = "Value")
   )
-  
+
   res
 }
 
@@ -52,38 +52,13 @@ show_box_probs <- function(grid, mines_left) {
 }
 
 compare_clickers <- function(n, dims, ...) {
-  #print("random")
-  #df_random <- cbind(compute_mines_probs_df(n, dims, clicker = random_clicker, ...), clicker = "random")
-  #print("certain")
-  #df_certain <- cbind(compute_mines_probs_df(n, dims, clicker = certain_else_random_clicker, ...), clicker = "certain")
+  print("random")
+  df_random <- cbind(compute_mines_probs_df(n, dims, clicker = random_clicker, ...), clicker = "random")
+  print("certain")
+  df_certain <- cbind(compute_mines_probs_df(n, dims, clicker = certain_else_random_clicker, ...), clicker = "certain")
   print("smart")
   df_smart <- cbind(compute_mines_probs_df(n, dims, clicker = smart_clicker), clicker = "smart")
-  print("smart2")
-  df_smart2 <- cbind(compute_mines_probs_df(n, dims, clicker = smart_clicker2), clicker = "smart_risky")
-  rbind(df_smart, df_smart2) # rbind(df_random, df_certain, df_smart, df_smart2)
-}
-
-compare_clickers_times <- function(n, dims, ...) {
-  print("smart")
-  res_smart <- sapply(seq_len(n), function(i) {
-    a <- Sys.time()
-    simulate_game(..., dims, clicker = smart_clicker)
-    b <- Sys.time()
-    as.numeric(difftime(b, a, units = "secs"))
-  })
-  print("smart2")
-  res_smart2 <- sapply(seq_len(n), function(i) {
-    a <- Sys.time()
-    simulate_game(..., dims, clicker = smart_clicker2)
-    b <- Sys.time()
-    as.numeric(difftime(b, a, units = "secs"))
-  })
-  
-  print(c(quantile(res_smart, c(0.1, 0.5, 0.9)), mean = mean(res_smart)))
-  print(c(quantile(res_smart2, c(0.1, 0.5, 0.9)), mean = mean(res_smart2)))
-
-  ggplot(data.frame(time = c(res_smart, res_smart2), clicker = c(rep("smart safe", n), rep("smart_risky", n)))) +
-    geom_density(aes(x = time, color = clicker))
+  rbind(df_random, df_certain, df_smart)
 }
 
 show_mines_difficulty <- function(df) {
@@ -101,7 +76,7 @@ compute_mines_probs_df <- function(n, dims, ...) {
   probs_low <- rep(NA, length(mines))
   probs_high <- rep(NA, length(mines))
   avg_pct_done <- rep(NA, length(mines))
-  
+
   stop_threshold <- 1 / 100
   for (i in seq_along(probs)) {
     print(paste0(i, " mines"))
