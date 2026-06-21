@@ -256,7 +256,7 @@ test_trial <- function(grid, mines_left, in_cluster, trial) {
   # préciser les bornes
   tmp_grid <- grid
   # pour simplifier, on met des no-mines partout ailleurs
-  tmp_grid[clust == 0] <- void_box
+  tmp_grid[in_cluster == 0] <- void_box
   new_solved_around <- init_solved_around(tmp_grid)
   
   # résoudre le cluster avec `trial` mines

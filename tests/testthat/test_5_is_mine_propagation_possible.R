@@ -421,7 +421,7 @@ test_that("is_mine_propagation_possible ne retourne pas de faux vrais", {
       12,
       init_solved_around(grid),
       to_clusterise = FALSE,
-      cluster = clust
+      in_cluster = clust
     )
   )
   expect_true(
@@ -430,7 +430,7 @@ test_that("is_mine_propagation_possible ne retourne pas de faux vrais", {
       6,
       init_solved_around(grid),
       to_clusterise = FALSE,
-      cluster = clust
+      in_cluster = clust
     )
   )
 })

@@ -1,4 +1,4 @@
-source(here("src/clicker/is_mine_propagation_possible.R"))
+source(here("src/clicker/helper/is_mine_propagation_possible.R"))
 
 test_that("independant_clusters fonctionne pour des hypothesis != 2", {
   grid <- matrix(

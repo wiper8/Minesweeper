@@ -1,5 +1,5 @@
 source("src/game_engine/init_solved_around.R")
-source("src/clicker/compute_mine_probability.R")
+source("src/clicker/helper/compute_mine_probability.R")
 
 test_that("compute_mine_probability calcule les bonnes probabilitées", {
   grid <- matrix(

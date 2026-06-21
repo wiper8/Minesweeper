@@ -4,6 +4,7 @@ source("src/game_engine/apply_action.R")
 source("src/game_engine/is_game_over.R")
 source("src/indicies/i_and_positions.R")
 source("src/clicker/random_first_click.R")
+source("src/clicker/helper/update_cache.R")
 
 #' Simuler une partie de Minsweeper
 #'
@@ -43,6 +44,7 @@ init_grid_after_first_click <- function(grid, pos, total_mines) {
 
 main_game_loop <- function(grid, mines_left, clicker, solved_around, hypothesis = 0, click_order = NULL,
                            global_cache = list(), ...) {
+  mines_left_init <- mines_left
   seuil_verbose_duration_click <- 5
   repeat {
     # if (hypothesis == 0) print(mean(grid %in% known))
@@ -71,19 +73,28 @@ main_game_loop <- function(grid, mines_left, clicker, solved_around, hypothesis 
       global_cache <- global_cache[keep]
     }
     if (is.null(tmp$clicks)) browser()
-    
+
+    new_grid <- grid # instancier l'objet pour possiblement plusieurs itérations
     for (new_action in tmp$clicks) {
       if (new_action[[2]]) click_order <- rbind(click_order, new_action[[1]])
       if (any(is.na(new_action[[1]]))) browser()
-      tmp2 <- apply_action(grid, new_action[[1]], new_action[[2]], mines_left, solved_around = solved_around, hypothesis = hypothesis, ...)
-      grid <- tmp2[[1]]
+      tmp2 <- apply_action(new_grid, new_action[[1]], new_action[[2]], mines_left, solved_around = solved_around, hypothesis = hypothesis, ...)
+      if (hypothesis == 0 && new_action[[3]] == "certain" && any(tmp2[[1]] %in% hp_mistakes)) {
+        browser() # le clicker a commis une erreur, ne devrait pas être possible
+      }
+      new_grid <- tmp2[[1]]
       mines_left <- tmp2[[3]]
       solved_around <- tmp2[[4]]
       if (tmp2[[2]] == 1) {
-        if (hypothesis == 2 && !is_grid_possible(grid)) return(list(grid, "partie impossible", solved_around, mines_left))
-        return(list(grid, "win", solved_around, mines_left))
+        if (hypothesis == 2 && !is_grid_possible(new_grid)) return(list(new_grid, "partie impossible", solved_around, mines_left))
+        return(list(new_grid, "win", solved_around, mines_left))
       }
-      if (tmp2[[2]] == -1) return(list(grid, "lost", solved_around, mines_left))
+      if (tmp2[[2]] == -1) return(list(new_grid, "lost", solved_around, mines_left))
+
+      # mettre à jour la cache
+      global_cache <- update_global_cache(tmp$global_cache, grid, new_grid)
+
+      grid <- new_grid
     }
   }
 }
