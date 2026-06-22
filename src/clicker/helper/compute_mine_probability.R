@@ -1,3 +1,4 @@
+source("src/clicker/helper/homologous_next_i.R")
 source("src/game_engine/convert_grid_solution_to_human_grid.R")
 
 compute_mine_probability <- function(grid, mine_i, all_combins) {
@@ -57,20 +58,42 @@ generate_probs_knowing_mines <- function(grid_tmp_propagate, mines_left_init, so
   # si un seul cluster
   if (length(clusters$clusters) == 1) {
     next_i <- next_i[1] # TODO mieux choisir le prochain next_i, soit avec probabilitées, le prioritise, ou le click_order
-    
     dims <- dim(grid_tmp_propagate)
-    mine_probs <- get_situational_probs(grid_tmp_propagate, i_to_position(next_i, dims), action = FALSE,
-                                        mines_left, solved_around, in_cluster = in_cluster, ...)
-    
-    no_mine_probs <- get_situational_probs(grid_tmp_propagate, i_to_position(next_i, dims), action = TRUE,
-                                           mines_left, solved_around, in_cluster = in_cluster, ...)
-    
-    list(
-      n_combins = mine_probs$n_combins + no_mine_probs$n_combins,
-      probs = (mine_probs$n_combins * mine_probs$probs +
-                 no_mine_probs$n_combins * no_mine_probs$probs) / (mine_probs$n_combins + no_mine_probs$n_combins),
-      clusters = clusters
-    )
+
+    # trouver les autres cases homologues à next_i
+    homologous <- homologous_next_i(grid_tmp_propagate, next_i, mines_left, solved_around, in_cluster, dims)
+    # TODO permettre de calculer les probs une fois pour les voisins homologues
+    if (length(homologous) > 0) {
+      mine_probs <- get_situational_probs(grid_tmp_propagate, i_to_position(next_i, dims), action = FALSE,
+                                          mines_left, solved_around, in_cluster = in_cluster, ...)
+      browser() # TODO comment recombiner le résultat en mode homologous ?
+      prob_mine_if_clicked <- mine_probs$probs[homologous[1]]
+      no_mine_probs <- mine_probs # copy
+      no_mine_probs$n_combins <- NA # TODO
+      no_mine_probs$probs <- no_mine_probs$probs * NA # TODO
+      mine_probs$probs |> matrix(nrow=dims[1])
+      no_mine_probs$probs[next_i] <- 0
+      
+
+      list(
+        n_combins = mine_probs$n_combins + no_mine_probs$n_combins,
+        probs = (mine_probs$n_combins * mine_probs$probs +
+                   no_mine_probs$n_combins * no_mine_probs$probs) / (mine_probs$n_combins + no_mine_probs$n_combins),
+        clusters = clusters
+      )
+    } else {
+      mine_probs <- get_situational_probs(grid_tmp_propagate, i_to_position(next_i, dims), action = FALSE,
+                                          mines_left, solved_around, in_cluster = in_cluster, ...)
+      
+      no_mine_probs <- get_situational_probs(grid_tmp_propagate, i_to_position(next_i, dims), action = TRUE,
+                                             mines_left, solved_around, in_cluster = in_cluster, ...)
+      list(
+        n_combins = mine_probs$n_combins + no_mine_probs$n_combins,
+        probs = (mine_probs$n_combins * mine_probs$probs +
+                   no_mine_probs$n_combins * no_mine_probs$probs) / (mine_probs$n_combins + no_mine_probs$n_combins),
+        clusters = clusters
+      )
+    }
   } else {
     compute_grid_probabilities(
       grid = grid_tmp_propagate,

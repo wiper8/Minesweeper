@@ -178,3 +178,48 @@ test_that("compute_grid_probabilities fait des clusters indépendants pendant la
     true_probs
   )
 })
+
+test_that("compute_grid_probabilities est rapide pour les clusters avec plusieurs combinaisons", {
+  grid <- matrix(
+    c(
+      -1, -1, -1, -1,
+      -2, 3, -1, -2,
+      -2, -1, -2, 3,
+      -1, -1, -2, -1,
+      -2, 4, -2, -1,
+      1, -1, -2, -2
+    ),
+    nrow = 6,
+    byrow = TRUE
+  )
+  
+  solved_around <- init_solved_around(grid)
+  blind_grid <- convert_grid_solution_to_human_grid(grid, solved_around)
+  mines_left <- 9
+  true_probs <- compute_true_probs(grid, blind_grid, mines_left, solved_around, function(x) sum(c(5, 9) %in% x) == 1 &
+                                     sum(c(1:3, 6:7, 10:12) %in% x) == 3 &
+                                     sum(c(4:5, 8:9, 13:15) %in% x) == 4 &
+                                     sum(c(11:13, 17:18) %in% x) == 3)
+  
+  expect_equal(
+    sum(true_probs, na.rm = TRUE),
+    mines_left
+  )
+  expect_equal(
+    compute_grid_probabilities(grid, mines_left = mines_left, solved_around)$probs,
+    true_probs
+  )
+  debugonce(generate_all_probs)# TODO déboguer le cas avec 8 mines_left dans le cluster
+  a <- Sys.time()
+  compute_grid_probabilities(
+    grid,
+    mines_left = mines_left,
+    solved_around = solved_around,
+    hypothesis = 0,
+    click_order = NULL,
+    global_cache = NULL,
+    clusters_cache = NULL
+  )
+  b <- Sys.time()
+  expect_true(as.numeric(difftime(a, b, unites = "secs")) < 10)
+})
