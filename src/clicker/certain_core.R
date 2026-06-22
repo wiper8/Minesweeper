@@ -2,6 +2,7 @@ source("src/fast_apply.R")
 source("src/indicies/count.R")
 source("src/game_engine/is_grid_possible.R")
 source("src/clicker/helper/update_cache.R")
+source("src/clicker/helper/deduce_unknown_boxes.R")
 source("src/clicker/helper/is_mine_propagation_possible.R")
 source("src/clicker/helper/find_best_i_to_investigate.R")
 
@@ -262,11 +263,11 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
   }
 
   tmp <- deduce_unknown_boxes(grid_init, mines_left_init, clusters_cache, ...)
-  if (!is.null(tmp)) return(list(clicks = tmp, global_cache = global_cache, clusters_cache = clusters_cache))
-  if (isTRUE(all.equal(tmp, "impossible"))) return(list(clicks = "impossible", global_cache = global_cache, clusters_cache = clusters_cache))
+  if (!is.null(tmp$clicks)) return(list(clicks = tmp$clicks, global_cache = global_cache, clusters_cache = tmp$clusters_cache))
+  if (isTRUE(all.equal(tmp$clicks, "impossible"))) return(list(clicks = "impossible", global_cache = global_cache, clusters_cache = tmp$clusters_cache))
   if (hypothesis != 2 && reached_prop && impossible) browser() # pas sensé etre impossible si on n'est pas en exploration
-  if (hypothesis == 2 && reached_prop) return(list(clicks = "impossible", global_cache = global_cache, clusters_cache = clusters_cache))
-  list(clicks = NULL, global_cache = global_cache, clusters_cache = clusters_cache) # ne sait pas quoi faire
+  if (hypothesis == 2 && reached_prop) return(list(clicks = "impossible", global_cache = global_cache, clusters_cache = tmp$clusters_cache))
+  list(clicks = NULL, global_cache = global_cache, clusters_cache = tmp$clusters_cache) # ne sait pas quoi faire
 }
 
 is_in_global_cache <- function(global_cache, idx) {
@@ -303,181 +304,6 @@ is_super_set_in_global_cache <- function(global_cache, idx) {
   )
 }
 
-
-deduce_unknown_boxes <- function(grid, mines_left, clusters_cache, in_cluster = NULL, ...) {
-  if (is.na(mines_left)) return(NULL)
-  known_boxes <- grid %in% known
-
-  if (!is.null(in_cluster)) {
-    known_boxes <- known_boxes | !in_cluster
-    no_info_boxes <- sum(!known_boxes)
-    if (no_info_boxes < mines_left) return("impossible")
-    if (no_info_boxes == mines_left) return(NULL) # ne sait simplement plus quoi cliquer dans les autres clusters
-  }
-  
-  dims <- dim(grid)
-  if (mines_left < 0) return("impossible")
-  if (mines_left == 0) return(lapply(which(!grid %in% known), function(i) list(i_to_position(i, dims), TRUE, "certain")))
-
-  no_info_boxes <- sum(!known_boxes)
-  if (no_info_boxes < mines_left) return("impossible")
-  if (no_info_boxes == mines_left) return(list(list(i_to_position(which(!known_boxes)[1], dims), FALSE, "certain")))
-
-  solved_around <- init_solved_around(grid)
-  # on a aucune information sur les boîtes
-  if (all(solved_around != 0) && no_info_boxes > mines_left) {
-    return(NULL)
-  }
-  res <- is_void_solvable(grid, solved_around, mines_left,
-                          clusters = clusters_cache %||% independant_clusters(grid, solved_around, mines_left))
-  if (!isFALSE(res)) {
-    return(res)
-  }
-  
-  NULL
-}
-
-is_void_solvable <- function(grid, solved_around, mines_left, clusters) {
-  res <- are_no_mine_in_void(grid, solved_around, mines_left, clusters)
-  if (!isFALSE(res)) {
-    return(res)
-  }
-  is_void_full_mines(grid, solved_around, mines_left, clusters)
-}
-
-are_no_mine_in_void <- function(grid, solved_around, mines_left, clusters) {
-  known_boxes <- grid %in% known
-  
-  # petit raccourci : s'il y a moins de mines que le nombre de boîtes à découvrir
-  if (mines_left <= sum(solved_around == 0 & !known_boxes)) {
-    dims <- dim(grid)
-    if (length(clusters$clusters) == 0 && mines_left == 0) {
-      next_i <- which(clusters$void$in_cluster)[1]
-      return(list(list(i_to_position(next_i, dims), TRUE, "certain")))
-    }
-    if (length(clusters$clusters) == 0) {
-      return(FALSE) # que du void avec des mines
-    }
-    if (all(!clusters$void$in_cluster)) {
-      return(FALSE) # pas de void
-    }
-
-    clusters_bornes_min_precises <- precise_clusters_bounds_min_shortcut(grid, solved_around, mines_left, clusters)
-
-    # SHORTCUT
-    # si toutes les mines sont assurément dans les clusters, je peux cliquer dans le vide
-    if (isTRUE(sum(clusters_bornes_min_precises) == mines_left)) {
-      return(
-        lapply(which(clusters$void$in_cluster), function(next_i) {
-          list(i_to_position(next_i, dims), TRUE, "certain")
-        })
-      )
-    }
-  }
-  FALSE
-}
-
-is_void_full_mines <- function(grid, solved_around, mines_left, clusters) {
-  if (mines_left == 0) return(FALSE)
-  n_box_in_void <- sum(clusters$void$in_cluster)
-  if (n_box_in_void > mines_left) return(FALSE)
-  if (n_box_in_void == 0) return(FALSE)
-  
-  clusters_bornes_max_precises <- precise_clusters_bounds_max_shortcut_full_void(grid, solved_around, mines_left, clusters)
-  remaining_for_void <- mines_left - sum(clusters_bornes_max_precises)
-
-  dims <- dim(grid)
-  if (isTRUE(n_box_in_void == remaining_for_void)) {
-    return(
-      lapply(which(clusters$void$in_cluster), function(next_i) {
-        list(i_to_position(next_i, dims), FALSE, "certain")
-      })
-    )
-  }
-  FALSE
-}
-
-precise_clusters_bounds_min_shortcut <- function(grid, solved_around, mines_left, clusters) {
-  res <- numeric(length(clusters$clusters))
-  cumul_min_shortcut <- 0
-  for (i in seq_along(res)) {
-    lst <- clusters$clusters[[i]]
-    # cluster d'une seule case connue
-    if (sum(lst$in_cluster) == 1) {
-      res[i] <- 0
-    } else {
-      trials <- lst$bornes_mines[1]:lst$bornes_mines[2]
-      left <- 1
-      right <- length(trials)
-      min_possible <- NA
-      while (left <= right) {
-        if (lst$possible[left] == "TRUE") {
-          possibility <- TRUE
-        } else if (lst$possible[left] == "FALSE") {
-          possibility <- FALSE
-        } else {
-          possibility <- test_trial(grid, mines_left, lst$in_cluster, trials[left])
-        }
-
-        if (possibility) {
-          min_possible <- trials[left]
-          break
-        } else {
-          left <- left + 1
-        }
-      }
-      res[i] <- min_possible
-    }
-    cumul_min_shortcut <- cumul_min_shortcut + res[i]
-    if (cumul_min_shortcut > mines_left) {
-      # volontairement retourner un nombre erroné pour pas que le SHORTCUT dans are_no_mine_in_void déclenche
-      return(NA)
-    }
-  }
-  res
-}
-
-precise_clusters_bounds_max_shortcut_full_void <- function(grid, solved_around, mines_left, clusters) {
-  n_box_in_void <- sum(clusters$void$in_cluster)
-  res <- numeric(length(clusters$clusters))
-  cumul_max_shortcut <- 0
-  for (i in seq_along(res)) {
-    lst <- clusters$clusters[[i]]
-    # cluster d'une seule case connue
-    if (sum(lst$in_cluster) == 1) {
-      res[i] <- 0
-    } else {
-      trials <- lst$bornes_mines[1]:lst$bornes_mines[2]
-      left <- 1
-      right <- length(trials)
-      max_possible <- NA
-      while (left <= right) {
-        if (lst$possible[right] == "TRUE") {
-          possibility <- TRUE
-        } else if (lst$possible[right] == "FALSE") {
-          possibility <- FALSE
-        } else {
-          possibility <- test_trial(grid, mines_left, lst$in_cluster, trials[right])
-        }
-
-        if (possibility) {
-          max_possible <- trials[right]
-          break
-        } else {
-          right <- right - 1
-        }
-      }
-      res[i] <- max_possible
-    }
-    
-    cumul_max_shortcut <- cumul_max_shortcut + res[i]
-    if ((mines_left - cumul_max_shortcut) < n_box_in_void) {
-      # volontairement retourner un nombre erroné pour pas que le SHORTCUT dans is_void_full_mines déclenche
-      return(NA)
-    }
-  }
-  res
-}
 
 #' Retourne si une proposition de mines est possible (génère une partie sans problèmes)
 which_combins_possible <- function(grid, combins, pos_unknown, solved_around, mines_left,

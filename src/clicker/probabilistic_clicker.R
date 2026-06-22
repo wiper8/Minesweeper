@@ -21,7 +21,7 @@ compute_grid_probabilities <- function(grid, mines_left, solved_around, hypothes
   solved_around_init <- solved_around
 
   clusters <- cluster_from_draft(grid, solved_around, mines_left, clusters_cache, ...)
-
+  if (is.null(clusters)) browser() # pas sensé déclencher
   if (length(clusters$clusters) == 0) { # raccourci
     void <- mines_left
     n_box_void <- sum(clusters$void$in_cluster)

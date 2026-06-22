@@ -98,8 +98,6 @@ get_situational_probs <- function(grid_tmp_propagate, pos, action = FALSE,
     ))
   }
   
-  # TODO utiliser la cache de clusters?
-  
   if (tmp[[2]] == "le clicker ne sait pu quoi faire") {
     clusters <- independant_clusters(tmp[[1]], tmp[[3]], tmp[[4]])
     if (length(clusters$clusters) == 1) {
