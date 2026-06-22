@@ -1,4 +1,4 @@
-source("src/clicker/certain_core.R")
+source("src/game_engine/convert_grid_solution_to_human_grid.R")
 
 compute_mine_probability <- function(grid, mine_i, all_combins) {
   sum(sapply(all_combins, function(sub_grid) {
@@ -128,7 +128,6 @@ get_situational_probs <- function(grid_tmp_propagate, pos, action = FALSE,
       )
     )
   }
-  
-  
+
   browser() # pas sensé déclencher
 }
