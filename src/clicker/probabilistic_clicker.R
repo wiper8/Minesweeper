@@ -1,9 +1,23 @@
 source("src/clicker/random_clicker.R")
 source("src/clicker/helper/compute_mine_probability.R")
 
-probabilistic_clicker <- function(grid, ...) {
+probabilistic_clicker <- function(grid, risky_first = FALSE, ...) {
   probs_grid_lst <- compute_grid_probabilities(grid, ...)
+  if (risky_first) {
+    if (length(probs_grid_lst$clusters$clusters) > 0) {
+      i_riskiest_clust <- which.max(sapply(probs_grid_lst$clusters$clusters, function(lst) min(probs_grid_lst$probs[lst$in_cluster], na.rm = TRUE)))
+  
+      to_overwrite_to_NA <- Reduce(
+        `+`,
+        lapply(probs_grid_lst$clusters$clusters[-i_riskiest_clust], function(lst) lst$in_cluster)
+      ) > 0
+      probs_grid_lst$probs[to_overwrite_to_NA] <- NA
+      probs_grid_lst$probs[probs_grid_lst$clusters$void$in_cluster] <- NA
+    }
+  }
+
   next_i <- sample2(which(probs_grid_lst$probs == min(probs_grid_lst$probs, na.rm = TRUE)), 1)
+
   list(
     clicks = list(list(i_to_position(next_i, dim(grid)), TRUE, "probabilistic")),
     global_cache = NULL,
@@ -26,10 +40,7 @@ compute_grid_probabilities <- function(grid, mines_left, solved_around, hypothes
     void <- mines_left
     n_box_void <- sum(clusters$void$in_cluster)
 
-    clusters_all_probs_cache <- lapply(clusters$clusters, function(lst) {
-      generate_all_probs(lst$grid, (lst$bornes_mines[1]:lst$bornes_mines[2])[lst$possible == "TRUE"], lst$solved_around,
-                         lst$in_cluster, clusters_cache = clusters)
-    })
+    clusters_all_probs_cache <- list()
 
     total_combins <- choose(n_box_void, void)
 
@@ -134,18 +145,6 @@ compute_grid_probabilities <- function(grid, mines_left, solved_around, hypothes
   list(probs = probs_grid, clusters = clusters)
 }
 
-risky_cluster <- function(grid, mines_left, solved_around, clusters = NULL, ...) {
-  if (is.null(clusters)) {
-    clusters <- independant_clusters(grid, solved_around, mines_left)
-    # recalculer les bornes précies des mines clusters
-    clusters <- precise_clusters_bounds_all(grid, solved_around, mines_left, clusters, ...)
-  }
-
-  risky_clusters <- sapply(clusters$clusters, function(lst) length(unique(lst$bornes_mines)) == 1)
-  if (length(risky_clusters) == 0) return(risky_clusters)
-  lapply(clusters$clusters[risky_clusters], function(lst) lst$in_cluster)
-}
-
 precise_clusters_bounds_all <- function(grid, solved_around, mines_left, clusters, know_possible = FALSE, ...) {
   # shortcut : si j'ai un erreur dans mon code, ce raccourci est non valide
   if (know_possible && length(clusters$clusters) == 1) {
@@ -191,11 +190,11 @@ precise_clusters_bounds_all <- function(grid, solved_around, mines_left, cluster
   clusters$void$bornes_mines[1] <- max(
     0,
     clusters$void$bornes_mines[1],
-    mines_left - sum(sapply(clusters$clusters, function(x) x$bornes_mines[2]))
+    mines_left - ifelse(length(clusters$clusters) == 0, 0, sum(sapply(clusters$clusters, function(x) x$bornes_mines[2])))
   )
   clusters$void$bornes_mines[2] <- min(
     clusters$void$bornes_mines[2],
-    mines_left - sum(sapply(clusters$clusters, function(x) x$bornes_mines[1]))
+    mines_left - ifelse(length(clusters$clusters) == 0, 0, sum(sapply(clusters$clusters, function(x) x$bornes_mines[1])))
   )
   clusters$void$possible <- rep("TRUE", clusters$void$bornes_mines[2] - clusters$void$bornes_mines[1] + 1)
   clusters

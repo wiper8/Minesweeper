@@ -205,11 +205,15 @@ cluster_from_draft <- function(grid, solved_around, mines_left, clusters_cache, 
         in_any_cluster <- in_any_cluster | in_next_cluster
         
         # utilisation de la cache
-        i_clust_identical_in_cache <- which(sapply(
-          clusters_cache$clusters,
-          function(clust) all(clust$in_cluster == in_next_cluster) &&
-            all(clust$grid[in_next_cluster] == grid[in_next_cluster])
-        ))
+        i_clust_identical_in_cache <- if (length(clusters_cache$clusters) == 0) {
+          c()
+        } else {
+          which(sapply(
+            clusters_cache$clusters,
+            function(clust) all(clust$in_cluster == in_next_cluster) &&
+              all(clust$grid[in_next_cluster] == grid[in_next_cluster])
+          ))
+        }
         if (length(i_clust_identical_in_cache) > 0) {
           # réutiliser les infos du cluster
           bornes_mines1 <- clusters_cache$clusters[[i_clust_identical_in_cache]]$bornes_mines

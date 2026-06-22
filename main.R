@@ -12,7 +12,16 @@ simulate_game(40, c(17, 9), random_clicker)
 set.seed(2026L)
 simulate_game(40, c(17, 9), certain_else_random_clicker)
 set.seed(2026L)
-simulate_game(40, c(17, 9), smart_clicker)
+simulate_game(40, c(17, 9), smart_clicker_risky)
+
+# TODO retirer, ce n'est que pour comparer les cas risky et non
+set.seed(2026L)
+show_mines_difficulty(compare_clickers(n = 100, c(4, 3)))
+set.seed(2026L)
+show_mines_difficulty(compare_clickers(n = 1, c(6, 4)))
+set.seed(2026L)
+show_mines_difficulty(compare_clickers(n = 1, c(17, 9)))
+
 
 # calculer probabilités de succès
 set.seed(2026L)

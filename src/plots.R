@@ -52,13 +52,22 @@ show_box_probs <- function(grid, mines_left) {
 }
 
 compare_clickers <- function(n, dims, ...) {
-  print("random")
-  df_random <- cbind(compute_mines_probs_df(n, dims, clicker = random_clicker, ...), clicker = "random")
-  print("certain")
-  df_certain <- cbind(compute_mines_probs_df(n, dims, clicker = certain_else_random_clicker, ...), clicker = "certain")
+  # print("random")
+  # df_random <- cbind(compute_mines_probs_df(n, dims, clicker = random_clicker, ...), clicker = "random")
+  # print("certain")
+  # df_certain <- cbind(compute_mines_probs_df(n, dims, clicker = certain_else_random_clicker, ...), clicker = "certain")
   print("smart")
+  a <- Sys.time()
   df_smart <- cbind(compute_mines_probs_df(n, dims, clicker = smart_clicker), clicker = "smart")
-  rbind(df_random, df_certain, df_smart)
+  b <- Sys.time()
+  print(b - a)
+  print("smart risky")
+  a <- Sys.time()
+  df_smart_risky <- cbind(compute_mines_probs_df(n, dims, clicker = smart_clicker_risky), clicker = "smart_risky")
+  b <- Sys.time()
+  print(b - a)
+  rbind(df_smart, df_smart_risky)
+  # rbind(df_random, df_certain, df_smart)
 }
 
 show_mines_difficulty <- function(df) {

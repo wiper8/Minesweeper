@@ -15,3 +15,17 @@ smart_clicker <- function(grid, mines_left, clusters_cache = NULL, ...) {
   # si aucune stratégie
   browser() # pas sensé ce rendre ici
 }
+
+smart_clicker_risky <- function(grid, mines_left, clusters_cache = NULL, ...) {
+  tmp <- certain_core(grid, mines_left, ...)
+  if (!is.null(tmp$clicks)) {
+    return(tmp)
+  }
+  clusters_cache <- tmp$clusters_cache
+  tmp <- probabilistic_clicker(grid, mines_left = mines_left, clusters_cache = clusters_cache, risky_first = TRUE, ...)
+  if (!is.null(tmp$clicks)) {
+    return(tmp)
+  }
+  # si aucune stratégie
+  browser() # pas sensé ce rendre ici
+}
