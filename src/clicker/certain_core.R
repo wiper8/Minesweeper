@@ -1,6 +1,7 @@
 source("src/fast_apply.R")
 source("src/indicies/count.R")
 source("src/game_engine/is_grid_possible.R")
+source("src/game_engine/convert_grid_solution_to_human_grid.R")
 source("src/clicker/helper/update_cache.R")
 source("src/clicker/helper/deduce_unknown_boxes.R")
 source("src/clicker/helper/is_mine_propagation_possible.R")
@@ -395,11 +396,4 @@ which_combins_possible <- function(grid, combins, pos_unknown, solved_around, mi
   }
 
   list(possible = possible, clusters_cache = clusters_cache)
-}
-
-convert_grid_solution_to_human_grid <- function(grid, solved_around = init_solved_around(grid), ...) {
-  human_grid <- grid
-  human_grid[solved_around == -1 & !grid %in% known] <- unknown_box
-  human_grid[human_grid %in% hp_to_hypo_no_mine] <- unknown_box
-  human_grid
 }

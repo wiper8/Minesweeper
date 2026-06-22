@@ -1,3 +1,5 @@
+source("src/clicker/helper/test_trial.R")
+
 deduce_unknown_boxes <- function(grid, mines_left, clusters_cache, in_cluster = NULL, ...) {
   if (is.na(mines_left)) return(NULL)
   known_boxes <- grid %in% known
