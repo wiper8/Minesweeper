@@ -26,11 +26,6 @@ compute_grid_probabilities <- function(grid, mines_left, solved_around, hypothes
     void <- mines_left
     n_box_void <- sum(clusters$void$in_cluster)
 
-    clusters_all_probs_cache <- lapply(clusters$clusters, function(lst) {
-      generate_all_probs(lst$grid, (lst$bornes_mines[1]:lst$bornes_mines[2])[lst$possible == "TRUE"], lst$solved_around,
-                         lst$in_cluster, clusters_cache = clusters)
-    })
-
     total_combins <- choose(n_box_void, void)
 
     probs <- grid * 0
@@ -134,18 +129,6 @@ compute_grid_probabilities <- function(grid, mines_left, solved_around, hypothes
   list(probs = probs_grid, clusters = clusters)
 }
 
-risky_cluster <- function(grid, mines_left, solved_around, clusters = NULL, ...) {
-  if (is.null(clusters)) {
-    clusters <- independant_clusters(grid, solved_around, mines_left)
-    # recalculer les bornes précies des mines clusters
-    clusters <- precise_clusters_bounds_all(grid, solved_around, mines_left, clusters, ...)
-  }
-
-  risky_clusters <- sapply(clusters$clusters, function(lst) length(unique(lst$bornes_mines)) == 1)
-  if (length(risky_clusters) == 0) return(risky_clusters)
-  lapply(clusters$clusters[risky_clusters], function(lst) lst$in_cluster)
-}
-
 precise_clusters_bounds_all <- function(grid, solved_around, mines_left, clusters, know_possible = FALSE, ...) {
   # shortcut : si j'ai un erreur dans mon code, ce raccourci est non valide
   if (know_possible && length(clusters$clusters) == 1) {
@@ -191,11 +174,11 @@ precise_clusters_bounds_all <- function(grid, solved_around, mines_left, cluster
   clusters$void$bornes_mines[1] <- max(
     0,
     clusters$void$bornes_mines[1],
-    mines_left - sum(sapply(clusters$clusters, function(x) x$bornes_mines[2]))
+    mines_left - ifelse(length(clusters$clusters) == 0, 0, sum(sapply(clusters$clusters, function(x) x$bornes_mines[2])))
   )
   clusters$void$bornes_mines[2] <- min(
     clusters$void$bornes_mines[2],
-    mines_left - sum(sapply(clusters$clusters, function(x) x$bornes_mines[1]))
+    mines_left - ifelse(length(clusters$clusters) == 0, 0, sum(sapply(clusters$clusters, function(x) x$bornes_mines[1])))
   )
   clusters$void$possible <- rep("TRUE", clusters$void$bornes_mines[2] - clusters$void$bornes_mines[1] + 1)
   clusters
