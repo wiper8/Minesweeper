@@ -40,8 +40,6 @@ compute_grid_probabilities <- function(grid, mines_left, solved_around, hypothes
     void <- mines_left
     n_box_void <- sum(clusters$void$in_cluster)
 
-    clusters_all_probs_cache <- list()
-
     total_combins <- choose(n_box_void, void)
 
     probs <- grid * 0

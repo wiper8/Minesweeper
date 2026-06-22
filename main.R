@@ -18,7 +18,7 @@ simulate_game(40, c(17, 9), smart_clicker_risky)
 set.seed(2026L)
 show_mines_difficulty(compare_clickers(n = 100, c(4, 3)))
 set.seed(2026L)
-show_mines_difficulty(compare_clickers(n = 1, c(6, 4)))
+show_mines_difficulty(compare_clickers(n = 30, c(6, 4)))
 set.seed(2026L)
 show_mines_difficulty(compare_clickers(n = 1, c(17, 9)))
 
