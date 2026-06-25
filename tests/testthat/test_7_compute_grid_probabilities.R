@@ -126,7 +126,6 @@ test_that("compute_grid_probabilities finds good probabilities avec void présen
 })
 
 test_that("compute_grid_probabilities fait des clusters indépendants pendant la propagation des mines pour accélérer", {
-  
   # grille avec 3 clusters, dont 1 qui se sépare facilement en 3 clusters aussi
   grid <- matrix(
     c(
@@ -200,16 +199,18 @@ test_that("compute_grid_probabilities est rapide pour les clusters avec plusieur
                                      sum(c(1:3, 6:7, 10:12) %in% x) == 3 &
                                      sum(c(4:5, 8:9, 13:15) %in% x) == 4 &
                                      sum(c(11:13, 17:18) %in% x) == 3)
-  
+
   expect_equal(
     sum(true_probs, na.rm = TRUE),
     mines_left
   )
+  # tester que les résultats sont bons
   expect_equal(
     compute_grid_probabilities(grid, mines_left = mines_left, solved_around)$probs,
     true_probs
   )
-  debugonce(generate_all_probs)# TODO déboguer le cas avec 8 mines_left dans le cluster
+
+  # tester que les résultats sont calculés rapidement
   a <- Sys.time()
   compute_grid_probabilities(
     grid,
@@ -221,5 +222,5 @@ test_that("compute_grid_probabilities est rapide pour les clusters avec plusieur
     clusters_cache = NULL
   )
   b <- Sys.time()
-  expect_true(as.numeric(difftime(a, b, unites = "secs")) < 10)
+  expect_true(as.numeric(difftime(b, a, units = "secs")) < 10)
 })

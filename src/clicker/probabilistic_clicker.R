@@ -64,7 +64,7 @@ compute_grid_probabilities <- function(grid, mines_left, solved_around, hypothes
   n_box_void <- sum(clusters$void$in_cluster)
 
   clusters_all_probs_cache <- lapply(clusters$clusters, function(lst) {
-    generate_all_probs(lst$grid, (lst$bornes_mines[1]:lst$bornes_mines[2])[lst$possible == "TRUE"], lst$solved_around, lst$in_cluster)
+    generate_all_probs(lst$grid, (lst$bornes_mines[1]:lst$bornes_mines[2])[lst$possible == "TRUE"], lst$solved_around, lst$in_cluster, ...)
   })
 
   numerator_mine_prob <- mapply(

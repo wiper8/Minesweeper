@@ -13,6 +13,10 @@ deduce_unknown_boxes <- function(grid, mines_left, clusters_cache, in_cluster = 
   
   dims <- dim(grid)
   if (mines_left < 0) return(list(clicks = "impossible", clusters_cache = clusters_cache))
+  if (mines_left == 0 && all(init_solved_around(grid) == 1)) return(list(
+    clicks = NULL,
+    clusters_cache = clusters_cache
+  ))
   if (mines_left == 0) return(list(
     clicks = lapply(which(!grid %in% known), function(i) list(i_to_position(i, dims), TRUE, "certain")),
     clusters_cache = clusters_cache
