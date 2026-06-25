@@ -32,14 +32,14 @@ solve_homologous <- function(grid, mines_left, solved_around, in_cluster, homolo
       solved_around <- tmp[[4]]
       if (tmp[[2]] == -1) browser() # pas sensé avoir perdu à ce point-ci
     }
-
+    
     # propager la partie
     tmp <- main_game_loop(grid, mines_left, certain_core, solved_around, hypothesis = 2)
     # 4. calculer les probs
     if (tmp[[2]] == "partie impossible") {
       return(list(n_combins = 0, probs = 0))
     }
-
+    
     if (tmp[[2]] == "le clicker ne sait pu quoi faire") {
       clusters <- independant_clusters(tmp[[1]], tmp[[3]], tmp[[4]])
       if (length(clusters$clusters) == 1) {
@@ -70,7 +70,7 @@ solve_homologous <- function(grid, mines_left, solved_around, in_cluster, homolo
         )
       )
     }
-
+    
     if (tmp[[2]] == "win") {
       probs <- tmp[[1]] %in% hp_flags
       # overwrite homologous
@@ -86,16 +86,16 @@ solve_homologous <- function(grid, mines_left, solved_around, in_cluster, homolo
   
   # 5. recombiner les probs et les combinaisons
   real_combins <- mapply(function(lst, n) lst$n_combins * choose(length(homologous), n), combins, possibles_mines_homologous)
-
+  
   total_combins <- sum(real_combins)
-
+  
   probs <- Reduce(
     `+`,
     mapply(function(lst, n) n * lst$probs, combins, real_combins)
   ) / total_combins
-
+  
   probs[homologous] <- sum(probs[homologous]) / length(probs[homologous]) # TODO vérifier
-
+  
   return(list(
     n_combins = total_combins,
     probs = probs

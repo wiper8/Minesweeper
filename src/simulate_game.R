@@ -71,7 +71,7 @@ main_game_loop <- function(grid, mines_left, clicker, solved_around, hypothesis 
 
     new_grid <- grid # instancier l'objet pour possiblement plusieurs itérations
     for (new_action in tmp$clicks) {
-      if (new_action[[2]]) click_order <- rbind(click_order, new_action[[1]])
+      click_order <- rbind(click_order, new_action[[1]])
       if (any(is.na(new_action[[1]]))) browser()
       tmp2 <- apply_action(new_grid, new_action[[1]], new_action[[2]], mines_left, solved_around = solved_around, hypothesis = hypothesis, ...)
       if (hypothesis == 0 && new_action[[3]] == "certain" && any(tmp2[[1]] %in% hp_mistakes)) {

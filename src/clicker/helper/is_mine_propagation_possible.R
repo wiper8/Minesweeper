@@ -26,7 +26,7 @@ is_mine_propagation_possible <- function(grid, mines_left = NA, solved_around, t
     browser()
     stop("erreur")
   }
-
+  
   tmp <- try_solve_a_cluster(new_clusters$clusters, 1, mines_left, grid, new_clusters$void$in_cluster,
                              clusters_cache = new_clusters, ...)
   new_clusters$clusters <- tmp$clusters
@@ -48,7 +48,7 @@ try_solve_a_cluster <- function(clusters, clust_i, mines_left, grid, void, ...) 
   }
   ratios <- trials_order / sum(!clusters[[clust_i]]$grid[clusters[[clust_i]]$solved_around != -1] %in% known)
   trials_order <- trials_order[order(abs(ratios - mines_target_ratio))]
-
+  
   # essayer de résoudre le cluster avec `mines_trial`
   # simuler une nouvelle partie avec un clicker certain
   propagated_game_end <- main_game_loop(
@@ -56,11 +56,11 @@ try_solve_a_cluster <- function(clusters, clust_i, mines_left, grid, void, ...) 
     solved_around = clusters[[clust_i]]$solved_around, hypothesis = 2, in_cluster = clusters[[clust_i]]$in_cluster,
     ...
   )
-
+  
   # si ça fonctionne, tenter de résoudre les autres clusters en ajustant récursivement les mines restantes
   if (propagated_game_end[[2]] %in% c("win", "le clicker ne sait pu quoi faire")) {
     clusters[[clust_i]]$possible[trials_order[1] - clusters[[clust_i]]$bornes_mines[1] + 1] <- "TRUE"
-
+    
     if (clust_i == length(clusters)) { # on a atteint le dernier cluster à tester
       # dernière vérification que le total de mines utilisé est plausible
       nb_in_void_cluster <- sum(void)

@@ -4,6 +4,7 @@ source("src/game_engine/is_grid_possible.R")
 source("src/game_engine/convert_grid_solution_to_human_grid.R")
 source("src/clicker/helper/update_cache.R")
 source("src/clicker/helper/deduce_unknown_boxes.R")
+source("src/clicker/helper/filter_homologous_combins.R")
 source("src/clicker/helper/is_mine_propagation_possible.R")
 source("src/clicker/helper/find_best_i_to_investigate.R")
 
@@ -25,7 +26,7 @@ can_flag_all_around <- function(grid, mines_left, solved_around, global_cache = 
     grid <- grid_init
     mines_left <- mines_left_init
     solved_around <- solved_around_init
-
+    
     tmp <- count_core(grid, i)
     values <- tmp$values
     positions <- tmp$positions
@@ -65,14 +66,14 @@ can_click_all_around <- function(grid, mines_left, solved_around, global_cache =
     grid <- grid_init
     mines_left <- mines_left_init
     solved_around <- solved_around_init
-
+    
     tmp <- count_core(grid, i)
     values <- tmp$values
     positions <- tmp$positions
     n_unknown <- count_unknown(grid, i, values)
     if (n_unknown > 0 && count_mines_left_around(grid, i, values) == 0) {
       unknown <- !values %in% known
-
+      
       # tenter de mettre les mines pour vérifier si possible
       proposal <- list(
         clicks = apply(positions[unknown, , drop = FALSE], 1, function(pos) list(pos, TRUE, "certain"), simplify = FALSE),
@@ -88,7 +89,7 @@ can_click_all_around <- function(grid, mines_left, solved_around, global_cache =
       if (!is_grid_possible(grid)) return(list(clicks = "impossible",
                                                global_cache = global_cache,
                                                clusters_cache = clusters_cache))
-
+      
       return(proposal)
     }
   }
@@ -140,6 +141,9 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
       )
     }
     combins <- combn(n_unknown, mines_left_around)
+    
+    combins <- filter_homologous_combins(grid, mines_left, solved_around, hypothesis, combins, pos_unknown, dims)
+    
     cache <- rep(NA, ncol(combins))
     
     for (mine_i in seq_len(n_unknown)) {
@@ -203,6 +207,9 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
         return(list(clicks = NULL, global_cache = global_cache, clusters_cache = clusters_cache))
       }
       
+      
+      
+      
       # si à l'inverse, je flag la cellule, et que toutes les situations sont impossibles, c'est qu'il n'y a pas de mine!
       # donc la cliquer
       tmp_which_possible <- which_combins_possible(
@@ -262,7 +269,7 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
       ))
     }
   }
-
+  
   tmp <- deduce_unknown_boxes(grid_init, mines_left_init, clusters_cache, ...)
   if (!is.null(tmp$clicks)) return(list(clicks = tmp$clicks, global_cache = global_cache, clusters_cache = tmp$clusters_cache))
   if (isTRUE(all.equal(tmp$clicks, "impossible"))) return(list(clicks = "impossible", global_cache = global_cache, clusters_cache = tmp$clusters_cache))
@@ -316,7 +323,7 @@ which_combins_possible <- function(grid, combins, pos_unknown, solved_around, mi
     keep <- !sapply(global_cache, `[[`, 2)
     global_cache <- global_cache[keep]
   }
-
+  
   dims <- dim(grid)
   mines_left_init <- mines_left
   solved_around_init <- solved_around
@@ -350,13 +357,15 @@ which_combins_possible <- function(grid, combins, pos_unknown, solved_around, mi
     i_to_flag <- position_to_i_mat(pos_unknown[combin, , drop = FALSE], dims)
     i_to_click <- position_to_i_mat(pos_unknown[-combin, , drop = FALSE], dims)
     i_to_click <- i_to_click[grid[i_to_click] %in% c(unknown_box, hp_to_hypo_no_mine)]
-
+    
     for (j in i_to_flag) {
-      tmp <- apply_action(grid_tmp_propagate, i_to_position(j, dims), action = FALSE, mines_left,
+      j_pos <- i_to_position(j, dims)
+      tmp <- apply_action(grid_tmp_propagate, j_pos, action = FALSE, mines_left,
                           solved_around, hypothesis = 2, ...)
       grid_tmp_propagate <- tmp[[1]]
       mines_left <- tmp[[3]]
       solved_around <- tmp[[4]]
+      click_order <- rbind(click_order, j_pos)
     }
 
     for (j in i_to_click) {

@@ -1,3 +1,4 @@
+source("src/simulate_game.R")
 source("src/clicker/helper/homologous_next_i.R")
 source("src/clicker/helper/solve_homologous.R")
 source("src/game_engine/convert_grid_solution_to_human_grid.R")
@@ -37,7 +38,7 @@ combins_to_probs <- function(combins) {
 
 generate_probs_knowing_mines <- function(grid_tmp_propagate, mines_left_init, solved_around, in_cluster, clusters_cache = NULL, ...) {
   grid_tmp_propagate_init <- grid_tmp_propagate
-
+  
   # pour s'assurer de résoudre les cas certain car le fait de modifier mines_left peut en causer
   tmp <- main_game_loop(grid_tmp_propagate, mines_left_init, certain_core, solved_around, ...)
   grid_tmp_propagate <- tmp[[1]]
@@ -52,14 +53,14 @@ generate_probs_knowing_mines <- function(grid_tmp_propagate, mines_left_init, so
   # vérifier ici que je sample vraiment une mine possible dans le cluster
   next_i <- which(grid_tmp_propagate == -10 & solved_around == 0 & in_cluster)
   if (length(next_i) == 0) browser() # pas sensé se rendre ici
-
+  
   clusters <- clusters_cache %||% independant_clusters(grid_tmp_propagate, solved_around, mines_left)
-
+  
   # si un seul cluster
   if (length(clusters$clusters) == 1) {
     next_i <- next_i[1] # TODO mieux choisir le prochain next_i, soit avec probabilitées, le prioritise, ou le click_order
     dims <- dim(grid_tmp_propagate)
-
+    
     # trouver les autres cases homologues à next_i
     homologous <- homologous_next_i(grid_tmp_propagate, next_i, mines_left, solved_around, in_cluster, dims)
     if (length(homologous) > 1) {

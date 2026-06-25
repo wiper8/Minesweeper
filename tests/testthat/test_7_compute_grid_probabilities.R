@@ -222,5 +222,5 @@ test_that("compute_grid_probabilities est rapide pour les clusters avec plusieur
     clusters_cache = NULL
   )
   b <- Sys.time()
-  expect_true(as.numeric(difftime(b, a, units = "secs")) < 10)
+  expect_true(as.numeric(difftime(b, a, units = "secs")) < 8)
 })
