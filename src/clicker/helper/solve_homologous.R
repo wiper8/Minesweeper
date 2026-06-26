@@ -1,3 +1,8 @@
+source("src/simulate_game.R")
+source("src/game_engine/apply_action.R")
+source("src/indicies/i_and_positions.R")
+
+
 solve_homologous <- function(grid, mines_left, solved_around, in_cluster, homologous, ...) {
   dims <- dim(grid)
   grid_init <- grid
@@ -10,7 +15,7 @@ solve_homologous <- function(grid, mines_left, solved_around, in_cluster, homolo
   # 2. énumérer toutes les combinaisons de mines
   combins <- lapply(possibles_mines_homologous, function(nb_mines_in_homologous) {
     grid <- grid_init
-    mines <- mines_init
+    mines_left <- mines_init
     solved_around <- solved_around_init
 
     # 3. compléter la grille pour TOUS les homologues avec une seule combinaison par nb de mines
@@ -23,9 +28,9 @@ solve_homologous <- function(grid, mines_left, solved_around, in_cluster, homolo
       solved_around <- tmp[[4]]
       if (tmp[[2]] == -1) browser() # pas sensé avoir perdu à ce point-ci
     }
-    for (i in seq_len(length(homologous) - nb_mines_in_homologous)) {
+    for (i in tail(seq_len(length(homologous)), length(homologous) - nb_mines_in_homologous)) {
       # apposer une no_mine temporaire
-      tmp <- apply_action(grid, i_to_position(homologous[length(homologous) - i + 1], dims), action = TRUE, mines_left,
+      tmp <- apply_action(grid, i_to_position(homologous[i], dims), action = TRUE, mines_left,
                           solved_around, ...)
       grid <- tmp[[1]]
       mines_left <- tmp[[3]]
@@ -75,6 +80,7 @@ solve_homologous <- function(grid, mines_left, solved_around, in_cluster, homolo
       probs <- tmp[[1]] %in% hp_flags
       # overwrite homologous
       probs[homologous] <- sum(probs[homologous]) / length(homologous)
+
       return(list(
         n_combins = 1,
         probs = probs
@@ -91,7 +97,7 @@ solve_homologous <- function(grid, mines_left, solved_around, in_cluster, homolo
   
   probs <- Reduce(
     `+`,
-    mapply(function(lst, n) n * lst$probs, combins, real_combins)
+    mapply(function(lst, n) n * lst$probs, combins, real_combins, SIMPLIFY = FALSE)
   ) / total_combins
   
   probs[homologous] <- sum(probs[homologous]) / length(probs[homologous]) # TODO vérifier

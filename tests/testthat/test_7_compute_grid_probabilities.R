@@ -43,11 +43,13 @@ test_that("compute_grid_probabilities finds good probabilities sans void", {
   solved_around <- init_solved_around(grid)
   blind_grid <- convert_grid_solution_to_human_grid(grid, solved_around)
   mines_left <- 7
-  true_probs <- compute_true_probs(grid, blind_grid, mines_left, solved_around, function(x) sum(2:4 %in% x) == 1 &
-                                     sum(c(6, 8, 10) %in% x) == 1 &
-                                     sum(13:15 %in% x) == 2 &
-                                     sum(c(7, 9, 11) %in% x) == 2)
-
+  true_probs <- compute_true_probs(
+    grid, blind_grid, mines_left, solved_around,
+    function(x) sum(2:4 %in% x) == 1 &
+      sum(c(6, 8, 10) %in% x) == 1 &
+      sum(13:15 %in% x) == 2 &
+      sum(c(7, 9, 11) %in% x) == 2)
+  
   expect_equal(
     sum(true_probs, na.rm = TRUE),
     mines_left
@@ -74,11 +76,13 @@ test_that("compute_grid_probabilities finds good probabilities avec void présen
   solved_around <- init_solved_around(grid)
   blind_grid <- convert_grid_solution_to_human_grid(grid, solved_around)
   mines_left <- 8
-  true_probs <- compute_true_probs(grid, blind_grid, mines_left, solved_around, function(x) sum(3:5 %in% x) == 1 &
-                                     sum(c(8, 11, 14) %in% x) == 1 &
-                                     sum(18:20 %in% x) == 2 &
-                                     sum(c(9, 12, 15) %in% x) == 2 &
-                                     sum(c(11, 14, 17:19) %in% x) == 3)
+  true_probs <- compute_true_probs(
+    grid, blind_grid, mines_left, solved_around,
+    function(x) sum(3:5 %in% x) == 1 &
+      sum(c(8, 11, 14) %in% x) == 1 &
+      sum(18:20 %in% x) == 2 &
+      sum(c(9, 12, 15) %in% x) == 2 &
+      sum(c(11, 14, 17:19) %in% x) == 3)
 
   expect_equal(
     sum(true_probs, na.rm = TRUE),
@@ -110,7 +114,9 @@ test_that("compute_grid_probabilities finds good probabilities avec void présen
   solved_around <- init_solved_around(grid)
   blind_grid <- convert_grid_solution_to_human_grid(grid, solved_around)
   mines_left <- 8
-  true_probs <- compute_true_probs(grid, blind_grid, mines_left, solved_around, function(x) sum(4:5 %in% x) == 1 &
+  true_probs <- compute_true_probs(
+    grid, blind_grid, mines_left, solved_around,
+    function(x) sum(4:5 %in% x) == 1 &
       sum(c(9, 16) %in% x) == 1 &
       sum(19:20 %in% x) == 1 &
       sum(c(16, 18, 19) %in% x) == 2)
@@ -154,11 +160,13 @@ test_that("compute_grid_probabilities fait des clusters indépendants pendant la
       in_cluster = clusters$clusters[[1]]$in_cluster
     )
   )
-
-
+  
+  
   # puis tester des cas qui se divisent en sous-clusters
   blind_grid <- convert_grid_solution_to_human_grid(grid, solved_around)
-  true_probs <- compute_true_probs(grid, blind_grid, mines_left, solved_around, function(x) sum(c(1, 3) %in% x) == 1 &
+  true_probs <- compute_true_probs(
+    grid, blind_grid, mines_left, solved_around,
+    function(x) sum(c(1, 3) %in% x) == 1 &
       sum(3:7 %in% x) == 2 &
       sum(c(3, 5) %in% x) == 1 &
       sum(c(5, 9, 10) %in% x) == 1 &
@@ -167,7 +175,7 @@ test_that("compute_grid_probabilities fait des clusters indépendants pendant la
       sum(c(20, 22) %in% x) == 1 &
       sum(c(12:14, 16, 18) %in% x) == 2
   )
-
+  
   expect_equal(
     sum(true_probs, na.rm = TRUE),
     mines_left
@@ -195,11 +203,13 @@ test_that("compute_grid_probabilities est rapide pour les clusters avec plusieur
   solved_around <- init_solved_around(grid)
   blind_grid <- convert_grid_solution_to_human_grid(grid, solved_around)
   mines_left <- 9
-  true_probs <- compute_true_probs(grid, blind_grid, mines_left, solved_around, function(x) sum(c(5, 9) %in% x) == 1 &
-                                     sum(c(1:3, 6:7, 10:12) %in% x) == 3 &
-                                     sum(c(4:5, 8:9, 13:15) %in% x) == 4 &
-                                     sum(c(11:13, 17:18) %in% x) == 3)
-
+  true_probs <- compute_true_probs(
+    grid, blind_grid, mines_left, solved_around,
+    function(x) sum(c(5, 9) %in% x) == 1 &
+      sum(c(1:3, 6:7, 10:12) %in% x) == 3 &
+      sum(c(4:5, 8:9, 13:15) %in% x) == 4 &
+      sum(c(11:13, 17:18) %in% x) == 3)
+  
   expect_equal(
     sum(true_probs, na.rm = TRUE),
     mines_left
@@ -209,7 +219,7 @@ test_that("compute_grid_probabilities est rapide pour les clusters avec plusieur
     compute_grid_probabilities(grid, mines_left = mines_left, solved_around)$probs,
     true_probs
   )
-
+  
   # tester que les résultats sont calculés rapidement
   a <- Sys.time()
   compute_grid_probabilities(
