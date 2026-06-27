@@ -26,7 +26,7 @@ can_flag_all_around <- function(grid, mines_left, solved_around, global_cache = 
     grid <- grid_init
     mines_left <- mines_left_init
     solved_around <- solved_around_init
-    
+
     tmp <- count_core(grid, i)
     values <- tmp$values
     positions <- tmp$positions
@@ -66,14 +66,14 @@ can_click_all_around <- function(grid, mines_left, solved_around, global_cache =
     grid <- grid_init
     mines_left <- mines_left_init
     solved_around <- solved_around_init
-    
+
     tmp <- count_core(grid, i)
     values <- tmp$values
     positions <- tmp$positions
     n_unknown <- count_unknown(grid, i, values)
     if (n_unknown > 0 && count_mines_left_around(grid, i, values) == 0) {
       unknown <- !values %in% known
-      
+
       # tenter de mettre les mines pour vérifier si possible
       proposal <- list(
         clicks = apply(positions[unknown, , drop = FALSE], 1, function(pos) list(pos, TRUE, "certain"), simplify = FALSE),
@@ -89,7 +89,7 @@ can_click_all_around <- function(grid, mines_left, solved_around, global_cache =
       if (!is_grid_possible(grid)) return(list(clicks = "impossible",
                                                global_cache = global_cache,
                                                clusters_cache = clusters_cache))
-      
+
       return(proposal)
     }
   }
