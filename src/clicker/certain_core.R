@@ -322,7 +322,7 @@ which_combins_possible <- function(grid, combins, pos_unknown, solved_around, mi
     keep <- !sapply(global_cache, `[[`, 2)
     global_cache <- global_cache[keep]
   }
-  
+
   dims <- dim(grid)
   mines_left_init <- mines_left
   solved_around_init <- solved_around
@@ -376,7 +376,7 @@ which_combins_possible <- function(grid, combins, pos_unknown, solved_around, mi
       solved_around <- tmp[[4]]
       click_order <- rbind(click_order, j_pos)
     }
-    
+
     # mettre à jour la cache
     global_cache <- update_global_cache(global_cache, grid, grid_tmp_propagate)
     tmp_possible <- is_mine_propagation_possible(grid_tmp_propagate, mines_left = mines_left,
