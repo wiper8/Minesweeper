@@ -63,7 +63,7 @@ generate_probs_knowing_mines <- function(grid_tmp_propagate, mines_left_init, so
     
     # trouver les autres cases homologues à next_i
     homologous <- homologous_next_i(grid_tmp_propagate, next_i, mines_left, solved_around, in_cluster, dims)
-    if (length(homologous) > 1) {
+    if (length(homologous$homologous_i) > 1) {
       return(
         append(
           solve_homologous(grid_tmp_propagate, mines_left, solved_around, in_cluster, homologous, ...),

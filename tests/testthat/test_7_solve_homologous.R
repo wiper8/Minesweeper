@@ -31,7 +31,7 @@ test_that("solve_homologous retourne des probabilités réalistes", {
         8,
         init_solved_around(grid),
         in_cluster = grid != -11,
-        homologous = c(31, 32),
+        homologous = list(homologous_i = c(31, 32), max_mines = 4),
         hypothesis = 1
       )$probs,
       na.rm = TRUE
