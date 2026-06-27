@@ -147,4 +147,3 @@ get_situational_probs <- function(grid_tmp_propagate, pos, action = FALSE,
   browser() # pas sensé déclencher, car on devrait toujours soit gagner, soit ne plus savoir quoi faire, mais pas
   # NULL ni "lost"
 }
-
