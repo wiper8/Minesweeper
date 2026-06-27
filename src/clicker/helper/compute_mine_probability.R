@@ -1,3 +1,6 @@
+source("src/simulate_game.R")
+source("src/clicker/helper/homologous_next_i.R")
+source("src/clicker/helper/solve_homologous.R")
 source("src/game_engine/convert_grid_solution_to_human_grid.R")
 
 compute_mine_probability <- function(grid, mine_i, all_combins) {
@@ -9,7 +12,7 @@ compute_mine_probability <- function(grid, mine_i, all_combins) {
 
 generate_all_probs <- function(grid, mines, solved_around, in_cluster, ...) {
   grid_tmp_propagate <- convert_grid_solution_to_human_grid(grid, solved_around, ...)
-  
+
   lapply(mines, function(mines_left_init) {
     tmp <- generate_probs_knowing_mines(grid_tmp_propagate, mines_left_init, solved_around, in_cluster, hypothesis = 1, ...)
     list(
@@ -37,7 +40,6 @@ generate_probs_knowing_mines <- function(grid_tmp_propagate, mines_left_init, so
   grid_tmp_propagate_init <- grid_tmp_propagate
 
   # pour s'assurer de résoudre les cas certain car le fait de modifier mines_left peut en causer
-  if (mines_left_init == 0) browser()
   tmp <- main_game_loop(grid_tmp_propagate, mines_left_init, certain_core, solved_around, ...)
   grid_tmp_propagate <- tmp[[1]]
   solved_around <- tmp[[3]]
@@ -57,30 +59,39 @@ generate_probs_knowing_mines <- function(grid_tmp_propagate, mines_left_init, so
   # si un seul cluster
   if (length(clusters$clusters) == 1) {
     next_i <- next_i[1] # TODO mieux choisir le prochain next_i, soit avec probabilitées, le prioritise, ou le click_order
-    
     dims <- dim(grid_tmp_propagate)
+
+    # trouver les autres cases homologues à next_i
+    homologous <- homologous_next_i(grid_tmp_propagate, next_i, mines_left, solved_around, in_cluster, dims)
+    if (length(homologous$homologous_i) > 1) {
+      return(
+        append(
+          solve_homologous(grid_tmp_propagate, mines_left, solved_around, in_cluster, homologous, ...),
+          list(clusters = clusters)
+        )
+      )
+    }
     mine_probs <- get_situational_probs(grid_tmp_propagate, i_to_position(next_i, dims), action = FALSE,
                                         mines_left, solved_around, in_cluster = in_cluster, ...)
-    
+
     no_mine_probs <- get_situational_probs(grid_tmp_propagate, i_to_position(next_i, dims), action = TRUE,
                                            mines_left, solved_around, in_cluster = in_cluster, ...)
-    
-    list(
-      n_combins = mine_probs$n_combins + no_mine_probs$n_combins,
+    total_combins <- mine_probs$n_combins + no_mine_probs$n_combins
+    return(list(
+      n_combins = total_combins,
       probs = (mine_probs$n_combins * mine_probs$probs +
-                 no_mine_probs$n_combins * no_mine_probs$probs) / (mine_probs$n_combins + no_mine_probs$n_combins),
+                 no_mine_probs$n_combins * no_mine_probs$probs) / total_combins,
       clusters = clusters
-    )
-  } else {
-    compute_grid_probabilities(
-      grid = grid_tmp_propagate,
-      mines_left = mines_left,
-      solved_around = solved_around,
-      return_n_combins = TRUE,
-      know_possible = TRUE,
-      ...
-    )
+    ))
   }
+  compute_grid_probabilities(
+    grid = grid_tmp_propagate,
+    mines_left = mines_left,
+    solved_around = solved_around,
+    return_n_combins = TRUE,
+    know_possible = TRUE,
+    ...
+  )
 }
 
 get_situational_probs <- function(grid_tmp_propagate, pos, action = FALSE,
@@ -90,20 +101,20 @@ get_situational_probs <- function(grid_tmp_propagate, pos, action = FALSE,
                       solved_around, ...)
   # propager la partie
   tmp <- main_game_loop(tmp[[1]], tmp[[3]], certain_core, tmp[[4]], ...)
-  
+
   if (tmp[[2]] == "win") {
     return(list(
       n_combins = 1,
       probs = tmp[[1]] %in% hp_flags
     ))
   }
-  
+
   if (tmp[[2]] == "le clicker ne sait pu quoi faire") {
     clusters <- independant_clusters(tmp[[1]], tmp[[3]], tmp[[4]])
+    args <- list(...)
     if (length(clusters$clusters) == 1) {
-      args <- list(...)
       args$in_cluster <- clusters$clusters[[1]]$in_cluster
-      
+
       return(
         do.call(
           generate_probs_knowing_mines,
@@ -118,16 +129,21 @@ get_situational_probs <- function(grid_tmp_propagate, pos, action = FALSE,
         )
       )
     }
-    return(
-      compute_grid_probabilities(
-        grid = tmp[[1]],
-        mines_left = tmp[[4]],
-        solved_around = tmp[[3]],
-        return_n_combins = TRUE,
-        ...
+    args$in_cluster <- NULL
+    return(do.call(
+      compute_grid_probabilities,
+      append(
+        args,
+        list(
+          grid = tmp[[1]],
+          mines_left = tmp[[4]],
+          solved_around = tmp[[3]],
+          return_n_combins = TRUE
+        )
       )
-    )
+    ))
   }
 
-  browser() # pas sensé déclencher
+  browser() # pas sensé déclencher, car on devrait toujours soit gagner, soit ne plus savoir quoi faire, mais pas
+  # NULL ni "lost"
 }
