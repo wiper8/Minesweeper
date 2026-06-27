@@ -102,14 +102,14 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
   impossible <- TRUE # pour hypothesis = 2
   reached_prop <- FALSE
   i_to_investigate <- find_best_i_to_investigate(grid, solved_around, click_order)
-  
+
   mines_left_init <- mines_left
   grid_init <- grid
   solved_around_init <- solved_around
-  
+
   # car possible qu'on soit bloqué ET qu'il n'y ait aucun i_to_investigate disponible, qu'il faut guess random
   if (length(i_to_investigate) == 0 && hypothesis != 2) impossible <- FALSE
-  
+
   # je prend une cellule avec un chiffre qui a >= 1 inconnu autour
   for (i in i_to_investigate) {
     mines_left <- mines_left_init
@@ -120,15 +120,15 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
     positions <- tmp$positions
     unknown <- !values %in% known
     n_unknown <- sum(unknown)
-    
+
     # car quand on essaie un drapeau et de le propager, ça peut arriver qu'il n'y a plus de combinaisons
     if (n_unknown == 0) next
     reached_prop <- TRUE
-    
+
     mines_left_around <- count_mines_left_around(grid, i, values)
     # appliquer toutes les combins de mines autour, et vérifier s'il y a une certitude
     pos_unknown <- positions[unknown, , drop = FALSE]
-    
+
     # tester toutes les combinaisons autour de cette case, vérifier s'il y a toujours ou jamais un drapeau
     # dans les situations où on propage un flag, ça peut arriver
     if (mines_left_around < 0 || n_unknown < mines_left_around || isTRUE(mines_left < mines_left_around)) {
@@ -141,14 +141,14 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
       )
     }
     combins <- combn(n_unknown, mines_left_around)
-    
+
     combins <- filter_homologous_combins(grid, mines_left, solved_around, hypothesis, combins, pos_unknown, dims)
-    
+
     cache <- rep(NA, ncol(combins))
-    
+
     for (mine_i in seq_len(n_unknown)) {
       mines_has_mine_i <- fast_apply(combins, 2, function(comb) mine_i %in% comb)
-      
+
       # je me questionne : parmi les mines restantes autour,
       # si je ne flag JAMAIS une cellule et que toutes les combinaisons ne sont pas possibles,
       # c'est que je dois la flagguer
@@ -206,10 +206,9 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
         # is_mine_propagation_possible qui va dire TRUE
         return(list(clicks = NULL, global_cache = global_cache, clusters_cache = clusters_cache))
       }
-      
-      
-      
-      
+
+
+
       # si à l'inverse, je flag la cellule, et que toutes les situations sont impossibles, c'est qu'il n'y a pas de mine!
       # donc la cliquer
       tmp_which_possible <- which_combins_possible(
@@ -269,7 +268,7 @@ can_deduce_pattern <- function(grid, mines_left, solved_around, hypothesis, clic
       ))
     }
   }
-  
+
   tmp <- deduce_unknown_boxes(grid_init, mines_left_init, clusters_cache, ...)
   if (!is.null(tmp$clicks)) return(list(clicks = tmp$clicks, global_cache = global_cache, clusters_cache = tmp$clusters_cache))
   if (isTRUE(all.equal(tmp$clicks, "impossible"))) return(list(clicks = "impossible", global_cache = global_cache, clusters_cache = tmp$clusters_cache))
