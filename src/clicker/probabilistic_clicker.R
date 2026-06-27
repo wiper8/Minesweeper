@@ -4,9 +4,12 @@ source("src/clicker/helper/compute_mine_probability.R")
 probabilistic_clicker <- function(grid, risky_first = FALSE, ...) {
   probs_grid_lst <- compute_grid_probabilities(grid, ...)
   if (risky_first) {
-    if (length(probs_grid_lst$clusters$clusters) > 0) {
-      i_riskiest_clust <- which.max(sapply(probs_grid_lst$clusters$clusters, function(lst) min(probs_grid_lst$probs[lst$in_cluster], na.rm = TRUE)))
-  
+    if (length(probs_grid_lst$clusters$clusters) > 1) {
+      i_riskiest_clust <- which.max(sapply(
+        probs_grid_lst$clusters$clusters,
+        function(lst) min(probs_grid_lst$probs[lst$in_cluster], na.rm = TRUE)
+      ))
+
       to_overwrite_to_NA <- Reduce(
         `+`,
         lapply(probs_grid_lst$clusters$clusters[-i_riskiest_clust], function(lst) lst$in_cluster)
@@ -227,21 +230,7 @@ precise_bounds_one_cluster <- function(lst, grid, mines_left) {
     } else if (lst$possible[left] == "FALSE") {
       possibility <- FALSE
     } else {
-      # TODO ceci est un shortcut pas 100% certain, mais je suis assez confiant que c'est valide.
-      # je suppose que les possibilitées sont du genre c(F, F, F, T, T, T, T, T, F, F), que le bloc continu de TRUE
-      # est continue. Genre, je suppose que c(F, F, F, T, T, T, F, T, F, F) serait impossible. Je n'en ai pas la preuve
-      # mais je suis assez confiant que ce l'est. Ce shortcut inclut aussi c(left_trials, right_trials)
-      if (!is.na(possible[left + 1]) &&
-          possible[left + 1] == FALSE &&
-          left > 1 &&
-          any(possible[(left + 1):length(trials)], na.rm = TRUE)
-        ) {
-        possibility <- FALSE
-        possible[left] <- FALSE
-        break
-      } else {
-        possibility <- test_trial(grid, mines_left, lst$in_cluster, trials[left])
-      }
+      possibility <- test_trial(grid, mines_left, lst$in_cluster, trials[left])
     }
     
     if (possibility) {
@@ -258,21 +247,7 @@ precise_bounds_one_cluster <- function(lst, grid, mines_left) {
     } else if (lst$possible[left] == "FALSE") {
       possibility <- FALSE
     } else {
-      # TODO ceci est un shortcut pas 100% certain, mais je suis assez confiant que c'est valide.
-      # je suppose que les possibilitées sont du genre c(F, F, F, T, T, T, T, T, F, F), que le bloc continu de TRUE
-      # est continue. Genre, je suppose que c(F, F, F, T, T, T, F, T, F, F) serait impossible. Je n'en ai pas la preuve
-      # mais je suis assez confiant que ce l'est. Ce shortcut inclut aussi c(left_trials, right_trials)
-      if (!is.na(possible[left - 1]) &&
-                 possible[left - 1] == FALSE &&
-                 left < length(trials) &&
-                 any(possible[seq_len(left - 1)], na.rm = TRUE)
-      ) {
-        possibility <- FALSE
-        possible[left] <- FALSE
-        break
-      } else {
-        possibility <- test_trial(grid, mines_left, lst$in_cluster, trials[left])
-      }
+      possibility <- test_trial(grid, mines_left, lst$in_cluster, trials[left])
     }
     
     if (possibility) {

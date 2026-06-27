@@ -84,14 +84,18 @@ generate_probs_knowing_mines <- function(grid_tmp_propagate, mines_left_init, so
       clusters = clusters
     ))
   }
-  compute_grid_probabilities(
-    grid = grid_tmp_propagate,
-    mines_left = mines_left,
-    solved_around = solved_around,
-    return_n_combins = TRUE,
-    know_possible = TRUE,
-    ...
+  args <- list(...)
+  args$known_possible <- TRUE
+  args <- append(
+    list(
+      grid = grid_tmp_propagate,
+      mines_left = mines_left,
+      solved_around = solved_around,
+      return_n_combins = TRUE
+    ),
+    args
   )
+  do.call(compute_grid_probabilities, args)
 }
 
 get_situational_probs <- function(grid_tmp_propagate, pos, action = FALSE,

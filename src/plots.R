@@ -2,6 +2,7 @@ library(ggplot2)
 source("src/indicies/i_and_positions.R")
 
 show_first_click_probs <- function(n, total_mines, dims) {
+  set.seed(2026L)
   # positions de clicks initiaux à essayer, sans symétries
   first_click_to_try <- expand.grid(seq_len(ceiling(dims[1] / 2)), seq_len(ceiling(dims[2] / 2))) |> unname() |> as.matrix()
   upper_left <- sapply(
@@ -57,13 +58,11 @@ compare_clickers <- function(n, dims, ...) {
   # print("certain")
   # df_certain <- cbind(compute_mines_probs_df(n, dims, clicker = certain_else_random_clicker, ...), clicker = "certain")
   print("smart")
-  set.seed(2026L)
   a <- Sys.time()
   df_smart <- cbind(compute_mines_probs_df(n, dims, clicker = smart_clicker), clicker = "smart")
   b <- Sys.time()
   print(b - a)
   print("smart risky")
-  set.seed(2026L)
   a <- Sys.time()
   df_smart_risky <- cbind(compute_mines_probs_df(n, dims, clicker = smart_clicker_risky), clicker = "smart_risky")
   b <- Sys.time()
