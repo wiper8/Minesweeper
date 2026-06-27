@@ -160,8 +160,8 @@ test_that("compute_grid_probabilities fait des clusters indépendants pendant la
       in_cluster = clusters$clusters[[1]]$in_cluster
     )
   )
-  
-  
+
+
   # puis tester des cas qui se divisent en sous-clusters
   blind_grid <- convert_grid_solution_to_human_grid(grid, solved_around)
   true_probs <- compute_true_probs(
@@ -175,7 +175,7 @@ test_that("compute_grid_probabilities fait des clusters indépendants pendant la
       sum(c(20, 22) %in% x) == 1 &
       sum(c(12:14, 16, 18) %in% x) == 2
   )
-  
+
   expect_equal(
     sum(true_probs, na.rm = TRUE),
     mines_left

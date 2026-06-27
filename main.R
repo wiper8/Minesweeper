@@ -21,9 +21,8 @@ compute_probs_success(n = 200, total_mines = 56, c(17, 9), smart_clicker)
 
 # graphique de la probabilité de succès selon le nombre de mines
 set.seed(2026L)
-show_mines_difficulty(compare_clickers(n = 5, c(6, 4)))
+show_mines_difficulty(compare_clickers(n = 200, c(6, 4)))
 set.seed(2026L)
-show_mines_difficulty(compare_clickers(n = 1, c(17, 9)))
 show_mines_difficulty(compare_clickers(n = 200, c(17, 9)))
 
 # vérification statistique qu'un clicker est meilleur qu'un autre
