@@ -48,6 +48,7 @@ compute_grid_probabilities <- function(grid, mines_left, solved_around, hypothes
 
     probs[clusters$void$in_cluster] <- void_prob
     probs[grid_init %in% hp_flags] <- 1
+
     probs_grid <- matrix(probs, nrow = nrow(clusters$void$grid), ncol = ncol(clusters$void$grid))
 
     if (return_n_combins) {
@@ -78,7 +79,7 @@ compute_grid_probabilities <- function(grid, mines_left, solved_around, hypothes
   n_box_void <- sum(clusters$void$in_cluster)
 
   clusters_all_probs_cache <- lapply(clusters$clusters, function(lst) {
-    generate_all_probs(lst$grid, (lst$bornes_mines[1]:lst$bornes_mines[2])[lst$possible == "TRUE"], lst$solved_around, lst$in_cluster)
+    generate_all_probs(lst$grid, (lst$bornes_mines[1]:lst$bornes_mines[2])[lst$possible == "TRUE"], lst$solved_around, lst$in_cluster, ...)
   })
 
   numerator_mine_prob <- mapply(
@@ -121,13 +122,15 @@ compute_grid_probabilities <- function(grid, mines_left, solved_around, hypothes
   total_combins <- sum(numerator_weights)
   numerator_weights <- numerator_weights / total_combins
 
-  probs <- mapply(function(x, w) x * w, numerator_mine_prob, numerator_weights) |>
-    rowSums() / sum(numerator_weights)
+  tmp <- mapply(function(x, w) x * w, numerator_mine_prob, numerator_weights)
+
+  probs <- rowSums(tmp) / sum(numerator_weights)
 
   void_prob <- sum(numerator_weights * void / n_box_void) / sum(numerator_weights)
 
   probs[clusters$void$in_cluster] <- void_prob
   probs[grid_init %in% hp_flags] <- 1
+
   probs_grid <- matrix(probs, nrow = nrow(clusters$void$grid), ncol = ncol(clusters$void$grid))
 
   if (return_n_combins) {

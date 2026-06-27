@@ -16,7 +16,11 @@ random_clicker <- function(grid, global_cache, clusters_cache, ...) {
     browser()
   }
   next_i <- sample2(which(grid %in% c(covered_no_mine, covered_mine)), 1)
-  list(list(i_to_position(next_i, dim(grid)), TRUE, "random"), global_cache = global_cache, clusters_cache = clusters_cache)
+  list(
+    clicks = list(list(i_to_position(next_i, dim(grid)), TRUE, "random")),
+    global_cache = global_cache,
+    clusters_cache = clusters_cache
+  )
 }
 
 sample2 <- function(x, size, ...) {

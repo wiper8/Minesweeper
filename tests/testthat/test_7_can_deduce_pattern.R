@@ -1,4 +1,5 @@
 source(here("src/clicker/certain_core.R"))
+source(here("src/clicker/helper/homologous_next_i.R"))
 
 # see https://minesweeper.online/help/patterns
 patterns <- list(
@@ -560,4 +561,33 @@ test_that("can_deduce_pattern trouve des edges cases", {
   expect_true(
     !is.null(can_deduce_pattern(grid, 5, init_solved_around(grid), hypothesis = 0)$clicks)
   )
+})
+
+test_that("can_deduce_pattern est rapide", {
+  grid <- matrix(
+    c(
+      -11, -11, -11, -11, -11, -11, -11, -11, -11,
+      -11, -11, -11, -11, -11, -5, -5, 4, -11,
+      -11, -11, -11, -11, -11, -10, 5, -5, -11,
+      -11, -11, -11, -11, -11, -10, -10, -10, -11,
+      -11, -11, -10, -10, -10, -10, 2, -10, -11,
+      -11, -11, -10, 4, -10, 2, -10, -10, -11,
+      -11, -10, -10, -10, -10, -10, -10, -11, -11,
+      -11, -10, 3, -10, -11, -11, -11, -11, -11,
+      -11, -10, -10, -10, -11, -11, -11, -11, -11,
+      -11, -11, -11, -11, -11, -11, -11, -11, -11
+    ),
+    ncol = 9,
+    byrow = TRUE
+  )
+
+  a <- Sys.time()
+  can_deduce_pattern(
+    grid,
+    11,
+    init_solved_around(grid),
+    hypothesis = 1
+  )
+  b <- Sys.time()
+  expect_true(as.numeric(difftime(b, a, "secs")) < 2)
 })
