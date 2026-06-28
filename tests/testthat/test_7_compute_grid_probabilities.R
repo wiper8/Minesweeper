@@ -258,7 +258,6 @@ test_that("compute_grid_probabilities est rapide pour les clusters avec plusieur
   ), nrow = 17, byrow = TRUE)
   
   a <- Sys.time()
-  # debugonce(generate_all_probs)
   compute_grid_probabilities(
     grid,
     mines_left = 40,
@@ -305,5 +304,3 @@ test_that("compute_grid_probabilities fonctionne avec de rares cas, comme un clu
     true_probs
   )
 })
-
-
