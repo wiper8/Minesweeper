@@ -1,3 +1,5 @@
+source("src/clicker/helper/is_cluster_island.R")
+
 test_that("is_cluster_island est fonctionnel", {
   grid <- matrix(
     c(

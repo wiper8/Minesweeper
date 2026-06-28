@@ -58,11 +58,15 @@ generate_probs_knowing_mines <- function(grid_tmp_propagate, mines_left_init, so
 
   # si un seul cluster
   if (length(clusters$clusters) == 1) {
-    next_i <- next_i[1] # TODO mieux choisir le prochain next_i, soit avec probabilitées, le prioritise, ou le click_order
     dims <- dim(grid_tmp_propagate)
+    influ_count <- sapply(next_i, function(i) nrow(get_influences(grid_tmp_propagate, i, in_cluster, dims)))
+    # les cases avec plus de voisins qui ont besoin de mines ont une corrélation négative avec le temps de calcul
+    # un peu comme du diviser pour régner : ça fixe plus de cases et réduit davantage le nombre de combinaisons
+    # de style choose(), donc accélère
+    next_i <- next_i[which.max(influ_count)]
 
     # trouver les autres cases homologues à next_i
-    homologous <- homologous_next_i(grid_tmp_propagate, next_i, mines_left, solved_around, in_cluster, dims)
+    homologous <- homologous_next_i(grid_tmp_propagate, next_i, in_cluster, dims)
     if (length(homologous$homologous_i) > 1) {
       return(
         append(

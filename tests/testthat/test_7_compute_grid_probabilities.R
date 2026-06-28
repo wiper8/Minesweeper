@@ -234,8 +234,9 @@ test_that("compute_grid_probabilities est rapide pour les clusters avec plusieur
     clusters_cache = NULL
   )
   b <- Sys.time()
-  expect_true(as.numeric(difftime(b, a, units = "secs")) < 8)
+  expect_true(as.numeric(difftime(b, a, units = "secs")) < 6)
 })
+
 
 test_that("compute_grid_probabilities fonctionne avec de rares cas, comme un cluster avec 4 ou 6 mines, mais pas 5", {
   grid <- matrix(
@@ -265,6 +266,7 @@ test_that("compute_grid_probabilities fonctionne avec de rares cas, comme un clu
     sum(true_probs, na.rm = TRUE),
     mines_left
   )
+
   # tester que les résultats sont bons
   expect_equal(
     compute_grid_probabilities(grid, mines_left = mines_left, solved_around)$probs,

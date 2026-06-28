@@ -15,6 +15,7 @@ set.seed(2026L)
 simulate_game(40, c(17, 9), smart_clicker_risky)
 
 ## TODO retirer, ce n'est que pour comparer les cas risky et non
+hypothesis_test(50, total_mines = 40, dims = c(17, 9), smart_clicker, smart_clicker_risky, alternative = "two.sided")
 hypothesis_test(50, total_mines = 36, dims = c(17, 9), smart_clicker, smart_clicker_risky, alternative = "two.sided")
 # n minimum is 4
 show_mines_difficulty(compare_clickers(n = 100, c(4, 3)))

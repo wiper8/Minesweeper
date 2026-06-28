@@ -10,7 +10,7 @@ probabilistic_clicker <- function(grid, risky_first = FALSE, ...) {
 
     if (sum(islands) > 0) {
       ### TODO peut-être en cas de island non certain sur le nombre de mines, il y a moyen de pondérer les probs, 
-      # mais ça semble assez complexe d'obtenir les vraies probabilités
+      # mais ça semble assez complexe d'obtenir les vraies probabilités, donc je flush pour l'instant
       certain_island <- sapply(
         probs_grid_lst$clusters$clusters,
         function(lst) {
@@ -252,6 +252,7 @@ precise_bounds_one_cluster <- function(lst, grid, mines_left) {
     } else if (lst$possible[left] == "FALSE") {
       possibility <- FALSE
     } else {
+      # je ne PEUX PAS supposer qu'il y a un bloc continu de TRUE consécutifs. Des cas existent où ce n'est pas vrai
       possibility <- test_trial(grid, mines_left, lst$in_cluster, trials[left])
     }
     
@@ -263,12 +264,14 @@ precise_bounds_one_cluster <- function(lst, grid, mines_left) {
       possible[left] <- FALSE
     }
   }
+
   for (left in right_trials) {
     if (lst$possible[left] == "TRUE") {
       possibility <- TRUE
     } else if (lst$possible[left] == "FALSE") {
       possibility <- FALSE
     } else {
+      # je ne PEUX PAS supposer qu'il y a un bloc continu de TRUE consécutifs. Des cas existent où ce n'est pas vrai
       possibility <- test_trial(grid, mines_left, lst$in_cluster, trials[left])
     }
     
