@@ -1,21 +1,43 @@
 source("src/clicker/random_clicker.R")
+source("src/clicker/helper/is_cluster_island.R")
 source("src/clicker/helper/compute_mine_probability.R")
 
 probabilistic_clicker <- function(grid, risky_first = FALSE, ...) {
   probs_grid_lst <- compute_grid_probabilities(grid, ...)
-  if (risky_first) {
-    if (length(probs_grid_lst$clusters$clusters) > 1) {
-      i_riskiest_clust <- which.max(sapply(
-        probs_grid_lst$clusters$clusters,
-        function(lst) min(probs_grid_lst$probs[lst$in_cluster], na.rm = TRUE)
-      ))
 
-      to_overwrite_to_NA <- Reduce(
-        `+`,
-        lapply(probs_grid_lst$clusters$clusters[-i_riskiest_clust], function(lst) lst$in_cluster)
-      ) > 0
-      probs_grid_lst$probs[to_overwrite_to_NA] <- NA
-      probs_grid_lst$probs[probs_grid_lst$clusters$void$in_cluster] <- NA
+  if (risky_first && length(probs_grid_lst$clusters$clusters) > 1) {
+    islands <- is_cluster_island(grid, probs_grid_lst)
+
+    if (sum(islands) > 0) {
+      ### TODO peut-être en cas de island non certain sur le nombre de mines, il y a moyen de pondérer les probs, 
+      # mais ça semble assez complexe d'obtenir les vraies probabilités
+      certain_island <- sapply(
+        probs_grid_lst$clusters$clusters,
+        function(lst) {
+         if (any(lst$possible == "NA")) browser()
+         sum(lst$possible == "TRUE") == 1
+       }
+      )
+      islands <- islands & certain_island
+      ###
+      
+      if (sum(islands) > 0) {
+        min_prob_per_island <- mapply(
+          function(lst, is_island) {
+            if (!is_island) return(NA)
+            min(probs_grid_lst$probs[lst$in_cluster], na.rm = TRUE)
+          },
+          probs_grid_lst$clusters$clusters,
+          islands
+        )
+        i_riskiest_clust <- which.max(min_prob_per_island)
+        to_overwrite_to_NA <- Reduce(
+          `+`,
+          lapply(probs_grid_lst$clusters$clusters[-i_riskiest_clust], function(lst) lst$in_cluster)
+        ) > 0
+        probs_grid_lst$probs[to_overwrite_to_NA] <- NA
+        probs_grid_lst$probs[probs_grid_lst$clusters$void$in_cluster] <- NA
+      }
     }
   }
 
