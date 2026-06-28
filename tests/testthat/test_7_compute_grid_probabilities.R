@@ -235,6 +235,38 @@ test_that("compute_grid_probabilities est rapide pour les clusters avec plusieur
   )
   b <- Sys.time()
   expect_true(as.numeric(difftime(b, a, units = "secs")) < 6)
+  
+  
+  grid <- matrix(c(
+    -1, -1, -1, -1, -1, -1, -2, -1, -1,
+    -2, -2, -1, -1, -2, -2, -1, -2, -1,
+    -1, -2, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -2, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1,  1,  1, -1, -1, -1, -1, -2,
+    -1, -1,  1, -2, -1, -1, -1, -1, -2,
+    -2, -1,  2, -1, -2, -1, -1, -2, -1,
+    -1, -2, -1,  2,  2,  2, -2, -1, -1,
+    -1, -1,  3, -2, -1, -1, -1, -1, -2,
+    -1, -1, -2, -1, -1, -2, -1, -2, -2,
+    -1, -1, -1, -1, -1, -2, -1, -2, -1,
+    -2, -2, -1, -1, -2, -1, -1, -1, -1,
+    -1, -1, -1, -1, -2, -1, -1, -2, -2,
+    -1, -2, -2, -1, -2, -2, -1, -1, -1,
+    -1, -1, -1, -1, -2, -2, -1, -1, -2,
+    -1, -1, -2, -2, -1, -1, -1, -1, -2
+  ), nrow = 17, byrow = TRUE)
+  
+  a <- Sys.time()
+  # debugonce(generate_all_probs)
+  compute_grid_probabilities(
+    grid,
+    mines_left = 40,
+    init_solved_around(grid),
+    hypothesis = 0
+  )
+  b <- Sys.time()
+  expect_true(as.numeric(difftime(b, a, units = "secs")) < 18)
 })
 
 
