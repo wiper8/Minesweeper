@@ -1,15 +1,17 @@
 library(ggplot2)
+library(progress)
 source("src/indicies/i_and_positions.R")
 
 show_first_click_probs <- function(n, total_mines, dims) {
   set.seed(2026L)
   # positions de clicks initiaux à essayer, sans symétries
   first_click_to_try <- expand.grid(seq_len(ceiling(dims[1] / 2)), seq_len(ceiling(dims[2] / 2))) |> unname() |> as.matrix()
+  pb <- progress_bar$new(total = nrow(first_click_to_try), format = "[:bar] :percent eta::eta")
   upper_left <- sapply(
     seq_len(nrow(first_click_to_try)),
     function(k) {
+      pb$tick()
       first_click <- first_click_to_try[k, ]
-      print(paste0(k, " / ", nrow(first_click_to_try)))
       all_simuls <- replicate(n, simulate_game(total_mines, dims, smart_clicker, first_click = first_click), simplify = FALSE)
       wins <- mean(sapply(all_simuls, function(lst) lst[[2]] == "win"))
     }
@@ -90,7 +92,7 @@ compute_mines_probs_df <- function(n, dims, ...) {
   stop_threshold <- 1 / 100
   for (i in seq_along(probs)) {
     print(paste0(i, " mines"))
-    tmp <- compute_probs_success(n, mines[i], dims, ...)
+    tmp <- compute_probs_success(n, mines[i], dims, ..., show_progress_bar = FALSE)
     probs[i] <- tmp[[1]]
     probs_low[i] <- tmp[[2]][1]
     probs_high[i] <- tmp[[2]][2]
@@ -101,7 +103,7 @@ compute_mines_probs_df <- function(n, dims, ...) {
     }
   }
   for (i in setdiff(rev(seq_along(probs)), which(!is.na(probs)))) {
-    tmp <- compute_probs_success(n, mines[i], dims, ...)
+    tmp <- compute_probs_success(n, mines[i], dims, ..., show_progress_bar = FALSE)
     probs[i] <- tmp[[1]]
     probs_low[i] <- tmp[[2]][1]
     probs_high[i] <- tmp[[2]][2]
@@ -115,10 +117,19 @@ compute_mines_probs_df <- function(n, dims, ...) {
   data.frame(total_mines = mines, probs = probs, probs_low = probs_low, probs_high = probs_high, avg_pct_done = avg_pct_done)
 }
 
-hypothesis_test <- function(n, total_mines, dims = c(17, 9), clicker1, clicker2) {
+hypothesis_test <- function(n, total_mines, dims = c(17, 9), clicker1, clicker2, alternative = "less") {
+  print("evaluating clicker1")
+  a <- Sys.time()
   x <- n * compute_probs_success(n, total_mines, dims, clicker1)[[1]]
+  b <- Sys.time()
+  print(b - a)
+  print("50% done")
+  print("evaluating clicker2")
+  a <- Sys.time()
   y <- n * compute_probs_success(n, total_mines, dims, clicker2)[[1]]
-  prop.test(c(x, y), c(n, n), alternative = "less")
+  b <- Sys.time()
+  print(b - a)
+  prop.test(c(x, y), c(n, n), alternative = alternative)
 }
 
 prob_interval <- function(success, tries, alpha = 0.05) {
