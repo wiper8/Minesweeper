@@ -3,10 +3,8 @@ source("src/game_engine/convert_grid_solution_to_human_grid.R")
 source("src/clicker/helper/is_mine_propagation_possible.R")
 
 test_trial <- function(grid, mines_left, in_cluster, trial) {
-  if (trial > 0.5 * mines_left & sum(in_cluster) > 18) { # juste pour ne pas évaluer inutilement pour de petits clusters
-    res <- test_trial_shortcut(grid, in_cluster, trial)
-    if (!is.null(res)) return(res)
-  }
+  res <- test_trial_shortcut(grid, in_cluster, trial)
+  if (!is.null(res)) return(res)
 
   # préciser les bornes
   tmp_grid <- grid
@@ -39,14 +37,11 @@ test_trial <- function(grid, mines_left, in_cluster, trial) {
 }
 
 test_trial_shortcut <- function(grid, in_cluster, trial) {
-  grid_init <- grid
-  trial_init <- trial
   counted <- grid * 0
-  candidates <- which(grid >= 0 & in_cluster)
   boxes_unknown <- sum(!grid %in% known & in_cluster)
 
   empty_boxes_count <- 0
-  for (cand in candidates) {
+  for (cand in which(grid >= 0 & in_cluster)) {
     tmp <- count_core(grid, cand)
     values <- tmp$values
     n_unknown <- count_unknown(grid, cand, values)
@@ -57,9 +52,7 @@ test_trial_shortcut <- function(grid, in_cluster, trial) {
     empty_boxes_count <- empty_boxes_count + n_unknown - n_mines_around
 
     # si on sait déjà que trial contient trop de mines
-    if ((boxes_unknown - empty_boxes_count) < trial) {
-      return(FALSE)
-    }
+    if ((boxes_unknown - empty_boxes_count) < trial) return(FALSE)
     counted[position_to_i_mat(tmp$positions, dim(grid))] <- 1
   
     # faire comme si on connaissait ces boites, pour ne pas les recompter
