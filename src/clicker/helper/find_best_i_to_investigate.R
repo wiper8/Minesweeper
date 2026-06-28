@@ -49,7 +49,7 @@ priority_investigate <- function(grid, solved_around) {
   # lorsqu'une case a plusieurs mines restantes et peu de cases, ET
   # qu'un de ses voisins a peu de mines et beaucoup de cases,
   # c'est très prometteur
-  
+
   ratio_grid <- mines_left_around_grid / n_unknown_grid
   to_priorise <- numeric(sum(!is.na(ratio_grid)))
   i <- which(!is.na(ratio_grid))

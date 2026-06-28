@@ -33,7 +33,8 @@ can_flag_all_around <- function(grid, mines_left, solved_around, global_cache = 
     n_unknown <- count_unknown(grid, i, values)
     if (n_unknown > 0 && count_mines_left_around(grid, i, values) == n_unknown) {
       unknown <- !values %in% known
-      if (isTRUE(mines_left - sum(unknown) < 0)) return(list(clicks = "impossible", global_cache = global_cache,
+      if (isTRUE(mines_left - sum(unknown) < 0)) return(list(clicks = "impossible",
+                                                             global_cache = global_cache,
                                                              clusters_cache = clusters_cache))
       
       # tenter de mettre les mines pour vérifier si possible

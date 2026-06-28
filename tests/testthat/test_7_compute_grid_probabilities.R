@@ -1,5 +1,7 @@
+source("src/game_engine/is_grid_possible.R")
 source("src/clicker/probabilistic_clicker.R")
 source("src/game_engine/init_solved_around.R")
+source("src/clicker/helper/is_mine_propagation_possible.R")
 
 compute_true_probs <- function(grid, blind_grid, mines_left, solved_around, exceptions_fun) {
   which_every_combins <- which(!grid %in% known)
@@ -232,5 +234,73 @@ test_that("compute_grid_probabilities est rapide pour les clusters avec plusieur
     clusters_cache = NULL
   )
   b <- Sys.time()
-  expect_true(as.numeric(difftime(b, a, units = "secs")) < 8)
+  expect_true(as.numeric(difftime(b, a, units = "secs")) < 6)
+  
+  
+  grid <- matrix(c(
+    -1, -1, -1, -1, -1, -1, -2, -1, -1,
+    -2, -2, -1, -1, -2, -2, -1, -2, -1,
+    -1, -2, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -2, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1,  1,  1, -1, -1, -1, -1, -2,
+    -1, -1,  1, -2, -1, -1, -1, -1, -2,
+    -2, -1,  2, -1, -2, -1, -1, -2, -1,
+    -1, -2, -1,  2,  2,  2, -2, -1, -1,
+    -1, -1,  3, -2, -1, -1, -1, -1, -2,
+    -1, -1, -2, -1, -1, -2, -1, -2, -2,
+    -1, -1, -1, -1, -1, -2, -1, -2, -1,
+    -2, -2, -1, -1, -2, -1, -1, -1, -1,
+    -1, -1, -1, -1, -2, -1, -1, -2, -2,
+    -1, -2, -2, -1, -2, -2, -1, -1, -1,
+    -1, -1, -1, -1, -2, -2, -1, -1, -2,
+    -1, -1, -2, -2, -1, -1, -1, -1, -2
+  ), nrow = 17, byrow = TRUE)
+  
+  a <- Sys.time()
+  compute_grid_probabilities(
+    grid,
+    mines_left = 40,
+    init_solved_around(grid),
+    hypothesis = 0
+  )
+  b <- Sys.time()
+  expect_true(as.numeric(difftime(b, a, units = "secs")) < 18)
+})
+
+
+test_that("compute_grid_probabilities fonctionne avec de rares cas, comme un cluster avec 4 ou 6 mines, mais pas 5", {
+  grid <- matrix(
+    c(
+      -1, -1, -2, -2, -2,
+      -2, -1, -2, -1, -5,
+      -2, 4, -1, -1, -5,
+      1, 2, -2, -1, -1,
+      -1, 1, 1, -1, -1
+    ),
+    ncol = 5,
+    byrow = TRUE
+  )
+
+  solved_around <- init_solved_around(grid)
+  blind_grid <- convert_grid_solution_to_human_grid(grid, solved_around)
+  mines_left <- sum(grid == -2)
+  true_probs <- compute_true_probs(
+    grid, blind_grid, mines_left, solved_around,
+    function(x) sum(c(2:3, 6, 8:10) %in% x) == 4 &
+      sum(3:4 %in% x) == 1 &
+      sum(c(4, 10) %in% x) == 1 &
+      sum(c(10, 14:15) %in% x) == 1 &
+      sum(c(3:4, 9:10) %in% x) == 2)
+  
+  expect_equal(
+    sum(true_probs, na.rm = TRUE),
+    mines_left
+  )
+
+  # tester que les résultats sont bons
+  expect_equal(
+    compute_grid_probabilities(grid, mines_left = mines_left, solved_around)$probs,
+    true_probs
+  )
 })

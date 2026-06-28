@@ -45,7 +45,7 @@ init_grid_after_first_click <- function(grid, pos, total_mines) {
 main_game_loop <- function(grid, mines_left, clicker, solved_around, hypothesis = 0, click_order = NULL,
                            global_cache = list(), clusters_cache = NULL, ...) {
   mines_left_init <- mines_left
-  seuil_verbose_duration_click <- 5
+  seuil_verbose_duration_click <- 10
   repeat {
     # if (hypothesis == 0) print(mean(grid %in% known))
 
@@ -57,7 +57,7 @@ main_game_loop <- function(grid, mines_left, clicker, solved_around, hypothesis 
     duration_for_click <- as.numeric(difftime(b, a, units = "secs"))
     if (hypothesis == 0 && duration_for_click > seuil_verbose_duration_click) {
       print(paste0("slow selection after ", nrow(click_order), " clicked. ", round(duration_for_click), " secs"))
-      # if (duration_for_click > 10) browser()
+      # if (duration_for_click > 60) browser()
     }
     # "partie impossible"
     # ne devrait pas être possible car

@@ -18,7 +18,7 @@ generate_all_probs <- function(grid, mines, solved_around, in_cluster, ...) {
     list(
       mines_left = mines_left_init,
       n_combins = tmp$n_combins,
-      tmp$probs
+      probs = tmp$probs
     )
   })
 }
@@ -36,20 +36,26 @@ combins_to_probs <- function(combins) {
   )
 }
 
-generate_probs_knowing_mines <- function(grid_tmp_propagate, mines_left_init, solved_around, in_cluster, clusters_cache = NULL, ...) {
+generate_probs_knowing_mines <- function(grid_tmp_propagate, mines_left_init, solved_around, in_cluster,
+                                         clusters_cache = NULL, skip_main_game_loop = FALSE, ...) {
   grid_tmp_propagate_init <- grid_tmp_propagate
 
   # pour s'assurer de résoudre les cas certain car le fait de modifier mines_left peut en causer
-  tmp <- main_game_loop(grid_tmp_propagate, mines_left_init, certain_core, solved_around, ...)
-  grid_tmp_propagate <- tmp[[1]]
-  solved_around <- tmp[[3]]
-  mines_left <- tmp[[4]]
-  if (tmp[[2]] == "win") {
-    return(list(
-      n_combins = 1,
-      probs = grid_tmp_propagate %in% hp_flags
-    ))
+  if (!skip_main_game_loop) {
+    tmp <- main_game_loop(grid_tmp_propagate, mines_left_init, certain_core, solved_around, ...)
+    grid_tmp_propagate <- tmp[[1]]
+    solved_around <- tmp[[3]]
+    mines_left <- tmp[[4]]
+    if (tmp[[2]] == "win") {
+      return(list(
+        n_combins = 1,
+        probs = grid_tmp_propagate %in% hp_flags
+      ))
+    }
+  } else {
+    mines_left <- mines_left_init
   }
+
   # vérifier ici que je sample vraiment une mine possible dans le cluster
   next_i <- which(grid_tmp_propagate == -10 & solved_around == 0 & in_cluster)
   if (length(next_i) == 0) browser() # pas sensé se rendre ici
@@ -58,11 +64,18 @@ generate_probs_knowing_mines <- function(grid_tmp_propagate, mines_left_init, so
 
   # si un seul cluster
   if (length(clusters$clusters) == 1) {
-    next_i <- next_i[1] # TODO mieux choisir le prochain next_i, soit avec probabilitées, le prioritise, ou le click_order
     dims <- dim(grid_tmp_propagate)
+    homologous <- lapply(next_i, function(i) homologous_next_i(grid_tmp_propagate, i, in_cluster, dims))
+    homologous_counts <- sapply(homologous, function(lst) length(lst$homologous_i))
+    i_keep <- which.max(homologous_counts)
+    if (max(homologous_counts) == 1) {
+      influ_count <- sapply(next_i, function(i) nrow(get_influences(grid_tmp_propagate, i, in_cluster, dims)))
+      i_keep <- which.max(influ_count)
+    }
+    next_i <- next_i[i_keep]
 
     # trouver les autres cases homologues à next_i
-    homologous <- homologous_next_i(grid_tmp_propagate, next_i, mines_left, solved_around, in_cluster, dims)
+    homologous <- homologous[[i_keep]]
     if (length(homologous$homologous_i) > 1) {
       return(
         append(
@@ -84,14 +97,18 @@ generate_probs_knowing_mines <- function(grid_tmp_propagate, mines_left_init, so
       clusters = clusters
     ))
   }
-  compute_grid_probabilities(
-    grid = grid_tmp_propagate,
-    mines_left = mines_left,
-    solved_around = solved_around,
-    return_n_combins = TRUE,
-    know_possible = TRUE,
-    ...
+  args <- list(...)
+  args$known_possible <- TRUE
+  args <- append(
+    list(
+      grid = grid_tmp_propagate,
+      mines_left = mines_left,
+      solved_around = solved_around,
+      return_n_combins = TRUE
+    ),
+    args
   )
+  do.call(compute_grid_probabilities, args)
 }
 
 get_situational_probs <- function(grid_tmp_propagate, pos, action = FALSE,
@@ -114,6 +131,7 @@ get_situational_probs <- function(grid_tmp_propagate, pos, action = FALSE,
     args <- list(...)
     if (length(clusters$clusters) == 1) {
       args$in_cluster <- clusters$clusters[[1]]$in_cluster
+      args$skip_main_game_loop <- TRUE # car on vient de l'exécuter avec hypothesis == 1
 
       return(
         do.call(

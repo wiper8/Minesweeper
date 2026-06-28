@@ -1,9 +1,72 @@
 source("src/clicker/random_clicker.R")
+source("src/clicker/helper/is_cluster_island.R")
 source("src/clicker/helper/compute_mine_probability.R")
 
-probabilistic_clicker <- function(grid, ...) {
-  probs_grid_lst <- compute_grid_probabilities(grid, ...)
+probabilistic_clicker <- function(grid, clusters_cache = NULL, ...) {
+  probs_grid_lst <- NULL
+
+  clusters <- clusters_cache %||% independant_clusters(grid, ...)
+  if (length(clusters$clusters) > 1) {
+    islands <- is_cluster_island(grid, clusters)
+
+    if (sum(islands) > 0) {
+
+      ### TODO peut-être en cas de island non certain sur le nombre de mines, il y a moyen de pondérer les probs, 
+      # mais ça semble assez complexe d'obtenir les vraies probabilités, donc je flush pour l'instant
+      clusters <- cluster_from_draft(grid, clusters_cache = clusters, ...)
+      certain_island <- sapply(
+        clusters$clusters,
+        function(lst) {
+          if (any(lst$possible == "NA")) browser()
+          sum(lst$possible == "TRUE") == 1
+        }
+      )
+      islands <- islands & certain_island
+      ###
+      
+      if (sum(islands) > 0) {
+        print("island chosen")
+        keep <- Reduce(
+          `+`,
+          lapply(clusters$clusters[islands], function(lst) lst$in_cluster)
+        ) > 0
+        grid[!keep] <- -5
+        # trouver les probs seulement pour les îles
+        clusters_all_probs_cache <- lapply(clusters$clusters[islands], function(lst) {
+          if (sum(lst$possible == "TRUE") != 1) browser() # pas implémenté
+          args <- list(...)
+          args$grid <- lst$grid
+          args$in_cluster <- lst$in_cluster
+          args$mines_left <- NULL
+          args$hypothesis <- NULL
+          args$mines <- (lst$bornes_mines[1]:lst$bornes_mines[2])[lst$possible == "TRUE"]
+          args$solved_around <- lst$solved_around
+          do.call(
+            generate_all_probs,
+            args
+          )
+        })
+
+        min_prob_per_island <- mapply(
+          function(lst, island_probs) {
+            if (length(island_probs) > 1) browser() # erreur d'implémentation si ça déclenche
+            min(island_probs[[1]]$probs[lst$in_cluster & !lst$grid %in% known], na.rm = TRUE)
+          },
+          clusters$clusters[islands],
+          clusters_all_probs_cache
+        )
+        i_riskiest_clust <- which.max(min_prob_per_island)
+        clusters_all_probs_cache <- clusters_all_probs_cache[[i_riskiest_clust]]
+        probs_grid_lst <- clusters_all_probs_cache[[1]]
+        to_overwrite_to_NA <- !clusters$clusters[islands][[i_riskiest_clust]]$in_cluster | grid %in% known
+        probs_grid_lst$probs[to_overwrite_to_NA] <- NA
+      }
+    }
+  }
+  if (is.null(probs_grid_lst)) probs_grid_lst <- compute_grid_probabilities(grid, clusters_cache = clusters_cache, ...)
+
   next_i <- sample2(which(probs_grid_lst$probs == min(probs_grid_lst$probs, na.rm = TRUE)), 1)
+
   list(
     clicks = list(list(i_to_position(next_i, dim(grid)), TRUE, "probabilistic")),
     global_cache = NULL,
@@ -74,7 +137,7 @@ compute_grid_probabilities <- function(grid, mines_left, solved_around, hypothes
         function(clust, tuple_i) {
           keep <- which(sapply(clust, function(x) x$mines_left) == tuple_i)
           if (length(keep) != 1) browser()
-          clust[[keep]][[3]]
+          clust[[keep]]$probs
         },
         clusters_all_probs_cache,
         tuple
@@ -207,27 +270,20 @@ precise_bounds_one_cluster <- function(lst, grid, mines_left) {
   max_possible <- NA
   possible <- rep(NA, length(trials))
 
+  activate_shortcut <- FALSE
   for (left in left_trials) {
     if (lst$possible[left] == "TRUE") {
       possibility <- TRUE
     } else if (lst$possible[left] == "FALSE") {
       possibility <- FALSE
     } else {
-      # TODO ceci est un shortcut pas 100% certain, mais je suis assez confiant que c'est valide.
-      # je suppose que les possibilitées sont du genre c(F, F, F, T, T, T, T, T, F, F), que le bloc continu de TRUE
-      # est continue. Genre, je suppose que c(F, F, F, T, T, T, F, T, F, F) serait impossible. Je n'en ai pas la preuve
-      # mais je suis assez confiant que ce l'est. Ce shortcut inclut aussi c(left_trials, right_trials)
-      if (!is.na(possible[left + 1]) &&
-          possible[left + 1] == FALSE &&
-          left > 1 &&
-          any(possible[(left + 1):length(trials)], na.rm = TRUE)
-        ) {
+      if (activate_shortcut) possibility <- FALSE
+      # je ne PEUX PAS supposer qu'il y a un bloc continu de TRUE consécutifs. Des cas existent où ce n'est pas vrai
+      else possibility <- test_trial(grid, mines_left, lst$in_cluster, trials[left])
+      if (possibility == "not enough mines") {
+        activate_shortcut <- TRUE
         possibility <- FALSE
-        possible[left] <- FALSE
-        break
-      } else {
-        possibility <- test_trial(grid, mines_left, lst$in_cluster, trials[left])
-      }
+      } else if (is.character(possibility)) possibility <- FALSE # car le test_trial_shortcut a trouvé un raccourci
     }
     
     if (possibility) {
@@ -238,29 +294,23 @@ precise_bounds_one_cluster <- function(lst, grid, mines_left) {
       possible[left] <- FALSE
     }
   }
+
+  activate_shortcut <- FALSE
   for (left in right_trials) {
     if (lst$possible[left] == "TRUE") {
       possibility <- TRUE
     } else if (lst$possible[left] == "FALSE") {
       possibility <- FALSE
     } else {
-      # TODO ceci est un shortcut pas 100% certain, mais je suis assez confiant que c'est valide.
-      # je suppose que les possibilitées sont du genre c(F, F, F, T, T, T, T, T, F, F), que le bloc continu de TRUE
-      # est continue. Genre, je suppose que c(F, F, F, T, T, T, F, T, F, F) serait impossible. Je n'en ai pas la preuve
-      # mais je suis assez confiant que ce l'est. Ce shortcut inclut aussi c(left_trials, right_trials)
-      if (!is.na(possible[left - 1]) &&
-                 possible[left - 1] == FALSE &&
-                 left < length(trials) &&
-                 any(possible[seq_len(left - 1)], na.rm = TRUE)
-      ) {
+      if (activate_shortcut) possibility <- FALSE
+      else possibility <- test_trial(grid, mines_left, lst$in_cluster, trials[left])
+      # je ne PEUX PAS supposer qu'il y a un bloc continu de TRUE consécutifs. Des cas existent où ce n'est pas vrai
+      if (possibility == "too many mines") {
+        activate_shortcut <- TRUE
         possibility <- FALSE
-        possible[left] <- FALSE
-        break
-      } else {
-        possibility <- test_trial(grid, mines_left, lst$in_cluster, trials[left])
-      }
+      } else if (is.character(possibility)) possibility <- FALSE # car le test_trial_shortcut a trouvé un raccourci
     }
-    
+
     if (possibility) {
       possible[left] <- TRUE
       min_possible <- min(min_possible, trials[left], na.rm = TRUE)
