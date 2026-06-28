@@ -25,7 +25,6 @@ probabilistic_clicker <- function(grid, clusters_cache = NULL, ...) {
       ###
       
       if (sum(islands) > 0) {
-        print("island chosen")
         keep <- Reduce(
           `+`,
           lapply(clusters$clusters[islands], function(lst) lst$in_cluster)
