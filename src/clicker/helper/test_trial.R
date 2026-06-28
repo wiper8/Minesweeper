@@ -39,24 +39,32 @@ test_trial <- function(grid, mines_left, in_cluster, trial) {
 test_trial_shortcut <- function(grid, in_cluster, trial) {
   counted <- grid * 0
   boxes_unknown <- sum(!grid %in% known & in_cluster)
+  grid_max <- grid
+  # grid_min <- grid
+  dims <- dim(grid)
 
   empty_boxes_count <- 0
+  full_boxes_count <- 0
   for (cand in which(grid >= 0 & in_cluster)) {
-    tmp <- count_core(grid, cand)
-    values <- tmp$values
-    n_unknown <- count_unknown(grid, cand, values)
+    tmp_max <- count_core(grid_max, cand, dims)
+    # tmp_min <- count_core(grid_min, cand, dims)
+    n_unknown <- count_unknown(grid, cand, tmp_max$values)
     if (n_unknown == 0) next
 
     # minimum à cause du <- 0 plus loin. Bref, le minimum permet de forcer n_unknown = n_mines_around
-    n_mines_around <- min(n_unknown, count_mines_left_around(grid, cand, values))
-    empty_boxes_count <- empty_boxes_count + n_unknown - n_mines_around
+    n_mines_around_max <- min(n_unknown, count_mines_left_around(grid_max, cand, tmp_max$values, dims))
+    # n_mines_around_min <- count_mines_left_around(grid_min, cand, tmp_min$values, dims)
+    empty_boxes_count <- empty_boxes_count + n_unknown - n_mines_around_max
+    # full_boxes_count <- full_boxes_count + n_mines_around_min
 
     # si on sait déjà que trial contient trop de mines
-    if ((boxes_unknown - empty_boxes_count) < trial) return(FALSE)
-    counted[position_to_i_mat(tmp$positions, dim(grid))] <- 1
+    if (boxes_unknown - empty_boxes_count < trial) return("too many mines")
+    # if (trial < full_boxes_count) return("not enough mines")
+    counted[position_to_i_mat(tmp_max$positions, dims)] <- 1
   
     # faire comme si on connaissait ces boites, pour ne pas les recompter
-    grid[counted == 1 & !grid %in% known] <- 0
+    grid_max[counted == 1 & !grid_max %in% known] <- 0
+    # grid_min[counted == 1 & !grid_min %in% known] <- flag_on_mine
   }
   NULL
 }

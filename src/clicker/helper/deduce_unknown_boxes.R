@@ -134,9 +134,10 @@ precise_clusters_bounds_min_shortcut <- function(grid, solved_around, mines_left
             possibility <- FALSE
           } else {
             possibility <- test_trial(grid, mines_left, lst$in_cluster, trials[right])
+            if (possibility %in% c("too many mines", "not enough mines")) possibility <- FALSE
             clusters$clusters[[i]]$possible[right] <- possibility
           }
-          
+
           if (possibility) {
             min_possible <- trials[right]
             right <- right - 1
@@ -157,6 +158,7 @@ precise_clusters_bounds_min_shortcut <- function(grid, solved_around, mines_left
             possibility <- FALSE
           } else {
             possibility <- test_trial(grid, mines_left, lst$in_cluster, trials[left])
+            if (possibility %in% c("too many mines", "not enough mines")) possibility <- FALSE
             clusters$clusters[[i]]$possible[left] <- possibility
           }
           
@@ -203,6 +205,7 @@ precise_clusters_bounds_max_shortcut_full_void <- function(grid, solved_around, 
             possibility <- FALSE
           } else {
             possibility <- test_trial(grid, mines_left, lst$in_cluster, trials[left])
+            if (possibility %in% c("too many mines", "not enough mines")) possibility <- FALSE
             clusters$clusters[[i]]$possible[left] <- possibility
           }
           
@@ -224,6 +227,7 @@ precise_clusters_bounds_max_shortcut_full_void <- function(grid, solved_around, 
             possibility <- FALSE
           } else {
             possibility <- test_trial(grid, mines_left, lst$in_cluster, trials[right])
+            if (possibility %in% c("too many mines", "not enough mines")) possibility <- FALSE
             clusters$clusters[[i]]$possible[right] <- possibility
           }
           
