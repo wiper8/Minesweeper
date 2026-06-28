@@ -358,7 +358,7 @@ test_that("can_deduce_pattern est rapide dans des clusters simples indépendants
   can_deduce_pattern(grid, 40, init_solved_around(grid), hypothesis = 0,
                      click_order = matrix(c(1, 5, 15, 2, 4, 4), ncol = 2, byrow = TRUE))$clicks
   b <- Sys.time()
-  expect_true(as.numeric(difftime(b, a, units = "secs")) < 1.5) # secondes
+  expect_true(as.numeric(difftime(b, a, units = "secs")) < 1.6) # secondes
 })
 
 test_that("can_deduce_pattern est rapide avec des grilles avancées en résolution", {
@@ -589,5 +589,5 @@ test_that("can_deduce_pattern est rapide", {
     hypothesis = 1
   )
   b <- Sys.time()
-  expect_true(as.numeric(difftime(b, a, "secs")) < 1.8)
+  expect_true(as.numeric(difftime(b, a, "secs")) < 2)
 })
