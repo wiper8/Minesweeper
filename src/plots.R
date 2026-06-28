@@ -1,6 +1,7 @@
 library(ggplot2)
 library(progress)
 source("src/indicies/i_and_positions.R")
+source("src/clicker/probabilistic_clicker.R")
 
 show_first_click_probs <- function(n, total_mines, dims) {
   set.seed(2026L)
@@ -50,27 +51,44 @@ show_first_click_probs <- function(n, total_mines, dims) {
 }
 
 show_box_probs <- function(grid, mines_left) {
-  # montre la grille avec toutes les boites non flaguées leur prob d'avoir une mine'
-  # TODO
+  # montre la grille avec toutes les boites non flaguées leur prob d'avoir une mine
+  probs_grid_lst <- compute_grid_probabilities(grid, mines_left, init_solved_around(grid), hypothesis = 0)
+
+  dims <- dim(grid)
+  probs <- probs_grid_lst$probs
+
+  df <- data.frame(
+    row = rep(seq_len(dims[1]), times = dims[2]),
+    col = rep(seq_len(dims[2]), each = dims[1]),
+    value = as.vector(probs)
+  )
+
+  ggplot(df, aes(x = col, y = row, fill = value)) +
+    geom_tile(color = "white") +
+    scale_fill_gradient2(
+      low = "green",
+      mid = "yellow",
+      high = "red",
+      midpoint = max(probs, na.rm = TRUE) / 2,
+      limits = c(0, max(probs, na.rm = TRUE))
+    ) +
+    scale_y_reverse() + # ensures probs[1, 1] is upper-left
+    coord_fixed() +
+    theme_minimal() +
+    labs(fill = "Probability")
 }
 
 compare_clickers <- function(n, dims, ...) {
-  # print("random")
-  # df_random <- cbind(compute_mines_probs_df(n, dims, clicker = random_clicker, ...), clicker = "random")
-  # print("certain")
-  # df_certain <- cbind(compute_mines_probs_df(n, dims, clicker = certain_else_random_clicker, ...), clicker = "certain")
+  print("random")
+  df_random <- cbind(compute_mines_probs_df(n, dims, clicker = random_clicker, ...), clicker = "random")
+  print("certain")
+  df_certain <- cbind(compute_mines_probs_df(n, dims, clicker = certain_else_random_clicker, ...), clicker = "certain")
   print("smart")
   a <- Sys.time()
   df_smart <- cbind(compute_mines_probs_df(n, dims, clicker = smart_clicker), clicker = "smart")
   b <- Sys.time()
   print(b - a)
-  print("smart risky")
-  a <- Sys.time()
-  df_smart_risky <- cbind(compute_mines_probs_df(n, dims, clicker = smart_clicker_risky), clicker = "smart_risky")
-  b <- Sys.time()
-  print(b - a)
-  rbind(df_smart, df_smart_risky)
-  # rbind(df_random, df_certain, df_smart)
+  rbind(df_random, df_certain, df_smart)
 }
 
 show_mines_difficulty <- function(df) {

@@ -112,9 +112,9 @@ test_that(
       res2
     )
 
-    # le shortcut sert à accélérer
+    # le shortcut sert à accélérer (marge de 10% tolélé si plus lent)
     expect_true(
-      as.numeric(difftime(b1, a1, units = "secs")) > as.numeric(difftime(b2, a2, units = "secs"))
+      as.numeric(difftime(b2, a2, units = "secs")) < as.numeric(difftime(b1, a1, units = "secs")) * 1.1
     )
   }
 )

@@ -22,7 +22,7 @@ test_that("is_cluster_island est fonctionnel", {
   expect_equal(
     is_cluster_island(
       grid,
-      compute_grid_probabilities(grid, sum(grid == -2), init_solved_around(grid), hypothesis = 0)
+      independant_clusters(grid, init_solved_around(grid), sum(grid == -2), hypothesis = 0)
     ),
     c(TRUE, FALSE)
   )

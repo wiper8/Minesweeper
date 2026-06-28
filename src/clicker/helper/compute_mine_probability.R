@@ -18,7 +18,7 @@ generate_all_probs <- function(grid, mines, solved_around, in_cluster, ...) {
     list(
       mines_left = mines_left_init,
       n_combins = tmp$n_combins,
-      tmp$probs
+      probs = tmp$probs
     )
   })
 }

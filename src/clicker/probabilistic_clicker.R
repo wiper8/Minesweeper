@@ -2,44 +2,68 @@ source("src/clicker/random_clicker.R")
 source("src/clicker/helper/is_cluster_island.R")
 source("src/clicker/helper/compute_mine_probability.R")
 
-probabilistic_clicker <- function(grid, risky_first = FALSE, ...) {
-  probs_grid_lst <- compute_grid_probabilities(grid, ...)
+probabilistic_clicker <- function(grid, clusters_cache = NULL, ...) {
+  probs_grid_lst <- NULL
 
-  if (risky_first && length(probs_grid_lst$clusters$clusters) > 1) {
-    islands <- is_cluster_island(grid, probs_grid_lst)
+  clusters <- clusters_cache %||% independant_clusters(grid, ...)
+  if (length(clusters$clusters) > 1) {
+    islands <- is_cluster_island(grid, clusters)
 
     if (sum(islands) > 0) {
+
       ### TODO peut-être en cas de island non certain sur le nombre de mines, il y a moyen de pondérer les probs, 
       # mais ça semble assez complexe d'obtenir les vraies probabilités, donc je flush pour l'instant
+      clusters <- cluster_from_draft(grid, clusters_cache = clusters, ...)
       certain_island <- sapply(
-        probs_grid_lst$clusters$clusters,
+        clusters$clusters,
         function(lst) {
-         if (any(lst$possible == "NA")) browser()
-         sum(lst$possible == "TRUE") == 1
-       }
+          if (any(lst$possible == "NA")) browser()
+          sum(lst$possible == "TRUE") == 1
+        }
       )
       islands <- islands & certain_island
       ###
       
       if (sum(islands) > 0) {
+        print("island chosen")
+        keep <- Reduce(
+          `+`,
+          lapply(clusters$clusters[islands], function(lst) lst$in_cluster)
+        ) > 0
+        grid[!keep] <- -5
+        # trouver les probs seulement pour les îles
+        clusters_all_probs_cache <- lapply(clusters$clusters[islands], function(lst) {
+          if (sum(lst$possible == "TRUE") != 1) browser() # pas implémenté
+          args <- list(...)
+          args$grid <- lst$grid
+          args$in_cluster <- lst$in_cluster
+          args$mines_left <- NULL
+          args$hypothesis <- NULL
+          args$mines <- (lst$bornes_mines[1]:lst$bornes_mines[2])[lst$possible == "TRUE"]
+          args$solved_around <- lst$solved_around
+          do.call(
+            generate_all_probs,
+            args
+          )
+        })
+
         min_prob_per_island <- mapply(
-          function(lst, is_island) {
-            if (!is_island) return(NA)
-            min(probs_grid_lst$probs[lst$in_cluster], na.rm = TRUE)
+          function(lst, island_probs) {
+            if (length(island_probs) > 1) browser() # erreur d'implémentation si ça déclenche
+            min(island_probs[[1]]$probs[lst$in_cluster & !lst$grid %in% known], na.rm = TRUE)
           },
-          probs_grid_lst$clusters$clusters,
-          islands
+          clusters$clusters[islands],
+          clusters_all_probs_cache
         )
         i_riskiest_clust <- which.max(min_prob_per_island)
-        to_overwrite_to_NA <- Reduce(
-          `+`,
-          lapply(probs_grid_lst$clusters$clusters[-i_riskiest_clust], function(lst) lst$in_cluster)
-        ) > 0
+        clusters_all_probs_cache <- clusters_all_probs_cache[[i_riskiest_clust]]
+        probs_grid_lst <- clusters_all_probs_cache[[1]]
+        to_overwrite_to_NA <- !clusters$clusters[islands][[i_riskiest_clust]]$in_cluster | grid %in% known
         probs_grid_lst$probs[to_overwrite_to_NA] <- NA
-        probs_grid_lst$probs[probs_grid_lst$clusters$void$in_cluster] <- NA
       }
     }
   }
+  if (is.null(probs_grid_lst)) probs_grid_lst <- compute_grid_probabilities(grid, clusters_cache = clusters_cache, ...)
 
   next_i <- sample2(which(probs_grid_lst$probs == min(probs_grid_lst$probs, na.rm = TRUE)), 1)
 
@@ -113,7 +137,7 @@ compute_grid_probabilities <- function(grid, mines_left, solved_around, hypothes
         function(clust, tuple_i) {
           keep <- which(sapply(clust, function(x) x$mines_left) == tuple_i)
           if (length(keep) != 1) browser()
-          clust[[keep]][[3]]
+          clust[[keep]]$probs
         },
         clusters_all_probs_cache,
         tuple

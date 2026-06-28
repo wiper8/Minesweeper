@@ -368,7 +368,7 @@ test_that("is_mine_propagation_possible ne retourne pas de faux vrais", {
     is_mine_propagation_possible(grid, mines_left = 2, init_solved_around(grid), to_clusterise = FALSE)$possible
   )
   
-  # TODO test à gérer : c'est normal que is_mine_propagation_possible retourne vrai car il peut
+  # c'est normal que is_mine_propagation_possible retourne vrai car il peut
   # mettre les mines en trop dans le void. Mais mon but est de forcer que le void n'est pas de mines mises
   # dedans vu que 13 est le nombre pour le cluster en cours
   grid <- matrix(

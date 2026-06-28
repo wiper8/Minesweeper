@@ -4,7 +4,7 @@ source("src/indicies/get_around_square.R")
 source("src/indicies/square_pos_and_get_around_square.R")
 source("src/clicker/probabilistic_clicker.R")
 
-independant_clusters <- function(grid, solved_around, mines_left) {
+independant_clusters <- function(grid, solved_around, mines_left, ...) {
   if (all(solved_around == -1)) {
     new_solved_around <- init_solved_around(grid, which(solved_around == -1))
     return(list(list(
@@ -78,8 +78,8 @@ independant_clusters <- function(grid, solved_around, mines_left) {
     )
     bornes_mines1[1] <- max(0, bornes_mines1[1], na.rm = TRUE)
     bornes_mines1[2] <- min(mines_left, bornes_mines1[2], sum(in_void), na.rm = TRUE)
-    # TODO weird mais on va le permettre vu que parfois en hypothesis == 2 ca peut être impossible
-    if (bornes_mines1[2] < bornes_mines1[1]) browser() # TODO solve
+    if (bornes_mines1[2] < bornes_mines1[1]) browser() # je crois qu'en retournant NULL, j'invalide les
+    # clusters cache
   }
   
   # vérifier que chaque case est dans un et un seul cluster, sauf les known qui peuvent être réutilisés
@@ -266,9 +266,8 @@ cluster_from_draft <- function(grid, solved_around, mines_left, clusters_cache, 
     )
     bornes_mines1[1] <- max(0, bornes_mines1[1], na.rm = TRUE)
     bornes_mines1[2] <- min(mines_left, bornes_mines1[2], sum(in_void), na.rm = TRUE)
-    # TODO weird mais on va le permettre vu que parfois en hypothesis == 2 ca peut être impossible
-    if (bornes_mines1[2] < bornes_mines1[1]) return(NULL) # TODO solve, je crois qu'en retournant NULL, j'invalide les
-    # clusters cache et tous les 
+    if (bornes_mines1[2] < bornes_mines1[1]) return(NULL) # je crois qu'en retournant NULL, j'invalide les
+    # clusters cache
   }
   
   # vérifier que chaque case est dans un et un seul cluster, sauf les known qui peuvent être réutilisés
