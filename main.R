@@ -16,6 +16,7 @@ simulate_game(40, c(17, 9), smart_clicker)
 
 # calculer probabilités de succès
 compute_probs_success(n = 200, total_mines = 56, c(17, 9), smart_clicker)
+compute_probs_success(n = 200, total_mines = 40, c(17, 9), smart_clicker)
 
 # graphique de la probabilité de succès selon le nombre de mines
 show_mines_difficulty(compare_clickers(n = 200, c(6, 4)))
@@ -35,7 +36,7 @@ show_first_click_probs(n = 100, total_mines = 40, dims = c(17, 9))
 compute_probs_success(n = 500, total_mines = 7, c(10, 8), smart_clicker) # begginner
 compute_probs_success(n = 250, total_mines = 15, c(14, 9), smart_clicker) # easy
 compute_probs_success(n = 150, total_mines = 40, c(20, 15), smart_clicker) # intermediate
-compute_probs_success(n = 1, total_mines = 99, c(26, 19), smart_clicker) # expert
+compute_probs_success(n = 50, total_mines = 99, c(26, 19), smart_clicker) # expert
 
 show_box_probs(
   matrix(c(
