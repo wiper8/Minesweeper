@@ -82,7 +82,7 @@ first_click_probs <- function(n, total_mines, dims, overwrite = TRUE, save = TRU
   return(list(mat = res, n = n))
 }
 
-show_first_click_probs <- function(res) {
+show_first_click_probs <- function(res, legend_type = TRUE) {
   dims <- dim(res$mat)
   df <- data.frame(
     row = rep(seq_len(dims[1]), times = dims[2]),
@@ -91,20 +91,64 @@ show_first_click_probs <- function(res) {
   )
   n <- res$n
 
-  success <- df$value * n
-  intervals <- mapply(prob_interval, success, n)
+  df$success <- df$value * n
+  
+  if (legend_type) {
+    
+    df_subset <- df[df$row <= ceiling(dims[1] / 2), , drop = FALSE]
+    df_subset <- df_subset[df_subset$col <= ceiling(dims[2] / 2), , drop = FALSE]
+    pairs <- combn(seq_len(nrow(df)), 2)
+    hypo_tests <- apply(pairs, 2, function(pair_i) {
+      prob_box_a_greater_then_b(df$success[pair_i[1]], df$success[pair_i[2]], n)
+    })
+    
+    seuil_pour_1_test <- 0.1 # seuil général d'un test d'hypothèse
+    # seuil_pour_1_test = 1 - (1 - seuil_pour_n_tests)^nrow(df_subset)
+    seuil_pour_n_tests <- 1 - (1 - seuil_pour_1_test)^(1 / nrow(df_subset))
+    legend_values <- c(0, seuil_pour_n_tests)
+    
+    df$legend_value <- pmin(
+      seuil_pour_n_tests,
+      sapply(seq_len(nrow(df)), function(i) {
+        keep <- apply(pairs, 2, function(x) i %in% x)
+        pairs <- pairs[, keep, drop = TRUE]
+        hypo_tests <- hypo_tests[keep]
+        min(mapply(
+          function(x, p) if (x[1] == i) p else 1 - p,
+          split(t(pairs), seq_len(length(hypo_tests))),
+          hypo_tests
+        ))
+      })
+    )
+  } else {
+    df$legend_value <- df$value
+    intervals <- mapply(prob_interval, df$succcess, n)
+    intervals <- c(intervals, range(df$value))
+    legend_values <- range(intervals)
+  }
+  legend_mid <- mean(legend_values)
+  legend_range <- legend_values
 
-  print(ggplot(df, aes(x = col, y = row, fill = value)) +
+  print(ggplot(df, aes(x = col, y = row, fill = legend_value)) +
       geom_tile(color = "white") +
       scale_fill_gradient2(
         low = "red", mid = "yellow", high = "green",
-        midpoint = mean(range(intervals)),
-        limits = range(intervals)
+        midpoint = legend_mid,
+        limits = legend_range
       ) +
       scale_y_reverse() +
       coord_fixed() +
       theme_minimal() +
       labs(x = "Column", y = "Row", fill = "Value"))
+}
+
+prob_box_a_greater_then_b <- function(a_success, b_success, n) {
+  f <- function(x) {
+    alpha <- c(a_success, b_success) + 1
+    beta <- n - c(a_success, b_success) + 1
+    dbeta(x, alpha[1], beta[1]) * pbeta(x, alpha[2], beta[2])
+  }
+  integrate(f, 0, 1)$value
 }
 
 show_box_probs <- function(grid, mines_left) {
@@ -214,10 +258,10 @@ show_mines_difficulty <- function(df) {
     geom_line(aes(x = total_mines, y = probs, col = clicker)) +
     # geom_line(aes(x = total_mines, y = avg_pct_done, col = clicker), linetype = "dashed") +
     geom_ribbon(aes(x = total_mines, ymin = probs_low, ymax = probs_high, fill = clicker), alpha = 0.2) +
-    geom_hline(aes(yintercept = 0.936, col = "beginner"), linetype = "dashed") + # begginner
-    geom_hline(aes(yintercept = 0.857, col = "easy"), linetype = "dashed") + # easy
-    geom_hline(aes(yintercept = 0.793, col = "intermediate"), linetype = "dashed") + # intermediate
-    geom_hline(aes(yintercept = NA, col = "expert"), linetype = "dashed") + # expert
+    geom_hline(aes(yintercept = 0.929, col = "beginner"), linetype = "dashed") + # begginner
+    geom_hline(aes(yintercept = 0.836, col = "easy"), linetype = "dashed") + # easy
+    geom_hline(aes(yintercept = 0.758, col = "intermediate"), linetype = "dashed") + # intermediate
+    geom_hline(aes(yintercept = 0.4, col = "expert"), linetype = "dashed") + # expert
     scale_color_manual(
       name = "Difficulty",
       values = c(
@@ -227,7 +271,6 @@ show_mines_difficulty <- function(df) {
         expert = "red"
       )
     ))
-    # TODO ajouter des seuils visuels d'expert
 }
 
 compute_mines_probs_df <- function(n, dims, verbose = TRUE, ...) {
