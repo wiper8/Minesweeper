@@ -28,10 +28,11 @@ get_mines_difficulty(n = 200, c(17, 9)) |> show_mines_difficulty()
 # vérification statistique qu'un clicker est meilleur qu'un autre
 hypothesis_test(20, total_mines = 5, dims = c(5, 9), random_clicker, certain_else_random_clicker) # exemple
 hypothesis_test(20, total_mines = 20, dims = c(17, 9), random_clicker, certain_else_random_clicker) # CONFIRMÉ
-hypothesis_test(50, total_mines = 30, dims = c(17, 9), certain_else_random_clicker, smart_clicker)
+hypothesis_test(100, total_mines = 30, dims = c(17, 9), certain_else_random_clicker, smart_clicker)
 
 # pour optimiser où cliquer au début d'une partie (coin, côté ou centre)
 first_click_probs(n = 4, total_mines = 5, dims = c(3, 4)) |> show_first_click_probs() # exemple
+get_first_click_probs(n = 1000, total_mines = 4, dims = c(4, 4)) |> show_first_click_probs()
 get_first_click_probs(n = 1000, total_mines = 7, dims = c(7, 4)) |> show_first_click_probs()
 get_first_click_probs(n = 500, total_mines = 13, dims = c(10, 5)) |> show_first_click_probs()
 get_first_click_probs(n = 100, total_mines = 40, dims = c(17, 9)) |> show_first_click_probs()

@@ -35,7 +35,7 @@ first_click_probs <- function(n, total_mines, dims, overwrite = TRUE, save = TRU
   bottom <- bottom[rev(seq_len(nrow(bottom))), , drop = FALSE]
   res <- rbind(top, bottom)
   
-  if (!save) return(res)
+  if (!save) return(list(mat = res, n = n))
 
   new_res <- list(mat = res)
   new_res$inputs <- list(
@@ -45,7 +45,7 @@ first_click_probs <- function(n, total_mines, dims, overwrite = TRUE, save = TRU
   )
   if (!file.exists(filepath_rds)) {
     saveRDS(list(new_res), filepath_rds)
-    return(res)
+    return(list(mat = res, n = n))
   }
   
   res_old <- readRDS(filepath_rds)
@@ -54,11 +54,11 @@ first_click_probs <- function(n, total_mines, dims, overwrite = TRUE, save = TRU
     function(lst) lst$inputs$total_mines == total_mines && all(lst$inputs$dims == dims)
   )
   if (any(iden)) {
-    if (!overwrite) return(res)
-    
+    if (!overwrite) return(list(mat = res, n = n))
+
     tmp <- res_old[[which(iden)]]
     old_wins <- round(tmp$inputs$n * tmp$mat)
-    
+
     new_mat <- (old_wins + res * n) / (tmp$inputs$n + n)
     new_res <- list(
       mat = new_mat,
@@ -70,7 +70,7 @@ first_click_probs <- function(n, total_mines, dims, overwrite = TRUE, save = TRU
     )
     res_old[[which(iden)]] <- new_res
     saveRDS(res_old, filepath_rds)
-    return(res)
+    return(list(mat = new_res$mat, n = new_res$inputs$n))
   }
   
   new_list <- append(
@@ -79,20 +79,28 @@ first_click_probs <- function(n, total_mines, dims, overwrite = TRUE, save = TRU
   )
   saveRDS(new_list, filepath_rds)
 
-  res
+  return(list(mat = res, n = n))
 }
 
 show_first_click_probs <- function(res) {
-  dims <- dim(res)
+  dims <- dim(res$mat)
   df <- data.frame(
     row = rep(seq_len(dims[1]), times = dims[2]),
     col = rep(seq_len(dims[2]), each = dims[1]),
-    value = as.vector(res)
+    value = as.vector(res$mat)
   )
+  n <- res$n
+
+  success <- df$value * n
+  intervals <- mapply(prob_interval, success, n)
 
   print(ggplot(df, aes(x = col, y = row, fill = value)) +
       geom_tile(color = "white") +
-      scale_fill_gradient(low = "red", high = "green") +
+      scale_fill_gradient2(
+        low = "red", mid = "yellow", high = "green",
+        midpoint = mean(range(intervals)),
+        limits = range(intervals)
+      ) +
       scale_y_reverse() +
       coord_fixed() +
       theme_minimal() +
@@ -111,7 +119,7 @@ show_box_probs <- function(grid, mines_left) {
     col = rep(seq_len(dims[2]), each = dims[1]),
     value = as.vector(probs)
   )
-
+  browser()
   ggplot(df, aes(x = col, y = row, fill = value)) +
     geom_tile(color = "white") +
     scale_fill_gradient2(

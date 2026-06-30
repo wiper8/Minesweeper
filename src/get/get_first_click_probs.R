@@ -31,8 +31,9 @@ get_first_click_probs <- function(n, total_mines, dims) {
   }
   tmp <- old[[which(iden)]]
   if (tmp$inputs$n >= n) {
+    res_n <- tmp$inputs$n
     tmp$inputs <- NULL
-    return(tmp$mat)
+    return(list(mat = tmp$mat, n = res_n))
   }
 
   missing_n <- n - tmp$inputs$n
