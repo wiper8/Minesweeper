@@ -192,6 +192,7 @@ precise_clusters_bounds_max_shortcut_full_void <- function(grid, solved_around, 
     if (sum(lst$in_cluster) == 1) {
       res[i] <- 0
     } else {
+      activate_shortcut <- FALSE
       if (any(lst$possible == "TRUE")) {
         # raccourci : commencer au true et aller vers la droite
         trials <- lst$bornes_mines[1]:lst$bornes_mines[2]
@@ -204,17 +205,20 @@ precise_clusters_bounds_max_shortcut_full_void <- function(grid, solved_around, 
           } else if (lst$possible[left] == "FALSE") {
             possibility <- FALSE
           } else {
-            possibility <- test_trial(grid, mines_left, lst$in_cluster, trials[left])
-            if (possibility %in% c("too many mines", "not enough mines")) possibility <- FALSE
+            if (activate_shortcut) possibility <- FALSE
+            # je ne PEUX PAS supposer qu'il y a un bloc continu de TRUE consécutifs. Des cas existent où ce n'est pas vrai
+            else possibility <- test_trial(grid, mines_left, lst$in_cluster, trials[left])
+            if (possibility == "too many mines") {
+              activate_shortcut <- TRUE
+              possibility <- FALSE
+            } else if (is.character(possibility)) possibility <- FALSE # car le test_trial_shortcut a trouvé un raccourci
             clusters$clusters[[i]]$possible[left] <- possibility
           }
           
           if (possibility) {
             max_possible <- trials[left]
-            left <- left + 1
-          } else {
-            break
           }
+          left <- left + 1
         }
       } else {
         trials <- lst$bornes_mines[1]:lst$bornes_mines[2]
@@ -226,17 +230,20 @@ precise_clusters_bounds_max_shortcut_full_void <- function(grid, solved_around, 
           } else if (lst$possible[right] == "FALSE") {
             possibility <- FALSE
           } else {
-            possibility <- test_trial(grid, mines_left, lst$in_cluster, trials[right])
-            if (possibility %in% c("too many mines", "not enough mines")) possibility <- FALSE
+            if (activate_shortcut) possibility <- FALSE
+            # je ne PEUX PAS supposer qu'il y a un bloc continu de TRUE consécutifs. Des cas existent où ce n'est pas vrai
+            else possibility <- test_trial(grid, mines_left, lst$in_cluster, trials[right])
+            if (possibility == "not enough mines") {
+              activate_shortcut <- TRUE
+              possibility <- FALSE
+            } else if (is.character(possibility)) possibility <- FALSE # car le test_trial_shortcut a trouvé un raccourci
             clusters$clusters[[i]]$possible[right] <- possibility
           }
           
           if (possibility) {
             max_possible <- trials[right]
-            break
-          } else {
-            right <- right - 1
           }
+          right <- right - 1
         }
       }
       
