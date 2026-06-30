@@ -1,0 +1,56 @@
+---
+title: "analyse"
+format: html
+execute:
+  echo: FALSE
+---
+
+
+## Probabilité de victoire selon le nombre de mines et le clicker
+
+```{r}
+#| label: difficulte-selon-mines
+#| warning: false
+#| message: false
+
+source("src/plots.R")
+source("src/get/get_mines_difficulty.R")
+
+filepath <- "data/compare_clickers_RDS.RDS"
+if (!file.exists(filepath)) {
+  args <- list(list(n = 1, dims = c(5, 3)))
+} else {
+  rds <- readRDS(filepath)
+
+  # lister tous les inputs
+  args <- unique(lapply(rds, function(lst) lst$inputs))
+}
+
+for (i in seq_along(args)) {
+  print(args[[i]])
+  show_mines_difficulty(do.call(get_mines_difficulty, args[[i]]))
+}
+```
+
+## Probabilité de victoire selon l'emplacement du premier clic
+
+```{r}
+#| label: premier-clic
+
+source("src/plots.R")
+source("src/get/get_first_click_probs.R")
+filepath <- "data/first_click_probs_RDS.RDS"
+if (!file.exists(filepath)) {
+  args <- list(list(n = 1, total_mines = 4, dims = c(5, 3)))
+} else {
+  rds <- readRDS(filepath)
+
+  # lister tous les inputs
+  args <- unique(lapply(rds, function(lst) lst$inputs))
+}
+
+for (i in seq_along(args)) {
+  print(args[[i]])
+  show_first_click_probs(do.call(get_first_click_probs, args[[i]]))
+}
+```
