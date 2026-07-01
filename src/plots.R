@@ -270,7 +270,8 @@ show_mines_difficulty <- function(df) {
         intermediate = "orange",
         expert = "red"
       )
-    ))
+    ))+
+    ylim(c(0, 1))
 }
 
 compute_mines_probs_df <- function(n, dims, verbose = TRUE, ...) {
