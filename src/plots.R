@@ -163,7 +163,7 @@ show_box_probs <- function(grid, mines_left) {
     col = rep(seq_len(dims[2]), each = dims[1]),
     value = as.vector(probs)
   )
-  browser()
+
   ggplot(df, aes(x = col, y = row, fill = value)) +
     geom_tile(color = "white") +
     scale_fill_gradient2(
@@ -261,7 +261,7 @@ show_mines_difficulty <- function(df) {
     geom_hline(aes(yintercept = 0.929, col = "beginner"), linetype = "dashed") + # begginner
     geom_hline(aes(yintercept = 0.836, col = "easy"), linetype = "dashed") + # easy
     geom_hline(aes(yintercept = 0.758, col = "intermediate"), linetype = "dashed") + # intermediate
-    geom_hline(aes(yintercept = 0.4, col = "expert"), linetype = "dashed") + # expert
+    geom_hline(aes(yintercept = 0.381, col = "expert"), linetype = "dashed") + # expert
     scale_color_manual(
       name = "Difficulty",
       values = c(
