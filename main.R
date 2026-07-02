@@ -23,7 +23,7 @@ get_prob(n = 200, total_mines = 56, c(17, 9))
 
 # graphique de la probabilité de succès selon le nombre de mines
 compare_clickers(n = 5, c(6, 4)) |> show_mines_difficulty() # exemple
-get_mines_difficulty(n = 300, c(5, 2)) |> show_mines_difficulty()
+get_mines_difficulty(n = 300, c(5, 4)) |> show_mines_difficulty()
 get_mines_difficulty(n = 200, c(8, 4)) |> show_mines_difficulty()
 get_mines_difficulty(n = 200, c(17, 9)) |> show_mines_difficulty()
 
@@ -36,7 +36,7 @@ hypothesis_test(100, total_mines = 30, dims = c(17, 9), certain_else_random_clic
 first_click_probs(n = 4, total_mines = 5, dims = c(3, 4)) |> show_first_click_probs() # exemple
 get_first_click_probs(n = 500, total_mines = 7, dims = c(3, 3)) |> show_first_click_probs() # exemple
 get_first_click_probs(n = 500, total_mines = 7, dims = c(3, 3)) |> show_first_click_probs(legend_type = FALSE) # exemple
-get_first_click_probs(n = 1000, total_mines = 4, dims = c(4, 4)) |> show_first_click_probs()
+get_first_click_probs(n = 1000, total_mines = 4, dims = c(4, 4)) |> show_first_click_probs(legend_type = TRUE)
 get_first_click_probs(n = 200, total_mines = 7, dims = c(7, 4)) |> show_first_click_probs()
 get_first_click_probs(n = 100, total_mines = 13, dims = c(10, 5)) |> show_first_click_probs()
 get_first_click_probs(n = 100, total_mines = 40, dims = c(17, 9)) |> show_first_click_probs()
