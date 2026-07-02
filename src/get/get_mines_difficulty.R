@@ -2,7 +2,7 @@ library(cli)
 source("src/plots.R")
 
 # en lien avec compare_clickers
-get_mines_difficulty <- function(n, dims, pb = NULL) {
+get_mines_difficulty <- function(n, dims, pb = NULL, max_ic_width = 0.2) {
   filepath <- "data/compare_clickers_RDS.RDS"
 
   if (!file.exists(filepath)) {
@@ -23,30 +23,42 @@ get_mines_difficulty <- function(n, dims, pb = NULL) {
 
   tmp <- old[[which(iden)]]
 
-  # maximum `n` atteint
-  if (all(tmp$inputs$n >= n)) {
-    tmp$inputs <- NULL
-    return(tmp$df)
-  }
-
-  missing_n <- ceiling(n - tmp$inputs$n)
-
-  if (missing_n <= 0) {
-    cli_progress_done(id = pb)
-    tmp$inputs <- NULL
-    return(tmp$df)
-  }
-
-  if (is.null(pb)) pb <- cli_progress_bar(total = missing_n)
-
   mines <- sort(unique(tmp$df$total_mines))
   which_to_train_again <- lapply(mines, function(mine) {
     subset_df <- tmp$df[tmp$df$total_mines == mine, , drop = FALSE]
+    # trier
+    order_map <- c("random" = 1, "certain" = 2, "smart" = 3)
+    subset_df <- subset_df[order(order_map[subset_df$clicker]), ]
     pairs <- combn(seq_len(nrow(subset_df)), 2)
     overlaps <- apply(pairs, 2, function(id) !(subset_df$probs_high[id[1]] <= subset_df$probs_low[id[2]] || subset_df$probs_low[id[1]] >= subset_df$probs_high[id[2]]))
-    overlap_pairs <- pairs[, which(overlaps)]
-    unique(as.vector(overlap_pairs))
+    overlap_pairs <- unique(as.vector(pairs[, which(overlaps)]))
+
+    large <- which(subset_df$probs_high - subset_df$probs_low > max_ic_width)
+    exclude <- which(subset_df$n >= n)
+
+    # overlap ou interval de confiance large, mais on exclut lorsque n est atteint
+    setdiff(c(overlap_pairs, large), exclude)
   })
+
+  # maximum `n` atteint
+  if (all(mapply(
+    function(m, c) {
+      !switch(
+        c,
+        "random" = 1,
+        "certain" = 2,
+        "smart" = 3
+      ) %in% which_to_train_again[[which(mines == m)]]
+    },
+    tmp$df$total_mines,
+    tmp$df$clicker
+  ))) {
+    tmp$inputs <- NULL
+    return(tmp$df)
+  }
+
+  if (is.null(pb)) pb <- cli_progress_bar(total = max(n - tmp$df$n))
+
   focus = list(
     random = mines[sapply(which_to_train_again, function(x) any(x == 1))],
     certain = mines[sapply(which_to_train_again, function(x) any(x == 2))],

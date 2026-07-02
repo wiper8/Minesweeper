@@ -261,7 +261,6 @@ compare_clickers <- function(
 }
 
 show_mines_difficulty <- function(df) {
-  
   print(ggplot(df) +
           geom_hline(aes(yintercept = 0.929, col = "beginner"), linetype = "dashed") + # begginner
           geom_hline(aes(yintercept = 0.836, col = "easy"), linetype = "dashed") + # easy
@@ -279,7 +278,7 @@ show_mines_difficulty <- function(df) {
               intermediate = "orange",
               expert = "red"
             )
-    )) +
+          )) +
     ylim(c(0, 1))
 }
 
