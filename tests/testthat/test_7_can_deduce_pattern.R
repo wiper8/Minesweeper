@@ -591,3 +591,19 @@ test_that("can_deduce_pattern est rapide", {
   b <- Sys.time()
   expect_true(as.numeric(difftime(b, a, "secs")) < 2)
 })
+
+test_that("deduce_unkwnown_boxes ne commet pas d'erreur", {
+  grid <- matrix(
+    c(-2, 1, -1, -1,
+       1, -1, 2, -2,
+       1, -1, -2, -1,
+       -1, -2, -1, -1
+    ),
+    nrow = 4,
+    byrow = TRUE
+  )
+  expect_equal(
+    deduce_unknown_boxes(grid, 4, NULL)$clicks,
+    NULL
+  )
+})

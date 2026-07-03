@@ -201,7 +201,7 @@ test_that("compute_grid_probabilities est rapide pour les clusters avec plusieur
     nrow = 6,
     byrow = TRUE
   )
-  
+
   solved_around <- init_solved_around(grid)
   blind_grid <- convert_grid_solution_to_human_grid(grid, solved_around)
   mines_left <- 9
@@ -221,7 +221,7 @@ test_that("compute_grid_probabilities est rapide pour les clusters avec plusieur
     compute_grid_probabilities(grid, mines_left = mines_left, solved_around)$probs,
     true_probs
   )
-  
+
   # tester que les résultats sont calculés rapidement
   a <- Sys.time()
   compute_grid_probabilities(

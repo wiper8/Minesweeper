@@ -1,24 +1,28 @@
+library(cli)
 library(ggplot2)
-library(progress)
+source("src/simulate_game.R")
 source("src/indicies/i_and_positions.R")
+source("src/clicker/smart_clicker.R")
+source("src/clicker/random_clicker.R")
+source("src/clicker/certain_else_random_clicker.R")
 source("src/clicker/probabilistic_clicker.R")
 
-show_first_click_probs <- function(n, total_mines, dims) {
-  set.seed(2026L)
+first_click_probs <- function(n, total_mines, dims, overwrite = TRUE, save = TRUE) {
+  filepath_rds <- "data/first_click_probs_RDS.RDS"
+  if (!file.exists(filepath_rds) && save) set.seed(2026L)
+  
   # positions de clicks initiaux à essayer, sans symétries
   first_click_to_try <- expand.grid(seq_len(ceiling(dims[1] / 2)), seq_len(ceiling(dims[2] / 2))) |> unname() |> as.matrix()
-  pb <- progress_bar$new(total = nrow(first_click_to_try), format = "[:bar] :percent eta::eta")
   upper_left <- sapply(
     seq_len(nrow(first_click_to_try)),
     function(k) {
-      pb$tick()
       first_click <- first_click_to_try[k, ]
       all_simuls <- replicate(n, simulate_game(total_mines, dims, smart_clicker, first_click = first_click), simplify = FALSE)
       wins <- mean(sapply(all_simuls, function(lst) lst[[2]] == "win"))
     }
   ) |>
     matrix(nrow = ceiling(dims[1] / 2))
-
+  
   # Limiter les symétries en ne faisant pas le expand.grid au complet et en propagant les résultats
   # en miroitant les symétries
   left <- upper_left
@@ -30,39 +34,136 @@ show_first_click_probs <- function(n, total_mines, dims) {
   bottom <- full_row_block[seq_len(dims[1] - nrow(upper_left)), , drop = FALSE]
   bottom <- bottom[rev(seq_len(nrow(bottom))), , drop = FALSE]
   res <- rbind(top, bottom)
+  
+  if (!save) return(list(mat = res, n = n))
+  
+  new_res <- list(mat = res)
+  new_res$inputs <- list(
+    n = n,
+    total_mines = total_mines,
+    dims = dims
+  )
+  if (!file.exists(filepath_rds)) {
+    saveRDS(list(new_res), filepath_rds)
+    return(list(mat = res, n = n))
+  }
+  
+  res_old <- readRDS(filepath_rds)
+  iden <- sapply(
+    res_old,
+    function(lst) lst$inputs$total_mines == total_mines && all(lst$inputs$dims == dims)
+  )
+  if (any(iden)) {
+    if (!overwrite) return(list(mat = res, n = n))
+    
+    tmp <- res_old[[which(iden)]]
+    old_wins <- round(tmp$inputs$n * tmp$mat)
+    
+    new_mat <- (old_wins + res * n) / (tmp$inputs$n + n)
+    new_res <- list(
+      mat = new_mat,
+      inputs = list(
+        n = tmp$inputs$n + n,
+        total_mines = total_mines,
+        dims = dims
+      )
+    )
+    res_old[[which(iden)]] <- new_res
+    saveRDS(res_old, filepath_rds)
+    return(list(mat = new_res$mat, n = new_res$inputs$n))
+  }
+  
+  new_list <- append(
+    res_old,
+    list(new_res)
+  )
+  saveRDS(new_list, filepath_rds)
+  
+  return(list(mat = res, n = n))
+}
 
-  # plot
+show_first_click_probs <- function(res, legend_type = TRUE) {
+  dims <- dim(res$mat)
   df <- data.frame(
     row = rep(seq_len(dims[1]), times = dims[2]),
     col = rep(seq_len(dims[2]), each = dims[1]),
-    value = as.vector(res)
+    value = as.vector(res$mat)
   )
-  print(
-    ggplot(df, aes(x = col, y = row, fill = value)) +
-      geom_tile(color = "white") +
-      scale_fill_gradient(low = "red", high = "green") +
-      scale_y_reverse() +
-      coord_fixed() +
-      theme_minimal() +
-      labs(x = "Column", y = "Row", fill = "Value")
-  )
+  n <- res$n
+  
+  df$success <- df$value * n
+  
+  if (legend_type) {
+    
+    df_subset <- df[df$row <= ceiling(dims[1] / 2), , drop = FALSE]
+    df_subset <- df_subset[df_subset$col <= ceiling(dims[2] / 2), , drop = FALSE]
+    pairs <- combn(seq_len(nrow(df)), 2)
+    hypo_tests <- apply(pairs, 2, function(pair_i) {
+      prob_box_a_greater_then_b(df$success[pair_i[1]], df$success[pair_i[2]], n)
+    })
+    
+    seuil_pour_1_test <- 0.1 # seuil général d'un test d'hypothèse
+    # seuil_pour_1_test = 1 - (1 - seuil_pour_n_tests)^nrow(df_subset)
+    seuil_pour_n_tests <- 1 - (1 - seuil_pour_1_test)^(1 / nrow(df_subset))
+    legend_values <- c(0, seuil_pour_n_tests)
+    
+    df$legend_value <- pmin(
+      seuil_pour_n_tests,
+      sapply(seq_len(nrow(df)), function(i) {
+        keep <- apply(pairs, 2, function(x) i %in% x)
+        pairs <- pairs[, keep, drop = TRUE]
+        hypo_tests <- hypo_tests[keep]
+        min(mapply(
+          function(x, p) if (x[1] == i) p else 1 - p,
+          split(t(pairs), seq_len(length(hypo_tests))),
+          hypo_tests
+        ))
+      })
+    )
+  } else {
+    df$legend_value <- df$value
+    intervals <- mapply(prob_interval, df$succcess, n)
+    intervals <- c(intervals, range(df$value))
+    legend_values <- range(intervals)
+  }
+  legend_mid <- mean(legend_values)
+  legend_range <- legend_values
+  
+  print(ggplot(df, aes(x = col, y = row, fill = legend_value)) +
+          geom_tile(color = "white") +
+          scale_fill_gradient2(
+            low = "red", mid = "yellow", high = "green",
+            midpoint = legend_mid,
+            limits = legend_range
+          ) +
+          scale_y_reverse() +
+          coord_fixed() +
+          theme_minimal() +
+          labs(x = "Column", y = "Row", fill = "Value"))
+}
 
-  res
+prob_box_a_greater_then_b <- function(a_success, b_success, n) {
+  f <- function(x) {
+    alpha <- c(a_success, b_success) + 1
+    beta <- n - c(a_success, b_success) + 1
+    dbeta(x, alpha[1], beta[1]) * pbeta(x, alpha[2], beta[2])
+  }
+  integrate(f, 0, 1)$value
 }
 
 show_box_probs <- function(grid, mines_left) {
   # montre la grille avec toutes les boites non flaguées leur prob d'avoir une mine
   probs_grid_lst <- compute_grid_probabilities(grid, mines_left, init_solved_around(grid), hypothesis = 0)
-
+  
   dims <- dim(grid)
   probs <- probs_grid_lst$probs
-
+  
   df <- data.frame(
     row = rep(seq_len(dims[1]), times = dims[2]),
     col = rep(seq_len(dims[2]), each = dims[1]),
     value = as.vector(probs)
   )
-
+  
   ggplot(df, aes(x = col, y = row, fill = value)) +
     geom_tile(color = "white") +
     scale_fill_gradient2(
@@ -78,73 +179,163 @@ show_box_probs <- function(grid, mines_left) {
     labs(fill = "Probability")
 }
 
-compare_clickers <- function(n, dims, ...) {
-  print("random")
-  df_random <- cbind(compute_mines_probs_df(n, dims, clicker = random_clicker, ...), clicker = "random")
-  print("certain")
-  df_certain <- cbind(compute_mines_probs_df(n, dims, clicker = certain_else_random_clicker, ...), clicker = "certain")
-  print("smart")
-  a <- Sys.time()
-  df_smart <- cbind(compute_mines_probs_df(n, dims, clicker = smart_clicker), clicker = "smart")
-  b <- Sys.time()
-  print(b - a)
-  rbind(df_random, df_certain, df_smart)
+compare_clickers <- function(
+    n, dims, overwrite = TRUE, save = TRUE, verbose = TRUE,
+    focus = list(
+      random = seq_len(prod(dims) - 1),
+      certain = seq_len(prod(dims) - 1),
+      smart = seq_len(prod(dims) - 1)
+    ),
+    ...
+) {
+  filepath <- "data/compare_clickers_RDS.RDS"
+  if (!file.exists(filepath) && save) set.seed(2026L)
+  
+  if (verbose) message("random")
+  df_random <- cbind(compute_mines_probs_df(n, dims, mines = focus$random, clicker = random_clicker, verbose = verbose, ...), clicker = "random")
+  if (verbose) message("certain")
+  df_certain <- cbind(compute_mines_probs_df(n, dims, mines = focus$certain, clicker = certain_else_random_clicker, verbose = verbose, ...), clicker = "certain")
+  if (verbose) message("smart")
+  df_smart <- cbind(compute_mines_probs_df(n, dims, mines = focus$smart, clicker = smart_clicker, verbose = verbose, ...), clicker = "smart")
+  
+  res <- rbind(df_random, df_certain, df_smart)
+  
+  if (!save) return(res)
+  
+  new_res <- list(df = res)
+  new_res$inputs <- list(
+    n = mean(res$n), # besoin de n pour le tri dans l'analyse. On n'a pas un seul n, donc on met la moyenne
+    dims = dims
+  )
+  if (!file.exists(filepath)) {
+    saveRDS(list(new_res), filepath)
+    return(res)
+  }
+  
+  res_old <- readRDS(filepath)
+  iden <- sapply(
+    res_old,
+    function(lst) all(lst$inputs$dims == dims)
+  )
+  
+  if (any(iden)) {
+    if (!overwrite) return(res)
+    
+    tmp <- res_old[[which(iden)]]
+    
+    old_wins <- round(tmp$df$n * tmp$df$probs)
+    
+    new_df <- res
+    
+    new_df$n <- tmp$df$n + res$n
+    new_df$avg_pct_done <- (tmp$df$avg_pct_done * tmp$df$n + res$avg_pct_done * res$n) / new_df$n
+    new_df$probs <- (old_wins + res$probs * res$n) / new_df$n
+    intervals <- mapply(prob_interval, old_wins + res$probs * res$n, new_df$n, SIMPLIFY = FALSE)
+    new_df$probs_low <- sapply(intervals, `[`, 1)
+    new_df$probs_high <- sapply(intervals, `[`, 2)
+    
+    new_df$probs[is.na(new_df$probs)] <- tmp$df$probs[is.na(new_df$probs)]
+    new_df$probs_low[is.na(new_df$probs_low)] <- tmp$df$probs_low[is.na(new_df$probs_low)]
+    new_df$probs_high[is.na(new_df$probs_high)] <- tmp$df$probs_high[is.na(new_df$probs_high)]
+    new_df$avg_pct_done[is.na(new_df$avg_pct_done)] <- tmp$df$avg_pct_done[is.na(new_df$avg_pct_done)]
+    
+    new_res <- list(
+      df = new_df,
+      inputs = list(
+        n = mean(new_df$n),
+        dims = dims
+      )
+    )
+    res_old[[which(iden)]] <- new_res
+    saveRDS(res_old, filepath)
+    return(res)
+  }
+  
+  new_list <- append(
+    res_old,
+    list(new_res)
+  )
+  saveRDS(new_list, filepath)
+  
+  res
 }
 
 show_mines_difficulty <- function(df) {
-  ggplot(df) +
-    geom_line(aes(x = total_mines, y = probs, col = clicker)) +
-    geom_line(aes(x = total_mines, y = probs, col = clicker)) +
-    # geom_line(aes(x = total_mines, y = avg_pct_done, col = clicker), linetype = "dashed") +
-    geom_ribbon(aes(x = total_mines, ymin = probs_low, ymax = probs_high, fill = clicker), alpha = 0.2)
-  # TODO ajouter des seuils visuels de facile, moyen, difficile, expert en me basant sur les probs de réussite des vraies applications
+  print(ggplot(df) +
+          geom_hline(aes(yintercept = 0.929, col = "beginner"), linetype = "dashed") + # begginner
+          geom_hline(aes(yintercept = 0.836, col = "easy"), linetype = "dashed") + # easy
+          geom_hline(aes(yintercept = 0.758, col = "intermediate"), linetype = "dashed") + # intermediate
+          geom_hline(aes(yintercept = 0.381, col = "expert"), linetype = "dashed") + # expert
+          geom_line(aes(x = total_mines, y = probs, col = clicker)) +
+          geom_line(aes(x = total_mines, y = probs, col = clicker)) +
+          # geom_line(aes(x = total_mines, y = avg_pct_done, col = clicker), linetype = "dashed") +
+          geom_ribbon(aes(x = total_mines, ymin = probs_low, ymax = probs_high, fill = clicker), alpha = 0.2) +
+          scale_color_manual(
+            name = "Difficulty",
+            values = c(
+              beginner = "blue",
+              easy = "green",
+              intermediate = "orange",
+              expert = "red"
+            )
+          )) +
+    ylim(c(0, 1))
 }
 
-compute_mines_probs_df <- function(n, dims, ...) {
-  mines <- seq_len(prod(dims) - 1)
-  probs <- rep(NA, length(mines))
-  probs_low <- rep(NA, length(mines))
-  probs_high <- rep(NA, length(mines))
-  avg_pct_done <- rep(NA, length(mines))
-
-  stop_threshold <- 1 / 100
-  for (i in seq_along(probs)) {
-    print(paste0(i, " mines"))
-    tmp <- compute_probs_success(n, mines[i], dims, ..., show_progress_bar = FALSE)
-    probs[i] <- tmp[[1]]
-    probs_low[i] <- tmp[[2]][1]
-    probs_high[i] <- tmp[[2]][2]
-    avg_pct_done[i] <- tmp[[3]]
-    if (probs_high[i] <= stop_threshold) {
-      print(paste0("stopped at ", i, " / ", length(probs)))
-      break
-    }
-  }
-  for (i in setdiff(rev(seq_along(probs)), which(!is.na(probs)))) {
-    tmp <- compute_probs_success(n, mines[i], dims, ..., show_progress_bar = FALSE)
-    probs[i] <- tmp[[1]]
-    probs_low[i] <- tmp[[2]][1]
-    probs_high[i] <- tmp[[2]][2]
-    avg_pct_done[i] <- tmp[[3]]
-    if (probs_high[i] <= stop_threshold) {
-      print(paste0("stopped at ", i, " / ", length(probs)))
-      break
-    }
-  }
+compute_mines_probs_df <- function(n, dims, mines = seq_len(prod(dims) - 1), verbose = TRUE, ...) {
+  idx <- seq_len(prod(dims) - 1)
+  probs <- rep(NA, length(idx))
+  probs_low <- rep(NA, length(idx))
+  probs_high <- rep(NA, length(idx))
+  avg_pct_done <- rep(NA, length(idx))
+  n_games <- rep(NA, length(idx))
   
-  data.frame(total_mines = mines, probs = probs, probs_low = probs_low, probs_high = probs_high, avg_pct_done = avg_pct_done)
+  stop_threshold <- 1 / 100
+  
+  for (i in seq_along(mines)) {
+    if (verbose) message(paste0(i, " mines"))
+    tmp <- compute_probs_success(n, mines[i], dims, ..., show_progress_bar = FALSE, save = FALSE)
+    i_to_put <- mines[i] == idx
+    probs[i_to_put] <- tmp[[1]]
+    probs_low[i_to_put] <- tmp[[2]][1]
+    probs_high[i_to_put] <- tmp[[2]][2]
+    avg_pct_done[i_to_put] <- tmp[[3]]
+    n_games[i_to_put] <- n
+    if (probs_high[i_to_put] <= stop_threshold) {
+      if (verbose) message(paste0("stopped at ", i, " / ", length(probs)))
+      break
+    }
+  }
+  for (i in setdiff(rev(seq_along(mines)), which(!is.na(probs)))) {
+    tmp <- compute_probs_success(n, mines[i], dims, ..., show_progress_bar = FALSE, save = FALSE)
+    probs[i_to_put] <- tmp[[1]]
+    probs_low[i_to_put] <- tmp[[2]][1]
+    probs_high[i_to_put] <- tmp[[2]][2]
+    avg_pct_done[i_to_put] <- tmp[[3]]
+    n_games[i_to_put] <- n
+    if (probs_high[i_to_put] <= stop_threshold) {
+      if (verbose) message(paste0("stopped at ", i, " / ", length(probs)))
+      break
+    }
+  }
+  n_games[is.na(n_games)] <- 0
+  
+  data.frame(
+    total_mines = idx, probs = probs, probs_low = probs_low, probs_high = probs_high, avg_pct_done = avg_pct_done,
+    n = n_games
+  )
 }
 
 hypothesis_test <- function(n, total_mines, dims = c(17, 9), clicker1, clicker2, alternative = "less") {
   print("evaluating clicker1")
   a <- Sys.time()
-  x <- n * compute_probs_success(n, total_mines, dims, clicker1)[[1]]
+  x <- n * compute_probs_success(n, total_mines, dims, clicker1, save = FALSE)[[1]]
   b <- Sys.time()
   print(b - a)
   print("50% done")
   print("evaluating clicker2")
   a <- Sys.time()
-  y <- n * compute_probs_success(n, total_mines, dims, clicker2)[[1]]
+  y <- n * compute_probs_success(n, total_mines, dims, clicker2, save = FALSE)[[1]]
   b <- Sys.time()
   print(b - a)
   prop.test(c(x, y), c(n, n), alternative = alternative)
@@ -153,3 +344,74 @@ hypothesis_test <- function(n, total_mines, dims = c(17, 9), clicker1, clicker2,
 prob_interval <- function(success, tries, alpha = 0.05) {
   qbeta(c(alpha / 2, 1 - alpha / 2), success + 1, tries - success + 1)
 }
+
+compute_probs_success <- function(n, total_mines, dims = c(17, 9), clicker,
+                                  show_progress_bar = TRUE, overwrite = TRUE, save = TRUE) {
+  filepath <- "data/compute_probs_success_RDS.RDS"
+  if (!file.exists(filepath) && save) set.seed(2026L)
+  itr <- seq_len(n)
+  all_simuls <- lapply(
+    if (show_progress_bar) cli_progress_along(itr) else itr,
+    function(useless) {
+      simulate_game(total_mines, dims, clicker)
+    }
+  )
+  wins <- sapply(all_simuls, function(lst) lst[[2]] == "win")
+  pct_done <- sapply(all_simuls, function(lst) mean(lst[[1]] %in% c(0:9, flag_on_mine)))
+  res <- list(
+    mean = mean(wins),
+    interval = prob_interval(sum(wins), n),
+    avg_pct_done = mean(pct_done)
+  )
+  
+  if (!save) return(res)
+  
+  new_res <- res
+  new_res$inputs <- list(
+    n = n,
+    total_mines = total_mines,
+    dims = dims
+  )
+  if (!file.exists(filepath)) {
+    saveRDS(list(new_res), filepath)
+    return(res)
+  }
+  
+  res_old <- readRDS(filepath)
+  iden <- sapply(
+    res_old,
+    function(lst) lst$inputs$total_mines == total_mines && all(lst$inputs$dims == dims)
+  )
+  if (any(iden)) {
+    if (!overwrite) return(res)
+    
+    tmp <- res_old[[which(iden)]]
+    old_wins <- round(tmp$inputs$n * tmp$mean)
+    old_wins <- c(rep(TRUE, old_wins), rep(FALSE, tmp$inputs$n - old_wins))
+    wins <- c(old_wins, wins)
+    pct_done <- (tmp$avg_pct_done * tmp$inputs$n + res$avg_pct_done * n) / (tmp$inputs$n + n)
+    n <- tmp$inputs$n + n
+    new_res <- list(
+      mean = mean(wins),
+      interval = prob_interval(sum(wins), n),
+      avg_pct_done = mean(pct_done),
+      inputs = list(
+        n = n,
+        total_mines = total_mines,
+        dims = dims
+      )
+    )
+    res_old[[which(iden)]] <- new_res
+    saveRDS(res_old, filepath)
+    return(res)
+  }
+  
+  new_list <- append(
+    res_old,
+    list(new_res)
+  )
+  saveRDS(new_list, filepath)
+  
+  res
+}
+
