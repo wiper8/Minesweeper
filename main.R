@@ -24,8 +24,12 @@ get_prob(n = 200, total_mines = 56, c(17, 9))
 # graphique de la probabilité de succès selon le nombre de mines
 compare_clickers(n = 5, c(5, 4)) |> show_mines_difficulty() # exemple
 get_mines_difficulty(n = 30, c(5, 4)) |> show_mines_difficulty() # exemple
-get_mines_difficulty(n = 30, c(5, 4), max_ic_width = 0.1) |> show_mines_difficulty() # exemple
-get_mines_difficulty(n = 20, c(8, 4)) |> show_mines_difficulty()
+get_mines_difficulty(n = 200, c(3, 2)) |> show_mines_difficulty()
+get_mines_difficulty(n = 200, c(4, 2)) |> show_mines_difficulty()
+get_mines_difficulty(n = 200, c(5, 3)) |> show_mines_difficulty()
+get_mines_difficulty(n = 200, c(6, 3)) |> show_mines_difficulty()
+get_mines_difficulty(n = 200, c(7, 4)) |> show_mines_difficulty()
+get_mines_difficulty(n = 200, c(8, 4)) |> show_mines_difficulty()
 get_mines_difficulty(n = 200, c(17, 9)) |> show_mines_difficulty()
 
 # vérification statistique qu'un clicker est meilleur qu'un autre
