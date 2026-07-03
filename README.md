@@ -18,7 +18,7 @@ Tous les résultats du dossier `data` seront mis dans l'analyse automatiquement.
 source("tests/testthat.R")
 ```
 
-## Idées d'améliorations futures
+## Idées d'améliorations futures (TODOs)
 
 - La fonction `choose()` pourrait-elle _overflow_? Approximation sinon ?
 
