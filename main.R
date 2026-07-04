@@ -19,6 +19,7 @@ simulate_game(40, c(17, 9), smart_clicker)
 # calculer probabilités de succès
 compute_probs_success(n = 10, total_mines = 12, c(17, 9), smart_clicker) # exemple
 get_prob(n = 200, total_mines = 40, c(17, 9))
+get_prob(n = 200, total_mines = 55, c(17, 9))
 get_prob(n = 200, total_mines = 56, c(17, 9))
 
 # graphique de la probabilité de succès selon le nombre de mines
