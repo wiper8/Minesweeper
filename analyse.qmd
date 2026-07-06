@@ -60,7 +60,7 @@ if (!file.exists(filepath)) {
 
 for (i in seq_along(args)) {
   print(args[[i]])
-  args$render <- TRUE
+  args[[i]]$render <- TRUE
   show_mines_difficulty(do.call(get_mines_difficulty, args[[i]]))
 }
 ```
