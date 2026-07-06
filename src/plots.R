@@ -246,6 +246,7 @@ compare_clickers <- function(
         dims = dims
       )
     )
+    if (any(new_df$probs[new_df$total_mines == (prod(dims) - 1)] != 1)) browser()
     res_old[[which(iden)]] <- new_res
     saveRDS(res_old, filepath)
     return(res)
@@ -293,7 +294,7 @@ compute_mines_probs_df <- function(n, dims, mines = seq_len(prod(dims) - 1), ver
   stop_threshold <- 1 / 100
   
   for (i in seq_along(mines)) {
-    if (verbose) message(paste0(i, " mines"))
+    if (verbose) message(paste0(mines[i], " mines"))
     tmp <- compute_probs_success(n, mines[i], dims, ..., show_progress_bar = FALSE, save = FALSE)
     i_to_put <- mines[i] == idx
     probs[i_to_put] <- tmp[[1]]
@@ -308,6 +309,7 @@ compute_mines_probs_df <- function(n, dims, mines = seq_len(prod(dims) - 1), ver
   }
   for (i in setdiff(rev(seq_along(mines)), which(!is.na(probs)))) {
     tmp <- compute_probs_success(n, mines[i], dims, ..., show_progress_bar = FALSE, save = FALSE)
+    i_to_put <- mines[i] == idx
     probs[i_to_put] <- tmp[[1]]
     probs_low[i_to_put] <- tmp[[2]][1]
     probs_high[i_to_put] <- tmp[[2]][2]
@@ -319,7 +321,7 @@ compute_mines_probs_df <- function(n, dims, mines = seq_len(prod(dims) - 1), ver
     }
   }
   n_games[is.na(n_games)] <- 0
-  
+
   data.frame(
     total_mines = idx, probs = probs, probs_low = probs_low, probs_high = probs_high, avg_pct_done = avg_pct_done,
     n = n_games
