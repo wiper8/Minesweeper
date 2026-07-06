@@ -2,12 +2,12 @@ library(cli)
 source("src/plots.R")
 
 # en lien avec compare_clickers
-get_mines_difficulty <- function(n, dims, pb = NULL, max_ic_width = 0.2, first = FALSE, new_pb = FALSE) {
+get_mines_difficulty <- function(n, dims, pb = NULL, max_ic_width = 0.2, extra_pb = 0, render = FALSE) {
   filepath <- "data/compare_clickers_RDS.RDS"
 
   if (!file.exists(filepath)) {
     compare_clickers(n = 1, dims = dims, verbose = FALSE)
-    return(get_mines_difficulty(n, dims))
+    return(get_mines_difficulty(n, dims, extra_pb = extra_pb, render = render))
   }
   old <- readRDS(filepath)
 
@@ -18,7 +18,7 @@ get_mines_difficulty <- function(n, dims, pb = NULL, max_ic_width = 0.2, first =
 
   if (all(!iden)) {
     compare_clickers(n = 1, dims = dims, verbose = FALSE)
-    return(get_mines_difficulty(n, dims))
+    return(get_mines_difficulty(n, dims, extra_pb = extra_pb, render = render))
   }
 
   tmp <- old[[which(iden)]]
@@ -57,11 +57,8 @@ get_mines_difficulty <- function(n, dims, pb = NULL, max_ic_width = 0.2, first =
     list(dist = min(distance), which = keep_pair[subset_df$n[keep_pair] < n])
   })
 
-  if (!first && !new_pb && all(sapply(which_to_train_again, length) == 0)) {
-    first <- TRUE
-    new_pb <- TRUE
-  } else {
-    new_pb <- FALSE
+  if (extra_pb == 0 && all(sapply(which_to_train_again, length) == 0)) {
+    extra_pb <- 1
   }
 
   closest <- sapply(distances, function(dist_lst) dist_lst$dist)
@@ -75,14 +72,15 @@ get_mines_difficulty <- function(n, dims, pb = NULL, max_ic_width = 0.2, first =
   }
 
   # maximum `n` atteint
-  if (length(unlist(which_to_train_again)) == 0) {
+  if (length(unlist(which_to_train_again)) == 0 || render) {
     tmp$inputs <- NULL
     return(tmp$df)
   }
 
-  if (new_pb) {
-    new_pb <- TRUE
-    first <- FALSE
+  if (extra_pb == 1) {
+    extra_pb <- 2
+    safe_done(pb)
+    print("Now in extra iterations. May stop earlier at anytime if desired")
     pb <- cli_progress_bar("Extra iters", total = sum(n - tmp$df$n))
   }
 
@@ -96,13 +94,24 @@ get_mines_difficulty <- function(n, dims, pb = NULL, max_ic_width = 0.2, first =
   compare_clickers(n = 1, dims = dims, verbose = FALSE, focus = focus)
 
   safe_update(pb)
-  get_mines_difficulty(n, dims, pb = pb, first = first, new_pb = new_pb)
+  get_mines_difficulty(n, dims, pb = pb, extra_pb = extra_pb, render = render)
 }
 
 safe_update <- function(pb) {
   tryCatch(
     {
       cli_progress_update(id = pb)
+    },
+    error = function(e) {
+      NULL # do nothing?
+    }
+  )
+}
+
+safe_done <- function(pb) {
+  tryCatch(
+    {
+      cli_progress_done(id = pb)
     },
     error = function(e) {
       NULL # do nothing?
